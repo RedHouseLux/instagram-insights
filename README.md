@@ -4,31 +4,113 @@
 
 A Google Sheet that reads your monthly Instagram data export from a Drive folder and builds a dashboard with themes, activity rhythm, behavioural indicators and risk signals, compared month over month. It runs entirely inside your Google account; nothing is sent to an AI or any other service.
 
-## One-time setup (about 5 minutes)
+## Setting it up
 
-1. **Create the sheet.** Go to [sheets.new](https://sheets.new) and name it `Instagram Insights`.
-2. **Add the script.** In the sheet, open **Extensions → Apps Script**. Delete the sample code, paste all of [Code.gs](Code.gs), and save (⌘S).
-   - For the network graph, click **+ → HTML**, name the file `NetworkView` (Apps Script adds `.html`), paste all of [NetworkView.html](NetworkView.html), and save.
-3. **Run setup.** In the Apps Script toolbar, pick `setup` from the function list and click **Run**.
-   - Google asks for permission to use Drive, Sheets and triggers. Choose your account.
-   - On "Google hasn't verified this app", click **Advanced → Go to (project name)**. It's your own script.
-4. Back in the sheet, setup shows the link to your **`Instagram Exports`** folder in Drive. It creates the folder unless you already have one with that name. To use a different folder, paste its ID into `EXPORTS_FOLDER_ID` at the top of `Code.gs` and run `setup` again.
-5. **Load the past months.** Upload the exports you already have into that folder, either the `.zip` files or the unzipped folders. Then reload the sheet and choose **Instagram Insights → Process new exports now**.
+You do this once. After that it runs on its own and you never touch it again.
 
-## Every month
+There are two parts: **ask Instagram for your data**, and **set up the sheet that reads it**. Do them in
+that order, because Instagram takes a few hours to send the first export and you may as well wait for it
+with everything else already done.
 
-1. In Instagram, go to **Accounts Centre → Your information and permissions → Export your information**, then **Create export**. Request your Instagram information with:
-   - **Format: HTML.** JSON exports are skipped.
-   - **Date range:** last month.
-   - **Media quality:** low. Media isn't needed.
-   - Keep Instagram in **English**; the dates are parsed in English.
-2. When Meta's email arrives, download the `.zip` and put it in the `Instagram Exports` folder. The Drive app on your phone works too.
-3. That's it. The script checks the folder every day around 08:00 and updates everything. To run it immediately, use **Instagram Insights → Process new exports now**.
+The [project site](https://redhouselux.github.io/instagram-insights/) has the same instructions with a
+screenshot for every tap. If you are doing this on a phone, use that.
 
-**Better: schedule it.** Instagram can export straight to Google Drive on a repeating schedule, which is what
-actually builds a record over time — each export only holds about a week of viewing history. In the export
-flow choose **Esporta su un servizio esterno → Google Drive → Weekly**, for at least a year. The
-[project site](https://redhouselux.github.io/instagram-insights/) has the step-by-step with screenshots.
+### Part 1 — ask Instagram for your data
+
+Open Instagram on your phone.
+
+1. Tap the **☰** button, top right. Then tap **Settings and activity**.
+2. Tap **Accounts Centre**. (It's the first thing on the list, with the Meta logo beside it.)
+3. Tap **Your information and permissions**.
+4. Tap **Export your information**.
+5. Tap **Create export**. Instagram asks which account. Pick the one you want to look at.
+6. It asks *where* to send the export. Tap **Export to a third-party service**.
+7. Pick **Google Drive** from the list.
+8. It asks how often. Tap **Weekly**. Then it asks for how long — pick **1 year** or more.
+   Tap **Link**, then sign in to Google and say yes when it asks for permission.
+9. One last screen, with four settings. Set all four:
+
+   | Setting | Set it to |
+   |---|---|
+   | Customise information | everything ticked |
+   | Date range | **Last week** |
+   | Format | **HTML** |
+   | Media quality | **Lower quality** |
+
+   Then tap **Start export**.
+
+That's Instagram done. It will now send your data to your own Google Drive every week, by itself.
+
+**Two things people get wrong here**, and both quietly break everything:
+
+- **Format must be HTML**, not JSON. A JSON export is skipped and nothing happens.
+- **Weekly, not monthly.** Instagram only remembers about *seven days* of what you looked at. A monthly
+  export does not contain a month of viewing — it contains the last week, and you lose the other three.
+  Weekly is what actually builds a record.
+
+Media quality doesn't break anything; it just makes the files enormous for no reason. Leave it low.
+
+Your Instagram can be in **English or Italian** — both are read correctly. Other languages will partly work:
+the numbers will be right, but some dates and labels may not be understood.
+
+### Part 2 — set up the sheet
+
+**The easy way** is one click, if a ready-made copy has been shared with you: open the link, click
+**Make a copy**, and skip to *"Now turn it on"* below.
+
+**The manual way**, if you'd rather paste the code yourself (or no copy link exists yet):
+
+1. Go to **[sheets.new](https://sheets.new)**. A blank spreadsheet opens. Name it `Instagram Insights` at
+   the top left.
+2. In the menu bar, click **Extensions → Apps Script**. A new tab opens with a code editor in it.
+3. There is a little sample code already in there (`function myFunction() { }`). Select it all and delete it.
+4. Open [Code.gs](Code.gs), copy **everything** in it, and paste it into that empty editor. Press **⌘S**
+   (or **Ctrl+S**) to save.
+5. Now add a second file. On the left there's a **+** next to "Files" — click it and choose **HTML**.
+   Name it exactly `NetworkView` (Apps Script adds the `.html` itself). Delete whatever is in it, paste
+   all of [NetworkView.html](NetworkView.html), and save.
+6. Add a third file the same way, but choose **Script** this time. Name it `Dashboard`. Paste all of
+   [Dashboard.gs](Dashboard.gs) and save.
+7. Add a fourth file, **HTML**, named exactly `Index`. Paste all of [webapp/Index.html](webapp/Index.html)
+   and save.
+
+Now close the code tab and go back to your spreadsheet.
+
+### Now turn it on
+
+1. **Reload the spreadsheet tab.** This matters — the menu only appears when the sheet opens.
+2. Look at the menu bar. There is a new menu called **Instagram Insights**, after "Help". Click it.
+3. Click **Setup (run once)**.
+4. Google will ask for permission. Click through it and pick your Google account.
+5. You will then see a scary-looking screen saying **"Google hasn't verified this app"**. This is expected
+   and it is fine. It is *your* copy of the script, running as you, on your own data. Google hasn't checked
+   it because nobody ever submitted it to be checked. Click **Advanced**, then
+   **Go to (project name)**, then **Allow**.
+
+That's it. Setup makes a folder in your Drive called **Instagram Exports** and links it to the sheet.
+
+> If clicking **Setup** seems to do nothing after you allow access, click it once more. The first click is
+> sometimes used up by the permission screen.
+
+### What happens now
+
+Nothing, from you. This is the whole point.
+
+Instagram sends an export to your Drive each week. The script looks in your Drive once a day, finds it,
+moves it into the **Instagram Exports** folder and reads it. You don't move files and you don't press
+anything.
+
+To look at your data: **Instagram Insights → Open dashboard**.
+
+To make it check right now instead of waiting for tomorrow: **Instagram Insights → Process new exports now**.
+
+**If you already have old exports** sitting on your computer, drag them into the **Instagram Exports** folder
+in Drive — `.zip` files or unzipped folders, both work — then run **Process new exports now**. They'll be
+read and added to the history.
+
+**If you skipped the weekly schedule** and asked for a one-off export instead, this is the one part that
+stays manual: when Meta emails you, put the `.zip` into the **Instagram Exports** folder yourself, then run
+**Process new exports now**. The Drive app on your phone is fine for this.
 
 ## What's in the sheet
 
@@ -161,24 +243,20 @@ A page that reads live from the tabs `processNewExports()` already keeps current
 
 What it shows: the month's tiles with month-over-month changes, the 11 risks with evidence and a trend arrow per risk, minutes per day, themes, the hour × weekday heatmap, most-seen accounts, quiet interests, the indicators, the signals, and a link to the network view.
 
-## Share it with a friend
+## Sharing it with other people
 
-Each person runs their own copy, so nobody sees anyone else's data.
+Everyone runs their own copy. Nobody can see anybody else's data — there is no shared server and no shared
+sheet, so there is nothing to leak.
 
-**You, once:**
-1. **Protect your data in the report.** Open **Resource → Manage added data sources**, then on each source click **Edit** and set **Data credentials** to **Viewer**.
-2. **Check the data sources.** In that same list there must be exactly 9 sources, with the **Alias** column reading `ds0`…`ds8` in this order: Monthly, Risks, Daily, Hourly, Themes, Top, Quiet interests, Profile, Actions. Click an alias to change it.
-3. **Share the report** with your friend's Google account as **Viewer**. Copy the report ID from its URL: `lookerstudio.google.com/reporting/<ID>/page/…`.
-4. **Make a data-free template sheet.** Create a new sheet, open **Extensions → Apps Script**, paste `Code.gs` and add the `NetworkView` HTML file (see step 2 of the one-time setup). Set `LOOKER_TEMPLATE_REPORT_ID` to the report ID and save. Don't run anything.
-5. **Share the template.** Set **General access** to **Anyone with the link · Viewer**. In the link, replace everything from `/edit` onwards with `/copy`.
-6. **Test it yourself first.** Open the `/copy` link and follow your friend's steps below with one of your own exports, then check every page.
+Point people at the **[project site](https://redhouselux.github.io/instagram-insights/)**. It walks through
+the whole thing with a screenshot for every tap, in English and Italian.
 
-**Your friend:**
-1. Open the `/copy` link and click **Make a copy**.
-2. Choose **Instagram Insights → Setup (run once)** and allow access. If nothing happens after allowing, click it again.
-3. Request the Instagram export (see *Every month* above) and drop the `.zip` into the `Instagram Exports` folder.
-4. Choose **Instagram Insights → Process new exports now**. The Dashboard tab fills in.
-5. Choose **Instagram Insights → Create Looker Studio report**, open the link, and click **Edit and share**. The report is a copy of yours, running on their own data.
+To give them the one-click copy instead of asking them to paste code, you need to make a **template sheet**
+once: a copy of your sheet with the script in it and all of your own data removed. The steps, and the
+mistakes to avoid, are in [docs/TEMPLATE.md](docs/TEMPLATE.md).
+
+> **Never share your own working sheet.** A bound Apps Script travels with the spreadsheet when someone
+> copies it — and so does everything in the tabs. The template has to be a separate, emptied copy.
 
 ## Limits worth knowing
 

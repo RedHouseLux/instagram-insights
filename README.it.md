@@ -4,32 +4,113 @@
 
 Un Foglio Google che legge il tuo export mensile di dati Instagram da una cartella di Drive e costruisce una dashboard con temi, ritmo di attività, indicatori comportamentali e segnali di rischio, confrontati mese su mese. Gira interamente dentro il tuo account Google; niente viene mandato a un'AI o a qualsiasi altro servizio.
 
-## Installazione una tantum (circa 5 minuti)
+## Come si installa
 
-1. **Crea il foglio.** Vai su [sheets.new](https://sheets.new) e chiamalo `Instagram Insights`.
-2. **Aggiungi lo script.** Nel foglio, apri **Estensioni → Apps Script**. Cancella il codice di esempio, incolla tutto [Code.gs](Code.gs) e salva (⌘S).
-   - Per il grafo della rete, clicca **+ → HTML**, chiama il file `NetworkView` (Apps Script aggiunge `.html`), incolla tutto [NetworkView.html](NetworkView.html) e salva.
-3. **Esegui setup.** Nella barra degli strumenti di Apps Script, scegli `setup` dall'elenco delle funzioni e clicca **Esegui**.
-   - Google chiede il permesso di usare Drive, Fogli e i trigger. Scegli il tuo account.
-   - Alla schermata "Google non ha verificato questa app", clicca **Avanzate → Apri (nome del progetto)**. È il tuo script.
-4. Tornato nel foglio, il setup mostra il link alla tua cartella **`Instagram Exports`** su Drive. La crea, a meno che tu non ne abbia già una con lo stesso nome. Per usare una cartella diversa, incolla il suo ID in `EXPORTS_FOLDER_ID` in cima a `Code.gs` ed esegui di nuovo `setup`.
-5. **Carica i mesi passati.** Metti in quella cartella gli export che hai già, sia i file `.zip` sia le cartelle scompattate. Poi ricarica il foglio e scegli **Instagram Insights → Processa i nuovi export ora**.
+Lo fai una volta sola. Dopo va avanti da solo e non ci metti più mano.
 
-## Ogni mese
+Ci sono due parti: **chiedere i tuoi dati a Instagram** e **preparare il foglio che li legge**. Falle in
+quest'ordine, perché Instagram ci mette qualche ora a mandarti il primo export e tanto vale aspettarlo con
+tutto il resto già pronto.
 
-1. Su Instagram vai su **Centro gestione account → Le tue informazioni e autorizzazioni → Esporta le tue informazioni**, poi **Crea esportazione**. Richiedi le tue informazioni di Instagram con:
-   - **Formato: HTML.** Gli export in JSON vengono ignorati.
-   - **Intervallo di date:** l'ultimo mese.
-   - **Qualità dei contenuti: bassa.** I media non servono.
-   - L'export funziona sia in italiano sia in inglese: le date e le etichette dei campi sono riconosciute in entrambe le lingue.
-2. Quando arriva l'email di Meta, scarica lo `.zip` e mettilo nella cartella `Instagram Exports`. Va bene anche l'app Drive del telefono.
-3. Tutto qui. Lo script controlla la cartella ogni giorno verso le 08:00 e aggiorna tutto. Per farlo subito, usa **Instagram Insights → Processa i nuovi export ora**.
+Il [sito del progetto](https://redhouselux.github.io/instagram-insights/it/) ha le stesse istruzioni con uno
+screenshot per ogni tocco. Se lo stai facendo dal telefono, usa quello.
 
-**Meglio ancora: programmalo.** Instagram può esportare direttamente su Google Drive con una pianificazione
-ricorrente, ed è questo che costruisce davvero un archivio nel tempo: ogni export contiene solo circa una
-settimana di cronologia di visualizzazione. Nel flusso di esportazione scegli **Esporta su un servizio
-esterno → Google Drive → Weekly**, per almeno un anno. Il
-[sito del progetto](https://redhouselux.github.io/instagram-insights/it/) ha i passaggi con gli screenshot.
+### Parte 1 — chiedi i tuoi dati a Instagram
+
+Apri Instagram sul telefono.
+
+1. Tocca il pulsante **☰** in alto a destra. Poi tocca **Impostazioni e attività**.
+2. Tocca **Centro gestione account**. (È la prima voce dell'elenco, con il logo Meta accanto.)
+3. Tocca **Le tue informazioni e autorizzazioni**.
+4. Tocca **Esporta le tue informazioni**.
+5. Tocca **Crea esportazione**. Instagram ti chiede quale account: scegli quello che vuoi analizzare.
+6. Ti chiede *dove* mandare l'export. Tocca **Esporta su un servizio esterno**.
+7. Scegli **Google Drive** dall'elenco.
+8. Ti chiede ogni quanto. Tocca **Weekly**. Poi ti chiede per quanto tempo: scegli **1 year** o più.
+   Tocca **Collega**, poi accedi con Google e dai il permesso quando te lo chiede.
+9. Un'ultima schermata, con quattro impostazioni. Mettile tutte e quattro:
+
+   | Impostazione | Mettila su |
+   |---|---|
+   | Personalizza informazioni | tutto selezionato |
+   | Intervallo di date | **Ultima settimana** |
+   | Formato | **HTML** |
+   | Qualità dei contenuti multimediali | **Qualità inferiore** |
+
+   Poi tocca **Avvia esportazione**.
+
+Instagram è a posto. Da adesso manda i tuoi dati sul tuo Google Drive ogni settimana, da solo.
+
+**Due cose che quasi tutti sbagliano qui**, e che rompono tutto in silenzio:
+
+- **Il formato dev'essere HTML**, non JSON. Un export in JSON viene ignorato e non succede niente.
+- **Settimanale, non mensile.** Instagram si ricorda solo circa *sette giorni* di quello che hai guardato.
+  Un export mensile non contiene un mese di visualizzazioni: contiene l'ultima settimana, e le altre tre le
+  perdi. È il settimanale che costruisce davvero un archivio.
+
+La qualità dei contenuti non rompe niente, rende solo i file enormi per nulla. Lasciala bassa.
+
+Il tuo Instagram può essere in **italiano o in inglese**: vengono letti correttamente entrambi. Altre lingue
+funzionano in parte: i numeri saranno giusti, ma alcune date ed etichette potrebbero non essere capite.
+
+### Parte 2 — prepara il foglio
+
+**La via facile** è un clic, se qualcuno ti ha condiviso una copia già pronta: apri il link, clicca
+**Crea una copia** e salta a *"Adesso accendilo"* qui sotto.
+
+**La via manuale**, se preferisci incollare il codice da solo (o se non esiste ancora un link di copia):
+
+1. Vai su **[sheets.new](https://sheets.new)**. Si apre un foglio vuoto. Chiamalo `Instagram Insights` in
+   alto a sinistra.
+2. Nella barra dei menu clicca **Estensioni → Apps Script**. Si apre una nuova scheda con dentro un editor
+   di codice.
+3. Dentro c'è già un piccolo codice di esempio (`function myFunction() { }`). Selezionalo tutto e cancellalo.
+4. Apri [Code.gs](Code.gs), copia **tutto** quello che c'è dentro e incollalo in quell'editor vuoto. Premi
+   **⌘S** (o **Ctrl+S**) per salvare.
+5. Ora aggiungi un secondo file. A sinistra, accanto a "File", c'è un **+**: cliccalo e scegli **HTML**.
+   Chiamalo esattamente `NetworkView` (l'estensione `.html` la mette Apps Script). Cancella quello che c'è
+   dentro, incolla tutto [NetworkView.html](NetworkView.html) e salva.
+6. Aggiungi un terzo file allo stesso modo, ma stavolta scegli **Script**. Chiamalo `Dashboard`. Incolla
+   tutto [Dashboard.gs](Dashboard.gs) e salva.
+7. Aggiungi un quarto file, **HTML**, chiamato esattamente `Index`. Incolla tutto
+   [webapp/Index.html](webapp/Index.html) e salva.
+
+Adesso chiudi la scheda del codice e torna al foglio di calcolo.
+
+### Adesso accendilo
+
+1. **Ricarica la scheda del foglio.** È importante: il menu compare solo quando il foglio si apre.
+2. Guarda la barra dei menu. C'è un menu nuovo che si chiama **Instagram Insights**, dopo "Guida". Cliccalo.
+3. Clicca **Setup (run once)**.
+4. Google ti chiederà il permesso. Vai avanti e scegli il tuo account Google.
+5. Poi vedrai una schermata dall'aria minacciosa che dice **"Google non ha verificato questa app"**. È
+   normale e non è un problema: è la *tua* copia dello script, che gira come te, sui tuoi dati. Google non
+   l'ha controllata perché nessuno l'ha mai sottoposta a controllo. Clicca **Avanzate**, poi
+   **Apri (nome del progetto)**, poi **Consenti**.
+
+Fatto. Il setup crea nel tuo Drive una cartella chiamata **Instagram Exports** e la collega al foglio.
+
+> Se dopo aver dato il permesso sembra che **Setup** non faccia niente, cliccalo ancora una volta. Il primo
+> clic a volte se lo mangia la schermata dei permessi.
+
+### Cosa succede adesso
+
+Da parte tua, niente. È tutto qui il punto.
+
+Instagram manda un export sul tuo Drive ogni settimana. Lo script guarda nel tuo Drive una volta al giorno,
+lo trova, lo sposta nella cartella **Instagram Exports** e lo legge. Non sposti file e non premi niente.
+
+Per guardare i tuoi dati: **Instagram Insights → Open dashboard**.
+
+Per farglielo controllare subito invece di aspettare domani: **Instagram Insights → Process new exports now**.
+
+**Se hai già dei vecchi export** sul computer, trascinali nella cartella **Instagram Exports** su Drive —
+vanno bene sia i file `.zip` sia le cartelle scompattate — poi esegui **Process new exports now**. Verranno
+letti e aggiunti allo storico.
+
+**Se hai saltato la pianificazione settimanale** e hai chiesto un export una tantum, questa è l'unica parte
+che resta manuale: quando Meta ti scrive, metti tu lo `.zip` nella cartella **Instagram Exports**, poi
+esegui **Process new exports now**. Per questo va benissimo l'app Drive del telefono.
 
 ## Cosa c'è nel foglio
 
@@ -163,7 +244,19 @@ Cosa mostra: i riquadri del mese con le variazioni rispetto al mese precedente, 
 
 ## Condividerlo con altri
 
-Ogni persona fa girare la propria copia, quindi nessuno vede i dati di nessun altro. Il percorso più semplice è il [sito del progetto](https://redhouselux.github.io/instagram-insights/it/), che spiega tutto passo passo; per preparare il foglio modello da far copiare, vedi [docs/TEMPLATE.it.md](docs/TEMPLATE.it.md).
+Ognuno fa girare la propria copia. Nessuno può vedere i dati di nessun altro: non c'è un server condiviso né
+un foglio condiviso, quindi non c'è nulla che possa uscire.
+
+Manda le persone sul **[sito del progetto](https://redhouselux.github.io/instagram-insights/it/)**. Spiega
+tutto con uno screenshot per ogni tocco, in italiano e in inglese.
+
+Per dare loro la copia in un clic invece di chiedergli di incollare del codice, devi preparare una volta un
+**foglio modello**: una copia del tuo foglio con lo script dentro e tutti i tuoi dati tolti. I passaggi, e
+gli errori da evitare, sono in [docs/TEMPLATE.it.md](docs/TEMPLATE.it.md).
+
+> **Non condividere mai il tuo foglio di lavoro.** Uno script Apps Script legato a un foglio viaggia insieme
+> a lui quando qualcuno lo copia — e con lui viaggia tutto quello che c'è nelle schede. Il modello dev'essere
+> una copia separata e svuotata.
 
 ## Limiti da conoscere
 

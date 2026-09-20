@@ -163,6 +163,15 @@ footer a { color: var(--ink-2); }
 .substeps li { margin-bottom: 7px; }
 .substeps b { color: var(--ink); }
 
+.mini { width: 100%; border-collapse: collapse; margin: 8px 0 2px; font-size: 13.5px; }
+.mini th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 4px 8px 4px 0; }
+.mini td { padding: 5px 8px 5px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.mini td:first-child { color: var(--ink-2); }
+.callout.is-warn { border-left-color: var(--accent); }
+.callout ul { margin: 6px 0; padding-left: 18px; }
+.callout li { margin-bottom: 4px; }
+
 /* ── Step slider ─────────────────────────────────────────────────────────────────────────────────────
    Phone screenshots are tall and narrow, so the frame is capped by HEIGHT rather than width: sized by
    width it would be a column of 800px-tall images and the steps beside it would scroll away. */
@@ -321,23 +330,34 @@ footer a { color: var(--ink-2); }
       <li>
         <h3>Chiedi i tuoi dati a Instagram</h3>
         <p>Fallo per primo — Meta può metterci da qualche ora a un giorno per mandarti il primo.</p>
+        <p>Apri Instagram sul telefono e segui questi passaggi.</p>
         <ol class="substeps">
-          <li>Apri Instagram e tocca il <b>menu hamburger</b> (☰) in alto a destra, poi <b>Impostazioni e attività</b>.</li>
-          <li>Tocca <b>Centro gestione account</b>. <button type="button" class="step-img" data-go="0">vedi immagine 1</button></li>
-          <li>Tocca <b>Le tue informazioni e autorizzazioni</b>. <button type="button" class="step-img" data-go="1">vedi immagine 2</button></li>
-          <li>Tocca <b>Esporta le tue informazioni</b>. <button type="button" class="step-img" data-go="2">vedi immagine 3</button></li>
-          <li>Tocca <b>Crea esportazione</b>, poi scegli il profilo di cui vuoi esportare i dati. <button type="button" class="step-img" data-go="3">vedi immagine 4</button></li>
-          <li>Scegli <b>Esporta su un servizio esterno</b>. <button type="button" class="step-img" data-go="4">vedi immagine 5</button></li>
-          <li>Scegli <b>Google Drive</b>. <button type="button" class="step-img" data-go="5">vedi immagine 6</button></li>
-          <li>Seleziona <b>Weekly</b> e per quanto tempo deve continuare — <b>almeno 1 anno</b>. Poi tocca
-            <b>Collega</b> e concedi l’accesso al tuo Google Drive. Potrebbe chiederti la password del tuo
-            account Google. <button type="button" class="step-img" data-go="6">vedi immagine 7</button></li>
-          <li>Nell’ultima schermata imposta tutte e quattro le voci:
-            <b>Personalizza informazioni</b> → tutto selezionato ·
-            <b>Intervallo di date</b> → <i>Ultima settimana</i> ·
-            <b>Formato</b> → <i>HTML</i> ·
-            <b>Qualità dei contenuti multimediali</b> → <i>Qualità inferiore</i>.
-            Poi <b>Avvia esportazione</b>. <button type="button" class="step-img" data-go="7">vedi immagine 8</button></li>
+          <li>Tocca il pulsante <b>☰</b> in alto a destra. Poi tocca <b>Impostazioni e attività</b>.</li>
+          <li>Tocca <b>Centro gestione account</b>. È la prima voce dell’elenco, con il logo Meta accanto.
+            <button type="button" class="step-img" data-go="0">vedi immagine 1</button></li>
+          <li>Tocca <b>Le tue informazioni e autorizzazioni</b>.
+            <button type="button" class="step-img" data-go="1">vedi immagine 2</button></li>
+          <li>Tocca <b>Esporta le tue informazioni</b>.
+            <button type="button" class="step-img" data-go="2">vedi immagine 3</button></li>
+          <li>Tocca <b>Crea esportazione</b>. Ti chiede quale account: scegli quello che vuoi analizzare.
+            <button type="button" class="step-img" data-go="3">vedi immagine 4</button></li>
+          <li>Adesso ti chiede <em>dove</em> mandarlo. Tocca <b>Esporta su un servizio esterno</b>.
+            <button type="button" class="step-img" data-go="4">vedi immagine 5</button></li>
+          <li>Scegli <b>Google Drive</b> dall’elenco.
+            <button type="button" class="step-img" data-go="5">vedi immagine 6</button></li>
+          <li>Ti chiede ogni quanto. Tocca <b>Weekly</b>. Poi ti chiede per quanto tempo: scegli
+            <b>1 year</b> o più. Tocca <b>Collega</b>, accedi con Google e dai il permesso quando te lo chiede.
+            <button type="button" class="step-img" data-go="6">vedi immagine 7</button></li>
+          <li>Un’ultima schermata, con quattro impostazioni. Mettile tutte e quattro, poi tocca
+            <b>Avvia esportazione</b>. <button type="button" class="step-img" data-go="7">vedi immagine 8</button>
+            <table class="mini">
+              <tr><th>Impostazione</th><th>Mettila su</th></tr>
+              <tr><td>Personalizza informazioni</td><td>tutto selezionato</td></tr>
+              <tr><td>Intervallo di date</td><td><b>Ultima settimana</b></td></tr>
+              <tr><td>Formato</td><td><b>HTML</b></td></tr>
+              <tr><td>Qualità dei contenuti multimediali</td><td><b>Qualità inferiore</b></td></tr>
+            </table>
+          </li>
         </ol>
 
         <div class="shots" id="shots">
@@ -364,11 +384,16 @@ footer a { color: var(--ink-2); }
           <div class="shots-dots" id="shots-dots"></div>
         </div>
 
-        <div class="callout" style="margin-top:14px"><b>Perché settimanale, e perché HTML.</b> Instagram
-          conserva solo circa una settimana di cronologia di visualizzazione in ogni singolo export, quindi
-          una pianificazione settimanale direttamente su Drive è il modo di costruire un archivio vero nel
-          tempo invece di qualche istantanea sparsa. Gli export in JSON vengono ignorati, e i contenuti
-          multimediali non servono mai: la qualità inferiore tiene i file piccoli.</div>
+        <div class="callout is-warn" style="margin-top:14px"><b>Due cose che quasi tutti sbagliano qui.</b>
+          Rompono tutto in silenzio, e non ti danno nessun errore.
+          <ul>
+            <li><b>Il formato dev’essere HTML</b>, non JSON. Un export in JSON viene ignorato e non compare
+              mai niente.</li>
+            <li><b>Settimanale, non mensile.</b> Instagram si ricorda solo circa <em>sette giorni</em> di
+              quello che hai guardato. Un export mensile non contiene un mese: contiene l’ultima settimana,
+              e le altre tre le perdi.</li>
+          </ul>
+          La qualità dei contenuti non rompe niente, rende solo i file enormi per nulla. Lasciala bassa.</div>
 
         <div class="callout">Gli export in italiano e in inglese funzionano entrambi. Altre lingue verranno
           lette solo in parte — date ed etichette dei campi sono le cose verificate finora.</div>
@@ -386,14 +411,22 @@ footer a { color: var(--ink-2); }
 
       <li>
         <h3>Clicca <b>Setup</b> una volta, dal menu del foglio</h3>
-        <p>La tua copia ha un menu <b>Instagram Insights</b> nella barra dei menu, accanto a Guida. Scegli
-          <kbd>Instagram Insights</kbd> → <kbd>Setup (run once)</kbd>. L’installazione è tutta qui: non devi
-          mai aprire l’editor di script.</p>
-        <p>Google ti chiederà il permesso di usare Drive, Fogli e i trigger, e ti avviserà che l’app non è
-          verificata. Quell’avviso è normale: è la <em>tua</em> copia dello script, che gira come te, e
-          Google non l’ha esaminata perché non è mai stata sottoposta a verifica. Scegli
-          <kbd>Avanzate</kbd> → <kbd>Apri (nome del progetto)</kbd> per proseguire.</p>
-        <div class="callout">Se il menu non c’è ancora, ricarica la scheda: viene aggiunto all’apertura del foglio.</div>
+        <ol class="substeps">
+          <li><b>Ricarica la scheda del foglio.</b> È importante: il menu compare solo quando il foglio si apre.</li>
+          <li>Guarda la barra dei menu. C’è un menu nuovo che si chiama <b>Instagram Insights</b>, subito
+            dopo "Guida". Cliccalo.</li>
+          <li>Clicca <b>Setup (run once)</b>.</li>
+          <li>Google ti chiede il permesso. Vai avanti e scegli il tuo account Google.</li>
+          <li>Poi vedrai una schermata che dice <b>"Google non ha verificato questa app"</b>. Clicca
+            <b>Avanzate</b>, poi <b>Apri (nome del progetto)</b>, poi <b>Consenti</b>.</li>
+        </ol>
+        <p>Non devi mai aprire l’editor di script. L’installazione è tutta qui.</p>
+        <div class="callout"><b>Quella schermata di avviso è normale e non è un problema.</b> È la
+          <em>tua</em> copia dello script, che gira come te, sui tuoi dati. Google non l’ha controllata
+          perché nessuno l’ha mai sottoposta a controllo: la verifica riguarda gli script che toccano gli
+          account <em>di altre persone</em>, e questo non lo fa mai.</div>
+        <div class="callout">Se dopo aver dato il permesso sembra che <b>Setup</b> non faccia niente,
+          cliccalo ancora una volta. Il primo clic a volte se lo mangia la schermata dei permessi.</div>
       </li>
 
       <li>

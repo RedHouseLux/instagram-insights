@@ -162,6 +162,15 @@ footer a { color: var(--ink-2); }
 .substeps li { margin-bottom: 7px; }
 .substeps b { color: var(--ink); }
 
+.mini { width: 100%; border-collapse: collapse; margin: 8px 0 2px; font-size: 13.5px; }
+.mini th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 4px 8px 4px 0; }
+.mini td { padding: 5px 8px 5px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.mini td:first-child { color: var(--ink-2); }
+.callout.is-warn { border-left-color: var(--accent); }
+.callout ul { margin: 6px 0; padding-left: 18px; }
+.callout li { margin-bottom: 4px; }
+
 /* ── Step slider ─────────────────────────────────────────────────────────────────────────────────────
    Phone screenshots are tall and narrow, so the frame is capped by HEIGHT rather than width: sized by
    width it would be a column of 800px-tall images and the steps beside it would scroll away. */
@@ -320,26 +329,35 @@ footer a { color: var(--ink-2); }
       <li>
         <h3>Ask Instagram for your data</h3>
         <p>Do this first — Meta can take a few hours to a day to send the first one.</p>
-        <p>The menu names below are the Italian ones, because that is what the screenshots show. If your
-          Instagram is in English the path is identical: <i>Accounts Centre → Your information and
-          permissions → Export your information</i>.</p>
+        <p>Open Instagram on your phone and follow these. The screenshots are in Italian because that is
+          how the person who made them has Instagram set; the English names are next to each one, and the
+          buttons are in exactly the same places.</p>
         <ol class="substeps">
-          <li>Open Instagram and tap the <b>hamburger menu</b> (☰) at the top right, then <b>Impostazioni e attività</b>.</li>
-          <li>Tap <b>Centro gestione account</b>. <button type="button" class="step-img" data-go="0">see image 1</button></li>
-          <li>Tap <b>Le tue informazioni e autorizzazioni</b>. <button type="button" class="step-img" data-go="1">see image 2</button></li>
-          <li>Tap <b>Esporta le tue informazioni</b>. <button type="button" class="step-img" data-go="2">see image 3</button></li>
-          <li>Tap <b>Crea esportazione</b>, then choose the profile you want to export. <button type="button" class="step-img" data-go="3">see image 4</button></li>
-          <li>Choose <b>Esporta su un servizio esterno</b>. <button type="button" class="step-img" data-go="4">see image 5</button></li>
-          <li>Choose <b>Google Drive</b>. <button type="button" class="step-img" data-go="5">see image 6</button></li>
-          <li>Pick <b>Weekly</b>, and how long it should keep running — <b>at least 1 year</b>. Then tap
-            <b>Collega</b> and grant access to your Google Drive. It may ask for your Google password.
+          <li>Tap the <b>☰</b> button, top right. Then tap <b>Settings and activity</b>.</li>
+          <li>Tap <b>Centro gestione account</b> — <i>Accounts Centre</i>. It's the first thing on the list,
+            with the Meta logo beside it. <button type="button" class="step-img" data-go="0">see image 1</button></li>
+          <li>Tap <b>Le tue informazioni e autorizzazioni</b> — <i>Your information and permissions</i>.
+            <button type="button" class="step-img" data-go="1">see image 2</button></li>
+          <li>Tap <b>Esporta le tue informazioni</b> — <i>Export your information</i>.
+            <button type="button" class="step-img" data-go="2">see image 3</button></li>
+          <li>Tap <b>Crea esportazione</b> — <i>Create export</i>. It asks which account. Pick the one you
+            want to look at. <button type="button" class="step-img" data-go="3">see image 4</button></li>
+          <li>Now it asks <em>where</em> to send it. Tap <b>Esporta su un servizio esterno</b> —
+            <i>Export to a third-party service</i>. <button type="button" class="step-img" data-go="4">see image 5</button></li>
+          <li>Pick <b>Google Drive</b> from the list. <button type="button" class="step-img" data-go="5">see image 6</button></li>
+          <li>It asks how often. Tap <b>Weekly</b>. Then it asks for how long — pick <b>1 year</b> or more.
+            Tap <b>Collega</b> (<i>Link</i>), sign in to Google, and say yes when it asks for permission.
             <button type="button" class="step-img" data-go="6">see image 7</button></li>
-          <li>On the last screen, set all four:
-            <b>Personalizza informazioni</b> → everything selected ·
-            <b>Intervallo di date</b> → <i>Ultima settimana</i> ·
-            <b>Formato</b> → <i>HTML</i> ·
-            <b>Qualità dei contenuti multimediali</b> → <i>Qualità inferiore</i>.
-            Then <b>Avvia esportazione</b>. <button type="button" class="step-img" data-go="7">see image 8</button></li>
+          <li>One last screen, with four settings. Set all four, then tap <b>Avvia esportazione</b>
+            (<i>Start export</i>). <button type="button" class="step-img" data-go="7">see image 8</button>
+            <table class="mini">
+              <tr><th>Setting</th><th>Set it to</th></tr>
+              <tr><td>Personalizza informazioni</td><td>everything ticked</td></tr>
+              <tr><td>Intervallo di date</td><td><b>Ultima settimana</b> (last week)</td></tr>
+              <tr><td>Formato</td><td><b>HTML</b></td></tr>
+              <tr><td>Qualità dei contenuti multimediali</td><td><b>Qualità inferiore</b> (lower)</td></tr>
+            </table>
+          </li>
         </ol>
 
         <div class="shots" id="shots">
@@ -366,10 +384,15 @@ footer a { color: var(--ink-2); }
           <div class="shots-dots" id="shots-dots"></div>
         </div>
 
-        <div class="callout" style="margin-top:14px"><b>Why weekly, and why HTML.</b> Instagram only keeps
-          about a week of viewing history in any one export, so a weekly schedule straight into Drive is how
-          you build a real record over time instead of a handful of snapshots. JSON exports are skipped, and
-          the media is never needed — low quality keeps the files small.</div>
+        <div class="callout is-warn" style="margin-top:14px"><b>Two things people get wrong here.</b> Both
+          quietly break everything, and neither gives you an error.
+          <ul>
+            <li><b>Format must be HTML</b>, not JSON. A JSON export is skipped and nothing ever appears.</li>
+            <li><b>Weekly, not monthly.</b> Instagram only remembers about <em>seven days</em> of what you
+              looked at. A monthly export does not contain a month — it contains the last week, and you lose
+              the other three.</li>
+          </ul>
+          Media quality breaks nothing; it just makes the files huge for no reason. Leave it low.</div>
 
         <div class="callout">English and Italian exports both work. Other languages will parse
           partially — the dates and field labels are what have been checked so far.</div>
@@ -387,14 +410,21 @@ footer a { color: var(--ink-2); }
 
       <li>
         <h3>Click <b>Setup</b> once, in the sheet's own menu</h3>
-        <p>Your copy has an <b>Instagram Insights</b> menu in the menu bar, next to Help. Choose
-          <kbd>Instagram Insights</kbd> → <kbd>Setup (run once)</kbd>. That is the whole setup — you never
-          need to open the script editor.</p>
-        <p>Google will ask for permission to use your Drive, Sheets and triggers, and will warn you the app
-          is unverified. That warning is expected: it is <em>your</em> copy of the script, running as you,
-          and Google has not reviewed it because it was never submitted for review. Choose
-          <kbd>Advanced</kbd> → <kbd>Go to (project name)</kbd> to continue.</p>
-        <div class="callout">If the menu is not there yet, reload the tab — it is added when the sheet opens.</div>
+        <ol class="substeps">
+          <li><b>Reload the spreadsheet tab.</b> This matters — the menu only appears when the sheet opens.</li>
+          <li>Look at the menu bar. There is a new menu called <b>Instagram Insights</b>, just after "Help". Click it.</li>
+          <li>Click <b>Setup (run once)</b>.</li>
+          <li>Google asks for permission. Click through and pick your Google account.</li>
+          <li>You'll then see a screen saying <b>"Google hasn't verified this app"</b>. Click
+            <b>Advanced</b>, then <b>Go to (project name)</b>, then <b>Allow</b>.</li>
+        </ol>
+        <p>You never need to open the script editor. That's the whole setup.</p>
+        <div class="callout"><b>That warning screen is expected, and it is fine.</b> It is <em>your</em> copy
+          of the script, running as you, on your own data. Google hasn't checked it because nobody ever
+          submitted it to be checked — verification is for scripts that touch <em>other people's</em>
+          accounts, and this one never does.</div>
+        <div class="callout">If clicking <b>Setup</b> seems to do nothing after you allow access, click it
+          once more. The first click is sometimes used up by the permission screen.</div>
       </li>
 
       <li>
