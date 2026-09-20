@@ -17,13 +17,19 @@ Un Foglio Google che legge il tuo export mensile di dati Instagram da una cartel
 
 ## Ogni mese
 
-1. Su Instagram vai su **Centro gestione account → Le tue informazioni e le tue autorizzazioni → Scarica le tue informazioni**. Richiedi le tue informazioni di Instagram con:
+1. Su Instagram vai su **Centro gestione account → Le tue informazioni e autorizzazioni → Esporta le tue informazioni**, poi **Crea esportazione**. Richiedi le tue informazioni di Instagram con:
    - **Formato: HTML.** Gli export in JSON vengono ignorati.
    - **Intervallo di date:** l'ultimo mese.
    - **Qualità dei contenuti: bassa.** I media non servono.
    - L'export funziona sia in italiano sia in inglese: le date e le etichette dei campi sono riconosciute in entrambe le lingue.
 2. Quando arriva l'email di Meta, scarica lo `.zip` e mettilo nella cartella `Instagram Exports`. Va bene anche l'app Drive del telefono.
 3. Tutto qui. Lo script controlla la cartella ogni giorno verso le 08:00 e aggiorna tutto. Per farlo subito, usa **Instagram Insights → Processa i nuovi export ora**.
+
+**Meglio ancora: programmalo.** Instagram può esportare direttamente su Google Drive con una pianificazione
+ricorrente, ed è questo che costruisce davvero un archivio nel tempo: ogni export contiene solo circa una
+settimana di cronologia di visualizzazione. Nel flusso di esportazione scegli **Esporta su un servizio
+esterno → Google Drive → Weekly**, per almeno un anno. Il
+[sito del progetto](https://redhouselux.github.io/instagram-insights/it/) ha i passaggi con gli screenshot.
 
 ## Cosa c'è nel foglio
 
@@ -99,7 +105,7 @@ Note e repost **non hanno alcun timestamp**, e le tre schede dei "past Instagram
 | Unfollowed · Blocked | Non più nella tua lista di following · nella tua lista dei bloccati |
 
 **Scarica una volta la lista completa dei follower.** Gli export mensili includono tutti quelli che segui, ma solo i follower *nuovi* di quel mese, quindi follow reciproci e fan risultano inizialmente sottostimati.
-1. Su Instagram vai su **Centro gestione account → Le tue informazioni e le tue autorizzazioni → Scarica le tue informazioni** e scegli **Alcune delle tue informazioni**.
+1. Su Instagram vai su **Centro gestione account → Le tue informazioni e autorizzazioni → Esporta le tue informazioni** e scegli **Alcune delle tue informazioni**.
 2. Spunta solo **Follower e profili seguiti**.
 3. Scegli **Intervallo di date: Tutto** e **Formato: HTML**, poi metti lo `.zip` nella cartella.
 

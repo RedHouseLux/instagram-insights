@@ -17,13 +17,18 @@ A Google Sheet that reads your monthly Instagram data export from a Drive folder
 
 ## Every month
 
-1. In Instagram, go to **Accounts Center → Your information and permissions → Download your information**. Request your Instagram information with:
+1. In Instagram, go to **Accounts Centre → Your information and permissions → Export your information**, then **Create export**. Request your Instagram information with:
    - **Format: HTML.** JSON exports are skipped.
    - **Date range:** last month.
    - **Media quality:** low. Media isn't needed.
    - Keep Instagram in **English**; the dates are parsed in English.
 2. When Meta's email arrives, download the `.zip` and put it in the `Instagram Exports` folder. The Drive app on your phone works too.
 3. That's it. The script checks the folder every day around 08:00 and updates everything. To run it immediately, use **Instagram Insights → Process new exports now**.
+
+**Better: schedule it.** Instagram can export straight to Google Drive on a repeating schedule, which is what
+actually builds a record over time — each export only holds about a week of viewing history. In the export
+flow choose **Esporta su un servizio esterno → Google Drive → Weekly**, for at least a year. The
+[project site](https://redhouselux.github.io/instagram-insights/) has the step-by-step with screenshots.
 
 ## What's in the sheet
 
@@ -102,7 +107,7 @@ daily view window the way the rest of the dashboard does.
 | Unfollowed · Blocked | No longer in your following list · on your blocked list |
 
 **Get the full followers list once.** Monthly exports include everyone you follow, but only that month's *new* followers, so mutual follows and fans start out undercounted.
-1. In Instagram, go to **Accounts Center → Your information and permissions → Download your information** and choose **Some of your information**.
+1. In Instagram, go to **Accounts Centre → Your information and permissions → Export your information** and choose **Some of your information**.
 2. Tick only **Followers and following**.
 3. Pick **Date range: All time** and **Format: HTML**, then drop the `.zip` in the folder.
 

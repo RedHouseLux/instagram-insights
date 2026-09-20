@@ -158,6 +158,65 @@ footer a { color: var(--ink-2); }
 .lang a { color: var(--muted); }
 .lang a:hover { color: var(--ink); background: var(--panel); }
 .lang b { color: #fff; background: var(--accent); font-weight: 600; }
+
+.substeps { margin: 10px 0 0; padding-left: 20px; font-size: 14.5px; color: var(--ink-2); }
+.substeps li { margin-bottom: 7px; }
+.substeps b { color: var(--ink); }
+
+/* ── Step slider ─────────────────────────────────────────────────────────────────────────────────────
+   Phone screenshots are tall and narrow, so the frame is capped by HEIGHT rather than width: sized by
+   width it would be a column of 800px-tall images and the steps beside it would scroll away. */
+.shots { margin: 22px 0 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.shots-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.shots-cap { font-size: 14px; font-weight: 600; flex: 1 1 200px; min-width: 0; }
+.shots-cap span { display: block; font-family: var(--mono); font-size: 11px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.shots-nav { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.shots-nav button { padding: 6px 12px; font-size: 15px; line-height: 1; }
+.shots-n { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 42px; text-align: center; }
+/* Capped to roughly the screenshots' own aspect: in a full-width frame a 410px-wide phone shot floats in
+   a field of empty background, which reads as a broken image rather than a deliberate one. */
+.shots-frame { position: relative; overflow: hidden; border-radius: 10px; max-width: 430px; margin: 0 auto;
+  background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.shots-track { display: flex; transition: transform .28s ease; }
+.shots-slide { flex: 0 0 100%; display: flex; justify-content: center; align-items: flex-start; padding: 10px 0; }
+.shots-slide img { height: 440px; width: auto; max-width: 100%; object-fit: contain; border-radius: 8px;
+  border: 1px solid var(--line); background: #000; }
+.shots-dots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+.shots-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 0;
+  background: color-mix(in srgb, var(--ink) 22%, transparent); cursor: pointer; }
+.shots-dots button[aria-current="true"] { background: var(--accent); }
+.step-img { font-family: var(--mono); font-size: 11.5px; background: none; border: 0; padding: 0;
+  color: var(--seen); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .shots-track { transition: none; } }
+@media (max-width: 560px) { .shots-slide img { height: 340px; } }
+
+/* ── The card that carries the argument ──────────────────────────────────────────────────────────────
+   One of the four "why" cards is the one that actually answers "why should I bother", so it stops
+   looking like a peer of the other three. */
+.why-card.is-key { border: 1px solid var(--accent); border-left-width: 4px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel)); grid-column: 1 / -1; }
+.why-card.is-key b { font-size: 21px; color: var(--accent); }
+.why-card.is-key p { font-size: 15.5px; color: var(--ink); }
+
+/* ── Sticky donation ─────────────────────────────────────────────────────────────────────────────────
+   Bottom-right on desktop; a full-width bar on phones, where a floating pill would sit on top of the
+   step slider's own controls. Both clear the safe-area inset. */
+.give {
+  position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  display: inline-flex; align-items: center; gap: 9px; text-decoration: none;
+  background: var(--accent); color: #fff; font-weight: 600; font-size: 14.5px;
+  border-radius: 99px; padding: 12px 20px; box-shadow: 0 8px 26px rgba(0, 0, 0, 0.28);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.give:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.34); }
+.give:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+@media (max-width: 620px) {
+  .give { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); justify-content: center; }
+  /* The bar would otherwise cover the last line of the page. */
+  body { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
+}
+.give-claim { max-width: 62ch; margin: 14px auto 0; font-size: 14.5px; color: var(--ink-2); }
 </style>
 </head>
 <body>
@@ -217,7 +276,7 @@ footer a { color: var(--ink-2); }
         <p>La deriva notturna, un feed che si restringe, un tono emotivo che scivola da una parte.
           Sono cose misurabili, e a ciò che è misurabile si può rispondere.</p>
       </div>
-      <div class="why-card">
+      <div class="why-card is-key">
         <b>Sono dati tuoi</b>
         <p>Meta è tenuta a consegnarteli se glieli chiedi. Quasi nessuno lo fa, perché l'export è un mucchio
           di HTML illeggibile. Questo lo rende leggibile — e lo tiene tuo.</p>
@@ -253,14 +312,56 @@ footer a { color: var(--ink-2); }
     <ol class="steps">
       <li>
         <h3>Chiedi i tuoi dati a Instagram</h3>
-        <p>Fallo per primo — Meta può metterci da qualche ora a un giorno per mandarteli.</p>
-        <p>Su Instagram: <kbd>Centro gestione account</kbd> → <kbd>Le tue informazioni e le tue autorizzazioni</kbd> →
-          <kbd>Scarica le tue informazioni</kbd>. Poi:</p>
-        <ul>
-          <li><b>Formato: HTML.</b> Gli export in JSON vengono ignorati.</li>
-          <li><b>Intervallo di date:</b> l'ultimo mese (o tutto, se è il tuo primo export).</li>
-          <li><b>Qualità dei contenuti: bassa.</b> Le foto non servono e rendono solo enorme il file.</li>
-        </ul>
+        <p>Fallo per primo — Meta può metterci da qualche ora a un giorno per mandarti il primo.</p>
+        <ol class="substeps">
+          <li>Apri Instagram e tocca il <b>menu hamburger</b> (☰) in alto a destra, poi <b>Impostazioni e attività</b>.</li>
+          <li>Tocca <b>Centro gestione account</b>. <button type="button" class="step-img" data-go="0">vedi immagine 1</button></li>
+          <li>Tocca <b>Le tue informazioni e autorizzazioni</b>. <button type="button" class="step-img" data-go="1">vedi immagine 2</button></li>
+          <li>Tocca <b>Esporta le tue informazioni</b>. <button type="button" class="step-img" data-go="2">vedi immagine 3</button></li>
+          <li>Tocca <b>Crea esportazione</b>, poi scegli il profilo di cui vuoi esportare i dati. <button type="button" class="step-img" data-go="3">vedi immagine 4</button></li>
+          <li>Scegli <b>Esporta su un servizio esterno</b>. <button type="button" class="step-img" data-go="4">vedi immagine 5</button></li>
+          <li>Scegli <b>Google Drive</b>. <button type="button" class="step-img" data-go="5">vedi immagine 6</button></li>
+          <li>Seleziona <b>Weekly</b> e per quanto tempo deve continuare — <b>almeno 1 anno</b>. Poi tocca
+            <b>Collega</b> e concedi l’accesso al tuo Google Drive. Potrebbe chiederti la password del tuo
+            account Google. <button type="button" class="step-img" data-go="6">vedi immagine 7</button></li>
+          <li>Nell’ultima schermata imposta tutte e quattro le voci:
+            <b>Personalizza informazioni</b> → tutto selezionato ·
+            <b>Intervallo di date</b> → <i>Ultima settimana</i> ·
+            <b>Formato</b> → <i>HTML</i> ·
+            <b>Qualità dei contenuti multimediali</b> → <i>Qualità inferiore</i>.
+            Poi <b>Avvia esportazione</b>. <button type="button" class="step-img" data-go="7">vedi immagine 8</button></li>
+        </ol>
+
+        <div class="shots" id="shots">
+          <div class="shots-head">
+            <div class="shots-cap"><span id="shots-step">Passo 2</span><b id="shots-title">Centro gestione account</b></div>
+            <div class="shots-nav">
+              <button type="button" class="btn" id="shots-prev" aria-label="Immagine precedente">‹</button>
+              <span class="shots-n" id="shots-n">1 / 8</span>
+              <button type="button" class="btn" id="shots-next" aria-label="Immagine successiva">›</button>
+            </div>
+          </div>
+          <div class="shots-frame">
+            <div class="shots-track" id="shots-track">
+              <div class="shots-slide"><img src="../img/step1.jpg" alt="Impostazioni di Instagram, con Centro gestione account cerchiato" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="../img/step2.jpg" alt="Centro gestione account, con Le tue informazioni e autorizzazioni cerchiato" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="../img/step3.jpg" alt="Le tue informazioni e autorizzazioni, con Esporta le tue informazioni cerchiato" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="../img/step4.jpg" alt="Scelta del profilo da esportare" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="../img/step5.jpg" alt="Scelta della destinazione, con Esporta su un servizio esterno cerchiato" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="../img/step6.jpg" alt="Elenco delle destinazioni con Google Drive selezionato" loading="lazy" width="380" height="800"></div>
+              <div class="shots-slide"><img src="../img/step7.jpg" alt="Frequenza impostata su Weekly e durata su 1 anno" loading="lazy" width="380" height="800"></div>
+              <div class="shots-slide"><img src="../img/step8.jpg" alt="Impostazioni finali: tutte le informazioni, ultima settimana, HTML, qualità inferiore" loading="lazy" width="380" height="800"></div>
+            </div>
+          </div>
+          <div class="shots-dots" id="shots-dots"></div>
+        </div>
+
+        <div class="callout" style="margin-top:14px"><b>Perché settimanale, e perché HTML.</b> Instagram
+          conserva solo circa una settimana di cronologia di visualizzazione in ogni singolo export, quindi
+          una pianificazione settimanale direttamente su Drive è il modo di costruire un archivio vero nel
+          tempo invece di qualche istantanea sparsa. Gli export in JSON vengono ignorati, e i contenuti
+          multimediali non servono mai: la qualità inferiore tiene i file piccoli.</div>
+
         <div class="callout">Gli export in italiano e in inglese funzionano entrambi. Altre lingue verranno
           lette solo in parte — date ed etichette dei campi sono le cose verificate finora.</div>
       </li>
@@ -338,6 +439,9 @@ footer a { color: var(--ink-2); }
       <p style="margin-top:20px">
         <a class="btn btn-primary btn-lg" href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">☕ Offrimi un caffè</a>
       </p>
+      <p class="give-claim">Questo progetto è costruito in modo indipendente, senza pubblicità e senza
+        vendere dati. Se ti va di sostenere un modo più calmo e più comunitario di fare tecnologia per la
+        salute mentale, puoi contribuire con una piccola donazione.</p>
     </div>
   </section>
 
@@ -357,8 +461,12 @@ footer a { color: var(--ink-2); }
       <a class="btn" id="sh-fb" href="#" target="_blank" rel="noopener">Facebook</a>
       <a class="btn" id="sh-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
       <a class="btn" id="sh-tg" href="#" target="_blank" rel="noopener">Telegram</a>
+      <button class="btn" id="sh-ig" type="button">Instagram</button>
+      <button class="btn" id="sh-tt" type="button">TikTok</button>
       <button class="btn" id="sh-copy" type="button">Copia il link</button>
     </div>
+    <p class="mono" style="margin-top:10px">Instagram e TikTok non permettono di precompilare un link, quindi
+      quei due copiano il link e aprono l’app — incollalo nella tua storia o in bio.</p>
   </section>
 
   <section class="thanks">
@@ -383,6 +491,7 @@ footer a { color: var(--ink-2); }
   </footer>
 </div>
 
+<a class="give" href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">☕ Sostieni il progetto</a>
 <div class="toast" id="toast" hidden></div>
 
 
@@ -448,6 +557,100 @@ footer a { color: var(--ink-2); }
       say(url);
     }
   });
+
+  // ── Step slider ─────────────────────────────────────────────────────────────
+  // Transform on a flex track rather than one-visible-slide: the images stay in the DOM and in tab order,
+  // so a screen reader and a printout both still get all eight, and there is nothing to re-render.
+  (function () {
+    var track = document.getElementById('shots-track');
+    if (!track) return;
+    var slides = track.children;
+    var total = slides.length;
+    var caps = [
+    ['Passo 2', "Centro gestione account"],
+    ['Passo 3', "Le tue informazioni e autorizzazioni"],
+    ['Passo 4', "Esporta le tue informazioni"],
+    ['Passo 5', "Scegli il profilo da esportare"],
+    ['Passo 6', "Esporta su un servizio esterno"],
+    ['Passo 7', "Google Drive"],
+    ['Passo 8', "Weekly, per almeno 1 anno"],
+    ['Passo 9', "Tutte le informazioni · ultima settimana · HTML · qualità inferiore"]
+    ];
+    var at = 0;
+    var dots = document.getElementById('shots-dots');
+    var elStep = document.getElementById('shots-step');
+    var elTitle = document.getElementById('shots-title');
+    var elN = document.getElementById('shots-n');
+
+    for (var i = 0; i < total; i++) {
+      (function (i) {
+        var d = document.createElement('button');
+        d.type = 'button';
+        d.setAttribute('aria-label', 'Immagine ' + (i + 1));
+        d.addEventListener('click', function () { go(i); });
+        dots.appendChild(d);
+      })(i);
+    }
+
+    function go(i) {
+      at = (i + total) % total;
+      track.style.transform = 'translateX(' + (-at * 100) + '%)';
+      elStep.textContent = caps[at][0];
+      elTitle.textContent = caps[at][1];
+      elN.textContent = (at + 1) + ' / ' + total;
+      for (var k = 0; k < dots.children.length; k++) {
+        dots.children[k].setAttribute('aria-current', k === at ? 'true' : 'false');
+      }
+    }
+    document.getElementById('shots-prev').addEventListener('click', function () { go(at - 1); });
+    document.getElementById('shots-next').addEventListener('click', function () { go(at + 1); });
+
+    // The "see image N" buttons inside the written steps drive the same slider, so the two never disagree.
+    Array.prototype.forEach.call(document.querySelectorAll('.step-img'), function (b) {
+      b.addEventListener('click', function () {
+        go(+b.getAttribute('data-go'));
+        document.getElementById('shots').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    });
+
+    // Arrow keys work once the slider itself has been used, not globally — hijacking arrow keys for a
+    // reader who is simply scrolling the page would be worse than not having the shortcut.
+    document.getElementById('shots').addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { go(at - 1); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { go(at + 1); e.preventDefault(); }
+    });
+
+    // Swipe, for the phone case this whole section is about.
+    var x0 = null;
+    track.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend', function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 40) go(dx < 0 ? at + 1 : at - 1);
+      x0 = null;
+    }, { passive: true });
+
+    go(0);
+  })();
+
+  // ── Instagram and TikTok ────────────────────────────────────────────────────
+  // Neither has a web share URL that can carry a link: Instagram takes no prefilled text at all, and
+  // TikTok only accepts uploads. So these copy the link and say where to paste it, which is what actually
+  // works — rather than a button that opens an app and loses the link on the way.
+  (function () {
+    var pair = [['sh-ig', 'https://www.instagram.com/'], ['sh-tt', 'https://www.tiktok.com/']];
+    pair.forEach(function (row) {
+      var b = document.getElementById(row[0]);
+      if (!b) return;
+      b.addEventListener('click', function (e) {
+        e.preventDefault();
+        var done = function () { say('Link copiato — ora incollalo nella storia o in bio'); window.open(row[1], '_blank', 'noopener'); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done, done);
+        } else { done(); }
+      });
+    });
+  })();
 })();
 </script>
 </body>

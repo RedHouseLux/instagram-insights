@@ -157,6 +157,65 @@ footer a { color: var(--ink-2); }
 .lang a { color: var(--muted); }
 .lang a:hover { color: var(--ink); background: var(--panel); }
 .lang b { color: #fff; background: var(--accent); font-weight: 600; }
+
+.substeps { margin: 10px 0 0; padding-left: 20px; font-size: 14.5px; color: var(--ink-2); }
+.substeps li { margin-bottom: 7px; }
+.substeps b { color: var(--ink); }
+
+/* ── Step slider ─────────────────────────────────────────────────────────────────────────────────────
+   Phone screenshots are tall and narrow, so the frame is capped by HEIGHT rather than width: sized by
+   width it would be a column of 800px-tall images and the steps beside it would scroll away. */
+.shots { margin: 22px 0 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.shots-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.shots-cap { font-size: 14px; font-weight: 600; flex: 1 1 200px; min-width: 0; }
+.shots-cap span { display: block; font-family: var(--mono); font-size: 11px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.shots-nav { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.shots-nav button { padding: 6px 12px; font-size: 15px; line-height: 1; }
+.shots-n { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 42px; text-align: center; }
+/* Capped to roughly the screenshots' own aspect: in a full-width frame a 410px-wide phone shot floats in
+   a field of empty background, which reads as a broken image rather than a deliberate one. */
+.shots-frame { position: relative; overflow: hidden; border-radius: 10px; max-width: 430px; margin: 0 auto;
+  background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.shots-track { display: flex; transition: transform .28s ease; }
+.shots-slide { flex: 0 0 100%; display: flex; justify-content: center; align-items: flex-start; padding: 10px 0; }
+.shots-slide img { height: 440px; width: auto; max-width: 100%; object-fit: contain; border-radius: 8px;
+  border: 1px solid var(--line); background: #000; }
+.shots-dots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+.shots-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 0;
+  background: color-mix(in srgb, var(--ink) 22%, transparent); cursor: pointer; }
+.shots-dots button[aria-current="true"] { background: var(--accent); }
+.step-img { font-family: var(--mono); font-size: 11.5px; background: none; border: 0; padding: 0;
+  color: var(--seen); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .shots-track { transition: none; } }
+@media (max-width: 560px) { .shots-slide img { height: 340px; } }
+
+/* ── The card that carries the argument ──────────────────────────────────────────────────────────────
+   One of the four "why" cards is the one that actually answers "why should I bother", so it stops
+   looking like a peer of the other three. */
+.why-card.is-key { border: 1px solid var(--accent); border-left-width: 4px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel)); grid-column: 1 / -1; }
+.why-card.is-key b { font-size: 21px; color: var(--accent); }
+.why-card.is-key p { font-size: 15.5px; color: var(--ink); }
+
+/* ── Sticky donation ─────────────────────────────────────────────────────────────────────────────────
+   Bottom-right on desktop; a full-width bar on phones, where a floating pill would sit on top of the
+   step slider's own controls. Both clear the safe-area inset. */
+.give {
+  position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  display: inline-flex; align-items: center; gap: 9px; text-decoration: none;
+  background: var(--accent); color: #fff; font-weight: 600; font-size: 14.5px;
+  border-radius: 99px; padding: 12px 20px; box-shadow: 0 8px 26px rgba(0, 0, 0, 0.28);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.give:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.34); }
+.give:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+@media (max-width: 620px) {
+  .give { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); justify-content: center; }
+  /* The bar would otherwise cover the last line of the page. */
+  body { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
+}
+.give-claim { max-width: 62ch; margin: 14px auto 0; font-size: 14.5px; color: var(--ink-2); }
 </style>
 </head>
 <body>
@@ -215,7 +274,7 @@ footer a { color: var(--ink-2); }
         <p>Late-night drift, a narrowing feed, an emotional tone creeping one way. These are measurable, and
           measurable things can be answered.</p>
       </div>
-      <div class="why-card">
+      <div class="why-card is-key">
         <b>It is your data</b>
         <p>Meta must hand it over when you ask. Almost nobody does, because the export is a pile of
           unreadable HTML. This makes it readable — and keeps it yours.</p>
@@ -252,14 +311,58 @@ footer a { color: var(--ink-2); }
     <ol class="steps">
       <li>
         <h3>Ask Instagram for your data</h3>
-        <p>Do this first — Meta can take a few hours to a day to send it.</p>
-        <p>In Instagram: <kbd>Accounts Centre</kbd> → <kbd>Your information and permissions</kbd> →
-          <kbd>Download your information</kbd>. Then:</p>
-        <ul>
-          <li><b>Format: HTML.</b> JSON exports are skipped.</li>
-          <li><b>Date range:</b> last month (or all time for your first one).</li>
-          <li><b>Media quality: low.</b> The photos are not needed and only make the file huge.</li>
-        </ul>
+        <p>Do this first — Meta can take a few hours to a day to send the first one.</p>
+        <p>The menu names below are the Italian ones, because that is what the screenshots show. If your
+          Instagram is in English the path is identical: <i>Accounts Centre → Your information and
+          permissions → Export your information</i>.</p>
+        <ol class="substeps">
+          <li>Open Instagram and tap the <b>hamburger menu</b> (☰) at the top right, then <b>Impostazioni e attività</b>.</li>
+          <li>Tap <b>Centro gestione account</b>. <button type="button" class="step-img" data-go="0">see image 1</button></li>
+          <li>Tap <b>Le tue informazioni e autorizzazioni</b>. <button type="button" class="step-img" data-go="1">see image 2</button></li>
+          <li>Tap <b>Esporta le tue informazioni</b>. <button type="button" class="step-img" data-go="2">see image 3</button></li>
+          <li>Tap <b>Crea esportazione</b>, then choose the profile you want to export. <button type="button" class="step-img" data-go="3">see image 4</button></li>
+          <li>Choose <b>Esporta su un servizio esterno</b>. <button type="button" class="step-img" data-go="4">see image 5</button></li>
+          <li>Choose <b>Google Drive</b>. <button type="button" class="step-img" data-go="5">see image 6</button></li>
+          <li>Pick <b>Weekly</b>, and how long it should keep running — <b>at least 1 year</b>. Then tap
+            <b>Collega</b> and grant access to your Google Drive. It may ask for your Google password.
+            <button type="button" class="step-img" data-go="6">see image 7</button></li>
+          <li>On the last screen, set all four:
+            <b>Personalizza informazioni</b> → everything selected ·
+            <b>Intervallo di date</b> → <i>Ultima settimana</i> ·
+            <b>Formato</b> → <i>HTML</i> ·
+            <b>Qualità dei contenuti multimediali</b> → <i>Qualità inferiore</i>.
+            Then <b>Avvia esportazione</b>. <button type="button" class="step-img" data-go="7">see image 8</button></li>
+        </ol>
+
+        <div class="shots" id="shots">
+          <div class="shots-head">
+            <div class="shots-cap"><span id="shots-step">Step 2</span><b id="shots-title">Centro gestione account</b></div>
+            <div class="shots-nav">
+              <button type="button" class="btn" id="shots-prev" aria-label="Previous image">‹</button>
+              <span class="shots-n" id="shots-n">1 / 8</span>
+              <button type="button" class="btn" id="shots-next" aria-label="Next image">›</button>
+            </div>
+          </div>
+          <div class="shots-frame">
+            <div class="shots-track" id="shots-track">
+              <div class="shots-slide"><img src="img/step1.jpg" alt="Instagram settings, with Centro gestione account circled" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="img/step2.jpg" alt="Accounts Centre, with Le tue informazioni e autorizzazioni circled" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="img/step3.jpg" alt="Your information and permissions, with Esporta le tue informazioni circled" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="img/step4.jpg" alt="Choose a profile to export" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="img/step5.jpg" alt="Choose where to export, with Esporta su un servizio esterno circled" loading="lazy" width="410" height="800"></div>
+              <div class="shots-slide"><img src="img/step6.jpg" alt="Destination list with Google Drive selected" loading="lazy" width="380" height="800"></div>
+              <div class="shots-slide"><img src="img/step7.jpg" alt="Frequency set to Weekly and duration to 1 year" loading="lazy" width="380" height="800"></div>
+              <div class="shots-slide"><img src="img/step8.jpg" alt="Final export settings: all information, last week, HTML, lower media quality" loading="lazy" width="380" height="800"></div>
+            </div>
+          </div>
+          <div class="shots-dots" id="shots-dots"></div>
+        </div>
+
+        <div class="callout" style="margin-top:14px"><b>Why weekly, and why HTML.</b> Instagram only keeps
+          about a week of viewing history in any one export, so a weekly schedule straight into Drive is how
+          you build a real record over time instead of a handful of snapshots. JSON exports are skipped, and
+          the media is never needed — low quality keeps the files small.</div>
+
         <div class="callout">English and Italian exports both work. Other languages will parse
           partially — the dates and field labels are what have been checked so far.</div>
       </li>
@@ -339,6 +442,9 @@ footer a { color: var(--ink-2); }
       <p style="margin-top:20px">
         <a class="btn btn-primary btn-lg" href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">☕ Buy me a coffee</a>
       </p>
+      <p class="give-claim">This is being built independently, with no ads and no data selling. If you’d
+        like to support a calmer, more community-based way to do mental health tech, you can chip in with a
+        small donation.</p>
     </div>
   </section>
 
@@ -359,8 +465,12 @@ footer a { color: var(--ink-2); }
       <a class="btn" id="sh-fb" href="#" target="_blank" rel="noopener">Facebook</a>
       <a class="btn" id="sh-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
       <a class="btn" id="sh-tg" href="#" target="_blank" rel="noopener">Telegram</a>
+      <button class="btn" id="sh-ig" type="button">Instagram</button>
+      <button class="btn" id="sh-tt" type="button">TikTok</button>
       <button class="btn" id="sh-copy" type="button">Copy link</button>
     </div>
+    <p class="mono" style="margin-top:10px">Instagram and TikTok allow no prefilled link, so those two copy
+      the link and open the app — paste it into your story or bio.</p>
   </section>
 
   <!-- ── Thanks ──────────────────────────────────────────────────────── -->
@@ -386,6 +496,7 @@ footer a { color: var(--ink-2); }
   </footer>
 </div>
 
+<a class="give" href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">☕ Support the project</a>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -450,6 +561,100 @@ footer a { color: var(--ink-2); }
       say(url);
     }
   });
+
+  // ── Step slider ─────────────────────────────────────────────────────────────
+  // Transform on a flex track rather than one-visible-slide: the images stay in the DOM and in tab order,
+  // so a screen reader and a printout both still get all eight, and there is nothing to re-render.
+  (function () {
+    var track = document.getElementById('shots-track');
+    if (!track) return;
+    var slides = track.children;
+    var total = slides.length;
+    var caps = [
+    ['Step 2', "Centro gestione account"],
+    ['Step 3', "Le tue informazioni e autorizzazioni"],
+    ['Step 4', "Esporta le tue informazioni"],
+    ['Step 5', "Choose the profile to export"],
+    ['Step 6', "Esporta su un servizio esterno"],
+    ['Step 7', "Google Drive"],
+    ['Step 8', "Weekly, for at least 1 year"],
+    ['Step 9', "All information · last week · HTML · lower quality"]
+    ];
+    var at = 0;
+    var dots = document.getElementById('shots-dots');
+    var elStep = document.getElementById('shots-step');
+    var elTitle = document.getElementById('shots-title');
+    var elN = document.getElementById('shots-n');
+
+    for (var i = 0; i < total; i++) {
+      (function (i) {
+        var d = document.createElement('button');
+        d.type = 'button';
+        d.setAttribute('aria-label', 'Image ' + (i + 1));
+        d.addEventListener('click', function () { go(i); });
+        dots.appendChild(d);
+      })(i);
+    }
+
+    function go(i) {
+      at = (i + total) % total;
+      track.style.transform = 'translateX(' + (-at * 100) + '%)';
+      elStep.textContent = caps[at][0];
+      elTitle.textContent = caps[at][1];
+      elN.textContent = (at + 1) + ' / ' + total;
+      for (var k = 0; k < dots.children.length; k++) {
+        dots.children[k].setAttribute('aria-current', k === at ? 'true' : 'false');
+      }
+    }
+    document.getElementById('shots-prev').addEventListener('click', function () { go(at - 1); });
+    document.getElementById('shots-next').addEventListener('click', function () { go(at + 1); });
+
+    // The "see image N" buttons inside the written steps drive the same slider, so the two never disagree.
+    Array.prototype.forEach.call(document.querySelectorAll('.step-img'), function (b) {
+      b.addEventListener('click', function () {
+        go(+b.getAttribute('data-go'));
+        document.getElementById('shots').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    });
+
+    // Arrow keys work once the slider itself has been used, not globally — hijacking arrow keys for a
+    // reader who is simply scrolling the page would be worse than not having the shortcut.
+    document.getElementById('shots').addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { go(at - 1); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { go(at + 1); e.preventDefault(); }
+    });
+
+    // Swipe, for the phone case this whole section is about.
+    var x0 = null;
+    track.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend', function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 40) go(dx < 0 ? at + 1 : at - 1);
+      x0 = null;
+    }, { passive: true });
+
+    go(0);
+  })();
+
+  // ── Instagram and TikTok ────────────────────────────────────────────────────
+  // Neither has a web share URL that can carry a link: Instagram takes no prefilled text at all, and
+  // TikTok only accepts uploads. So these copy the link and say where to paste it, which is what actually
+  // works — rather than a button that opens an app and loses the link on the way.
+  (function () {
+    var pair = [['sh-ig', 'https://www.instagram.com/'], ['sh-tt', 'https://www.tiktok.com/']];
+    pair.forEach(function (row) {
+      var b = document.getElementById(row[0]);
+      if (!b) return;
+      b.addEventListener('click', function (e) {
+        e.preventDefault();
+        var done = function () { say('Link copied — now paste it in your story or bio'); window.open(row[1], '_blank', 'noopener'); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done, done);
+        } else { done(); }
+      });
+    });
+  })();
 })();
 </script>
 </body>
