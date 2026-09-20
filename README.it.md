@@ -67,7 +67,7 @@ funzionano in parte: i numeri saranno giusti, ma alcune date ed etichette potreb
 3. Dentro c'è già un piccolo codice di esempio (`function myFunction() { }`). Selezionalo tutto e cancellalo.
 4. Apri [Code.gs](Code.gs), copia **tutto** quello che c'è dentro e incollalo in quell'editor vuoto. Premi
    **⌘S** (o **Ctrl+S**) per salvare.
-5. Ora aggiungi un secondo file. A sinistra, accanto a "File", c'è un **+**: cliccalo e scegli **HTML**.
+5. Sempre dentro App Script aggiungi un secondo file. A sinistra, accanto a "File", c'è un **+**: cliccalo e scegli **HTML**.
    Chiamalo esattamente `NetworkView` (l'estensione `.html` la mette Apps Script). Cancella quello che c'è
    dentro, incolla tutto [NetworkView.html](NetworkView.html) e salva.
 6. Aggiungi un terzo file allo stesso modo, ma stavolta scegli **Script**. Chiamalo `Dashboard`. Incolla
