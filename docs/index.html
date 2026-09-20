@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Instagram Insights — see your own digital footprint</title>
+<meta name="description" content="A dashboard that reads your own Instagram data export and shows you your themes, rhythm, attention and risk signals. Runs entirely inside your own Google account. Free, open, work in progress.">
+<meta property="og:title" content="Instagram Insights — see your own digital footprint">
+<meta property="og:description" content="Read your own Instagram export inside your own Google account. Nothing is uploaded, nothing is sent to an AI. Free and open.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://redhouselux.github.io/instagram-insights/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap">
+<style>
+/* The dashboard's own tokens, so the landing page and the thing it introduces look like one project. */
+:root {
+  --ground: #f6f6f4; --panel: #ffffff; --ink: #14161a; --ink-2: #4c5158; --muted: #85898f; --line: #e3e3de;
+  --seen: #2a78d6; --accent: #eb6834; --better: #006300;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #121317; --panel: #1a1c21; --ink: #f0f1f4; --ink-2: #b6bac1; --muted: #82868d; --line: #2b2e34;
+    --seen: #4f95e0; --accent: #dc6230; --better: #0ca30c;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #121317; --panel: #1a1c21; --ink: #f0f1f4; --ink-2: #b6bac1; --muted: #82868d; --line: #2b2e34;
+  --seen: #4f95e0; --accent: #dc6230; --better: #0ca30c;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.6;
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+}
+img { max-width: 100%; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--seen); }
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 0; flex-wrap: wrap; }
+.brand { font-family: var(--cond); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+.brand span { color: var(--accent); }
+.bar-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { font: inherit; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: border-color .12s ease; }
+.btn:hover { border-color: var(--seen); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn-primary:hover { border-color: var(--accent); filter: brightness(1.06); }
+.btn-lg { font-size: 16px; padding: 13px 22px; }
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero { padding: 40px 0 30px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 14px; }
+h1 { font-family: var(--cond); font-weight: 700; font-size: clamp(34px, 7vw, 54px); line-height: 1.05;
+  letter-spacing: -0.02em; margin: 0 0 18px; }
+.lede { font-size: clamp(17px, 2.4vw, 20px); color: var(--ink-2); max-width: 60ch; margin: 0 0 12px; }
+.hero-cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; align-items: center; }
+.hero-note { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 14px; }
+
+/* A claim worth putting in a box, because it is the one that decides whether anyone should trust this. */
+.promise { border: 1px solid var(--line); border-left: 4px solid var(--better); background: var(--panel);
+  border-radius: 12px; padding: 18px 20px; margin: 30px 0; }
+.promise b { display: block; font-family: var(--cond); font-size: 19px; margin-bottom: 6px; }
+.promise p { margin: 0; color: var(--ink-2); font-size: 15px; }
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+section { padding: 34px 0; border-top: 1px solid var(--line); }
+section:first-of-type { border-top: 0; }
+h2 { font-family: var(--cond); font-weight: 700; font-size: clamp(24px, 4vw, 32px); letter-spacing: -0.01em;
+  margin: 0 0 8px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.sec-n { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.06em; }
+h3 { font-family: var(--cond); font-weight: 700; font-size: 19px; margin: 0 0 6px; }
+p { margin: 0 0 14px; }
+.sub { color: var(--ink-2); max-width: 64ch; }
+
+/* ── Why ─────────────────────────────────────────────────────────────────── */
+.why { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 22px; }
+.why-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.why-card b { font-family: var(--cond); font-size: 18px; display: block; margin-bottom: 6px; }
+.why-card p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+
+/* ── Steps ───────────────────────────────────────────────────────────────── */
+.steps { list-style: none; counter-reset: step; padding: 0; margin: 24px 0 0; }
+.steps > li { counter-increment: step; position: relative; padding: 0 0 26px 54px; }
+.steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: 0;
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: #fff; font-family: var(--mono); font-weight: 600; font-size: 14px;
+}
+/* The rail that makes a numbered list read as a sequence rather than five separate facts. */
+.steps > li:not(:last-child)::after {
+  content: ""; position: absolute; left: 16.5px; top: 40px; bottom: 6px; width: 1px; background: var(--line);
+}
+.steps h3 { margin-bottom: 4px; }
+.steps p { font-size: 15px; color: var(--ink-2); margin-bottom: 8px; }
+.steps ul { font-size: 14.5px; color: var(--ink-2); padding-left: 18px; margin: 8px 0; }
+.steps li { margin-bottom: 4px; }
+kbd { font-family: var(--mono); font-size: 12.5px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 5px; padding: 2px 6px; white-space: nowrap; }
+.callout { font-size: 14px; color: var(--ink-2); background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid var(--seen); border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+
+/* ── What you get ────────────────────────────────────────────────────────── */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.tile b { font-family: var(--cond); font-size: 17px; display: block; margin-bottom: 4px; }
+.tile p { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+/* ── Roadmap ─────────────────────────────────────────────────────────────── */
+.wip { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 99px; padding: 4px 12px; margin-bottom: 14px; }
+.road { list-style: none; padding: 0; margin: 20px 0 0; }
+.road li { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.road li:last-child { border-bottom: 0; }
+.road .tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 3px 9px; flex-shrink: 0; min-width: 88px; text-align: center; }
+.road .tag.now { color: var(--better); border-color: color-mix(in srgb, var(--better) 45%, var(--line)); }
+.road .tag.next { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.road div { font-size: 15px; }
+.road div b { display: block; font-weight: 600; }
+.road div span { color: var(--ink-2); font-size: 14px; }
+
+/* ── Support / share ─────────────────────────────────────────────────────── */
+.support { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 26px; text-align: center; }
+.support h2 { justify-content: center; }
+.share { display: flex; gap: 9px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+.thanks { text-align: center; padding: 46px 0; }
+.thanks h2 { justify-content: center; font-size: clamp(26px, 5vw, 38px); }
+.thanks p { max-width: 54ch; margin-left: auto; margin-right: auto; color: var(--ink-2); }
+footer { border-top: 1px solid var(--line); padding: 26px 0 40px; font-size: 13.5px; color: var(--muted); }
+footer a { color: var(--ink-2); }
+.foot-row { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 20;
+  background: var(--ink); color: var(--ground); padding: 11px 20px; border-radius: 10px; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="brand">Instagram <span>Insights</span></div>
+    <nav class="bar-links">
+      <a class="btn" href="#how">How it works</a>
+      <a class="btn" href="#start">Get started</a>
+      <button class="btn" id="theme" type="button" aria-label="Switch light or dark theme">◐</button>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <span class="eyebrow">A Blockcert project · free · open · work in progress</span>
+    <h1>You have a digital footprint. You have never actually seen it.</h1>
+    <p class="lede">Instagram knows what it showed you, when, how often, and what you did about it.
+      It just never shows you. This turns your own data export into a dashboard you can read — themes,
+      rhythm, attention, the accounts you keep watching without ever admitting it, and where the friction is.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="#start">Set up your own copy</a>
+      <a class="btn btn-lg" href="https://github.com/RedHouseLux/instagram-insights" target="_blank" rel="noopener">Read the code</a>
+    </div>
+    <p class="hero-note">Takes about 5 minutes. Needs a Google account and an Instagram data export.</p>
+  </div>
+
+  <div class="promise">
+    <b>Your data never leaves your Google account.</b>
+    <p>This is not a service and there is no server of mine to send anything to. You run your own private
+      copy: the script lives in your Google Drive, reads the export sitting in your own folder, and writes
+      to your own spreadsheet. Nothing is uploaded, nothing is sent to an AI, and I cannot see any of it —
+      that is not a policy, it is just how the thing is built. The code is open, so you can check.</p>
+  </div>
+
+  <!-- ── Why ─────────────────────────────────────────────────────────── -->
+  <section id="why">
+    <h2><span class="sec-n">01</span>Why bother</h2>
+    <p class="sub">The mission is narrow and worth saying plainly: <b>higher consciousness about our digital
+      footprints, and better digital well-being.</b> Not a detox app, not a lecture about screen time.
+      Evidence about your own behaviour, in your hands, that nobody else gets a copy of.</p>
+    <div class="why">
+      <div class="why-card">
+        <b>The feed is not neutral</b>
+        <p>What you see is chosen for you. Once it is laid out by theme and hour, you can see the shape of
+          that choice — and how much of your attention went somewhere you never picked.</p>
+      </div>
+      <div class="why-card">
+        <b>Likes are performance</b>
+        <p>Likes are what you are willing to show. Repeated viewing is what actually held you. The gap
+          between those two is the most honest thing in the whole export.</p>
+      </div>
+      <div class="why-card">
+        <b>You cannot change what you cannot see</b>
+        <p>Late-night drift, a narrowing feed, an emotional tone creeping one way. These are measurable, and
+          measurable things can be answered.</p>
+      </div>
+      <div class="why-card">
+        <b>It is your data</b>
+        <p>Meta must hand it over when you ask. Almost nobody does, because the export is a pile of
+          unreadable HTML. This makes it readable — and keeps it yours.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── What you get ────────────────────────────────────────────────── -->
+  <section id="how">
+    <h2><span class="sec-n">02</span>What you get</h2>
+    <p class="sub">A spreadsheet with about twenty tabs, and a private dashboard that reads it. Every number
+      is rule-based and every rule is visible and editable — nothing here is a judgement about you.</p>
+    <div class="grid">
+      <div class="tile"><b>Themes</b><p>What the feed actually fed you, by share, with subtopics and month-on-month movement.</p></div>
+      <div class="tile"><b>Rhythm</b><p>Hour by hour and weekday by weekday. Estimated minutes, sessions, late-night share.</p></div>
+      <div class="tile"><b>Quiet interests</b><p>Accounts you kept seeing and never once reacted to — attention you give but do not express.</p></div>
+      <div class="tile"><b>Network</b><p>Everyone you follow, who follows you, and who the feed keeps pushing, drawn as a graph.</p></div>
+      <div class="tile"><b>Belonging</b><p>Seen, Heard, Invested in, Connected — scored where the data allows, and marked unmeasurable where it does not.</p></div>
+      <div class="tile"><b>Risk signals</b><p>Eleven behavioural indicators scored likelihood × impact, with what to try for each.</p></div>
+    </div>
+    <div class="callout" style="margin-top:18px">
+      These are behavioural indicators built from keyword rules over what you were <em>shown</em>. They are
+      not a clinical assessment, not a security audit, and not a verdict on you. The formulas are printed
+      next to the numbers so you can disagree with them.
+    </div>
+  </section>
+
+  <!-- ── Get started ─────────────────────────────────────────────────── -->
+  <section id="start">
+    <h2><span class="sec-n">03</span>Set it up</h2>
+    <p class="sub">Two things happen once, then it runs itself. If you get stuck at any step, open an
+      issue — a confusing step is a bug in this page, not in you.</p>
+
+    <ol class="steps">
+      <li>
+        <h3>Ask Instagram for your data</h3>
+        <p>Do this first — Meta can take a few hours to a day to send it.</p>
+        <p>In Instagram: <kbd>Accounts Centre</kbd> → <kbd>Your information and permissions</kbd> →
+          <kbd>Download your information</kbd>. Then:</p>
+        <ul>
+          <li><b>Format: HTML.</b> JSON exports are skipped.</li>
+          <li><b>Date range:</b> last month (or all time for your first one).</li>
+          <li><b>Media quality: low.</b> The photos are not needed and only make the file huge.</li>
+        </ul>
+        <div class="callout">English and Italian exports both work. Other languages will parse
+          partially — the dates and field labels are what have been checked so far.</div>
+      </li>
+
+      <li>
+        <h3>Make your own copy of the sheet</h3>
+        <p>One click. You get a private copy in your own Drive, with the script already inside it —
+          no code to paste.</p>
+        <p><a class="btn btn-primary" id="copy-link" href="#" target="_blank" rel="noopener">Make a copy →</a></p>
+        <div class="callout">Prefer to read the code before running it? Every line is on
+          <a href="https://github.com/RedHouseLux/instagram-insights" target="_blank" rel="noopener">GitHub</a>,
+          and the README has the manual paste-it-yourself route.</div>
+      </li>
+
+      <li>
+        <h3>Run setup once</h3>
+        <p>In your new sheet: <kbd>Extensions</kbd> → <kbd>Apps Script</kbd>, pick <kbd>setup</kbd> from the
+          function dropdown, and press Run.</p>
+        <p>Google will ask for permission to use your Drive, Sheets and triggers, and will warn you the app
+          is unverified. That warning is expected: it is <em>your</em> copy of the script, running as you,
+          and Google has not reviewed it because it was never submitted for review. Choose
+          <kbd>Advanced</kbd> → <kbd>Go to (project name)</kbd> to continue.</p>
+        <p>Setup creates an <b>Instagram Exports</b> folder in your Drive and links it. It also prints the
+          folder link so you can find it.</p>
+      </li>
+
+      <li>
+        <h3>Drop the export in</h3>
+        <p>When Meta's email arrives, put the <kbd>.zip</kbd> straight into that
+          <b>Instagram Exports</b> folder — unzipping is optional, and the Drive app on your phone works fine.</p>
+        <p>Then reload the sheet and choose <kbd>Instagram Insights</kbd> →
+          <kbd>Process new exports now</kbd>. After that it checks by itself once a day, so every month you
+          only have to drop the new file in.</p>
+      </li>
+
+      <li>
+        <h3>Open your dashboard</h3>
+        <p>The sheet is already readable, but the dashboard is nicer. In the Apps Script editor:
+          <kbd>Deploy</kbd> → <kbd>New deployment</kbd> → <kbd>Web app</kbd>, then set
+          <b>Execute as: Me</b> and <b>Who has access: Only myself</b>.</p>
+        <div class="callout"><b>Keep it on "Only myself."</b> That deployment runs as you and reads your
+          spreadsheet, so anyone you gave the link to would be reading your Instagram history through your
+          own account. This is also why there is no shared dashboard to hand you — the only safe version
+          is the one that belongs to you.</div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ── Roadmap ─────────────────────────────────────────────────────── -->
+  <section id="roadmap">
+    <h2><span class="sec-n">04</span>Where this is going</h2>
+    <span class="wip">Work in progress</span>
+    <p class="sub">This is unfinished and openly so. It starts at Instagram because that export is the
+      richest one Meta actually hands over — but Instagram is the starting point, not the point. Anything
+      that leaves a digital footprint you are entitled to read could be pulled into the same frame, always
+      under the same rule: <b>your data stays in your account.</b></p>
+    <ul class="road">
+      <li><span class="tag now">Working</span><div><b>Instagram</b><span>Themes, rhythm, quiet interests, network graph, belonging, risk register.</span></div></li>
+      <li><span class="tag next">Next</span><div><b>Belonging, properly</b><span>Two of its four dimensions cannot be measured from an Instagram export at all. The dashboard says so out loud instead of faking a score — closing that gap needs better sources.</span></div></li>
+      <li><span class="tag next">Next</span><div><b>Outward, not just inward</b><span>The dashboard describes consumption. The first feature that points outward — real places and groups near you, by interest — is designed and not yet built.</span></div></li>
+      <li><span class="tag">Later</span><div><b>Other footprints</b><span>Other platforms that offer real data exports, and a way to read several of them side by side.</span></div></li>
+      <li><span class="tag">Later</span><div><b>Longer memory</b><span>Most of what matters only becomes visible across a year, not a week. That needs time and exports, not code.</span></div></li>
+    </ul>
+    <p class="sub" style="margin-top:18px">Requests and disagreements are genuinely useful here — especially
+      "this number is wrong and here is why". The rules behind every metric are editable in the
+      <b>Settings</b> tab of your own copy, so you can also just fix it for yourself.</p>
+  </section>
+
+  <!-- ── Support ─────────────────────────────────────────────────────── -->
+  <section id="support">
+    <div class="support">
+      <h2>Free, and staying free</h2>
+      <p class="sub" style="margin: 0 auto 4px">There is nothing to buy, no account to make, no upsell and
+        no data of yours to sell — there could not be, since none of it ever reaches me. If it was useful
+        and you feel like it, you can put something in the tin. Entirely optional, and it changes nothing
+        about what you get.</p>
+      <p style="margin-top:20px">
+        <a class="btn btn-primary btn-lg" href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Join in ─────────────────────────────────────────────────────── -->
+  <section id="join">
+    <h2><span class="sec-n">05</span>Join in</h2>
+    <p class="sub">Tell me what broke, what was confusing, or what you found out about yourself that you did
+      not expect. That last one is the whole reason this exists.</p>
+    <div class="share">
+      <a class="btn" id="discuss" href="https://github.com/RedHouseLux/instagram-insights/discussions" target="_blank" rel="noopener">💬 Comment &amp; discuss</a>
+      <a class="btn" id="issue" href="https://github.com/RedHouseLux/instagram-insights/issues/new" target="_blank" rel="noopener">🐞 Report a problem</a>
+    </div>
+    <h3 style="margin-top:28px">Share it</h3>
+    <p class="sub">Most people do not know they can ask for this data at all.</p>
+    <div class="share" style="justify-content:flex-start">
+      <a class="btn" id="sh-x" href="#" target="_blank" rel="noopener">Share on X</a>
+      <a class="btn" id="sh-li" href="#" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="btn" id="sh-fb" href="#" target="_blank" rel="noopener">Facebook</a>
+      <a class="btn" id="sh-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn" id="sh-tg" href="#" target="_blank" rel="noopener">Telegram</a>
+      <button class="btn" id="sh-copy" type="button">Copy link</button>
+    </div>
+  </section>
+
+  <!-- ── Thanks ──────────────────────────────────────────────────────── -->
+  <section class="thanks">
+    <h2>Thank you for being here</h2>
+    <p>Every person who runs this, breaks it, argues with a number or tells someone else about it is doing
+      the actual work — making our own digital footprints something we can look at directly instead of
+      something that just happens to us. That is the whole project. Thank you for taking part.</p>
+  </section>
+
+  <footer>
+    <div class="foot-row">
+      <span>A <b>Blockcert</b> project · free and open · work in progress</span>
+      <span>
+        <a href="https://github.com/RedHouseLux/instagram-insights" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">Support</a>
+      </span>
+    </div>
+    <p style="margin-top:14px">Not affiliated with, endorsed by, or connected to Meta or Instagram.
+      Instagram is a trademark of Meta Platforms, Inc. This tool only reads the data export Meta already
+      gives you on request.</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Fill in once you have shared the template sheet (see docs/TEMPLATE.md). Until it is set, step 2 sends
+  // people to the manual route in the README instead of to a dead link — a broken button at the exact
+  // moment someone decides to try this is the most expensive kind of broken.
+  var TEMPLATE_SHEET_ID = '';
+  var REPO = 'https://github.com/RedHouseLux/instagram-insights';
+
+  var copy = document.getElementById('copy-link');
+  if (TEMPLATE_SHEET_ID) {
+    copy.href = 'https://docs.google.com/spreadsheets/d/' + TEMPLATE_SHEET_ID + '/copy';
+  } else {
+    copy.href = REPO + '#one-time-setup-about-5-minutes';
+    copy.textContent = 'Set up from the README →';
+    copy.classList.remove('btn-primary');
+  }
+
+  // ── Theme toggle ────────────────────────────────────────────────────────
+  var root = document.documentElement;
+  try {
+    var saved = localStorage.getItem('ii-theme');
+    if (saved) root.setAttribute('data-theme', saved);
+  } catch (e) { /* private window, blocked storage: the OS preference still applies */ }
+  document.getElementById('theme').addEventListener('click', function () {
+    var isDark = root.getAttribute('data-theme') === 'dark'
+      || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('ii-theme', next); } catch (e) { /* nothing to do */ }
+  });
+
+  // ── Share ───────────────────────────────────────────────────────────────
+  var url = location.href.split('#')[0];
+  var text = 'Instagram knows what it showed you, when, and what you did about it — it just never shows you. '
+    + 'This reads your own Instagram data export inside your own Google account. Nothing is uploaded.';
+  var e = encodeURIComponent;
+  var links = {
+    'sh-x': 'https://twitter.com/intent/tweet?text=' + e(text) + '&url=' + e(url),
+    'sh-li': 'https://www.linkedin.com/sharing/share-offsite/?url=' + e(url),
+    'sh-fb': 'https://www.facebook.com/sharer/sharer.php?u=' + e(url),
+    'sh-wa': 'https://api.whatsapp.com/send?text=' + e(text + ' ' + url),
+    'sh-tg': 'https://t.me/share/url?url=' + e(url) + '&text=' + e(text)
+  };
+  Object.keys(links).forEach(function (id) { document.getElementById(id).href = links[id]; });
+
+  var toast = document.getElementById('toast');
+  function say(msg) {
+    toast.textContent = msg;
+    toast.hidden = false;
+    setTimeout(function () { toast.hidden = true; }, 2200);
+  }
+  document.getElementById('sh-copy').addEventListener('click', function () {
+    // navigator.clipboard is unavailable on insecure origins and can reject even on https.
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { say('Link copied'); },
+        function () { say(url); });
+    } else {
+      say(url);
+    }
+  });
+})();
+</script>
+</body>
+</html>

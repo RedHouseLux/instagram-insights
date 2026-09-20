@@ -1,0 +1,19 @@
+# OAuth client secret downloaded from Google Cloud, and the token minted from it. Both grant read access
+# to the spreadsheet holding your Instagram history — never commit either, and never paste them anywhere.
+# Revoke at myaccount.google.com/permissions if either ever leaks.
+.oauth-client.json
+.oauth-token.json
+*.creds.json
+
+# clasp's own credentials, if they are ever copied into the project (they normally live in ~/.clasprc.json)
+.clasprc.json
+
+.DS_Store
+node_modules/
+
+# Deploy staging: holds the script ID and live deployment URL of ONE person's private copy.
+# Nobody forking this needs them, and they should not be published.
+.clasp-deploy/
+
+# Local scratch
+pilot/

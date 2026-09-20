@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_blank">
+<meta charset="utf-8">
+<style>
+  :root {
+    --surface: #fcfcfb; --plane: #f9f9f7; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --baseline: #c3c2b7; --ring: rgba(11, 11, 11, 0.10);
+    --engaged: #2a78d6; --seen: #eb6834; --unseen: #c3c2b7;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--surface); color: var(--ink); font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 10px 16px 6px; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tile { background: #fff; border: 1px solid var(--ring); border-radius: 8px; padding: 6px 12px; min-width: 116px; }
+  .tile b { display: block; font-size: 20px; font-weight: 650; }
+  .tile span { color: var(--ink-2); font-size: 12px; }
+  .banner { margin-top: 8px; padding: 6px 10px; background: #fdf0cf; border-radius: 6px; color: var(--ink); font-size: 12px; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 16px 8px; border-bottom: 1px solid var(--grid); }
+  input[type=search] { font: inherit; padding: 5px 8px; border: 1px solid var(--baseline); border-radius: 6px; width: 190px; }
+  .chip { font: inherit; font-size: 12px; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--baseline); background: #fff; color: var(--ink-2); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .sep { width: 1px; height: 20px; background: var(--grid); margin: 0 4px; }
+  main { position: relative; flex: 1; min-height: 0; }
+  svg { width: 100%; height: 100%; display: block; cursor: grab; background: var(--plane); }
+  svg.dragging { cursor: grabbing; }
+  .node { cursor: pointer; }
+  .label { font-size: 10px; fill: var(--ink); paint-order: stroke; stroke: var(--plane); stroke-width: 3px; pointer-events: none; }
+  .sector { font-size: 12px; fill: var(--ink-2); font-weight: 600; pointer-events: none; }
+  .legend { position: absolute; left: 12px; bottom: 12px; background: rgba(255, 255, 255, 0.94); border: 1px solid var(--ring);
+    border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--ink-2); max-width: 300px; }
+  .legend div { margin: 2px 0; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  #tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid var(--ring); border-radius: 8px; padding: 8px 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); font-size: 12px; max-width: 280px; display: none; }
+  #tip b { font-size: 13px; }
+  #tip .k { color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="tiles" id="tiles"></div>
+  <div class="banner" id="empty-banner" hidden>No accounts yet. If the rest of your dashboard already shows real months, this tab just hasn't been rebuilt under it: run
+    <b>Instagram Insights → Reprocess everything</b> once from the Sheet's own menu, then reload this page.</div>
+  <div class="banner" id="banner" hidden>Followers are incomplete: monthly exports only list new followers, so mutual follows are undercounted.
+    Request an <b>All time</b> export of <b>Followers and following</b> once and drop it in the folder.</div>
+</header>
+<div class="controls">
+  <input type="search" id="search" placeholder="Find an account…" aria-label="Find an account">
+  <button class="chip" id="labels" aria-pressed="true">Labels</button>
+  <button class="chip" id="links" aria-pressed="true" title="Lines from you to accounts you liked or searched">Links</button>
+  <button class="chip" id="fit" aria-pressed="false">Fit</button>
+  <span class="sep"></span>
+  <span id="chips"></span>
+</div>
+<main>
+  <svg id="svg" role="img" aria-label="Network of Instagram accounts around you"><g id="world"></g></svg>
+  <div class="legend">
+    <div><span class="dot" style="background:var(--engaged)"></span>You liked or searched them</div>
+    <div><span class="dot" style="background:var(--seen)"></span>Seen, no reaction</div>
+    <div><span class="dot" style="background:var(--unseen)"></span>Not seen in any export</div>
+    <div style="margin-top:6px">Bigger dot = more attention (seen + 5× likes + 3× searches).</div>
+    <div>Rings from the centre: closest · you follow, seen lately · dormant follows and fans · not followed · unfollowed.</div>
+    <div>Sectors group accounts by their main theme. The full table is the Network tab.</div>
+  </div>
+  <div id="tip"></div>
+</main>
+
+<script>
+const DATA = <?!= data ?>;
+const NS = 'http://www.w3.org/2000/svg';
+const RINGS = [
+  ['Close friend', 'Inner circle'],
+  ['Engaged follow', 'Quiet follow', 'Active follow'],
+  ['Dormant follow', 'Fan'],
+  ['Chosen, not followed', 'Pushed by feed'],
+  ['Unfollowed', 'Blocked'],
+];
+const HIDDEN_BY_DEFAULT = ['Unfollowed', 'Blocked'];
+const MAX_SECTORS = 9;
+const nodes = DATA.nodes.map(n => Object.assign({}, n, {
+  kind: n.liked + n.searched > 0 ? 'engaged' : n.seen > 0 ? 'seen' : 'unseen',
+  r: Math.min(12, 2.6 + Math.sqrt(n.attention) * 0.9),
+}));
+const active = new Set(DATA.statuses.filter(s => HIDDEN_BY_DEFAULT.indexOf(s) < 0));
+const state = { labels: true, links: true, query: '', scale: 1, tx: 0, ty: 0 };
+const $ = id => document.getElementById(id);
+const el = (name, attrs, parent) => {
+  const e = document.createElementNS(NS, name);
+  Object.keys(attrs).forEach(k => e.setAttribute(k, attrs[k]));
+  if (parent) parent.appendChild(e);
+  return e;
+};
+
+// Summary tiles
+const count = f => nodes.filter(f).length;
+const tiles = [
+  [count(n => n.relation === 'You follow' || n.relation === 'Mutual'), 'Following'],
+  [count(n => n.relation === 'Follows you' || n.relation === 'Mutual'), DATA.followersComplete ? 'Followers' : 'Followers (new only)'],
+  [count(n => n.relation === 'Mutual'), 'Mutual'],
+  [count(n => n.kind === 'engaged'), 'You liked or searched'],
+  [count(n => n.status === 'Dormant follow'), 'Dormant follows'],
+  [count(n => n.status === 'Pushed by feed'), 'Pushed by the feed'],
+];
+$('tiles').innerHTML = tiles.map(t => `<div class="tile"><b>${t[0]}</b><span>${t[1]}</span></div>`).join('');
+$('empty-banner').hidden = DATA.nodes.length > 0;
+$('banner').hidden = DATA.nodes.length === 0 || DATA.followersComplete;
+
+// Status chips
+$('chips').innerHTML = DATA.statuses.map(s => {
+  const c = count(n => n.status === s);
+  return c ? `<button class="chip" data-status="${s}" aria-pressed="${active.has(s)}">${s} ${c}</button>` : '';
+}).join(' ');
+$('chips').addEventListener('click', e => {
+  const s = e.target.getAttribute('data-status');
+  if (!s) return;
+  active.has(s) ? active.delete(s) : active.add(s);
+  e.target.setAttribute('aria-pressed', active.has(s));
+  draw(true);
+});
+[['labels', 'labels'], ['links', 'links']].forEach(([id, key]) => $(id).addEventListener('click', () => {
+  state[key] = !state[key];
+  $(id).setAttribute('aria-pressed', state[key]);
+  draw(false);
+}));
+$('fit').addEventListener('click', () => { fit(); apply(); });
+$('search').addEventListener('input', e => { state.query = e.target.value.trim().toLowerCase(); draw(false); });
+
+// Layout: rings by closeness, sectors by main theme, dots packed in rows from the inside out.
+let outer = 100;
+let sectors = [];
+function layout(visible) {
+  const byCluster = {};
+  visible.forEach(n => { byCluster[n.cluster] = (byCluster[n.cluster] || 0) + 1; });
+  const named = Object.keys(byCluster).filter(c => c !== 'No content seen').sort((a, b) => byCluster[b] - byCluster[a]);
+  const keep = new Set(named.slice(0, MAX_SECTORS));
+  const groups = named.slice(0, MAX_SECTORS).map(c => ({ name: c, members: new Set([c]) }));
+  const rest = named.slice(MAX_SECTORS);
+  if (rest.length) groups.push({ name: 'Other themes', members: new Set(rest) });
+  if (byCluster['No content seen']) groups.push({ name: 'No content seen', members: new Set(['No content seen']) });
+  const rawWeight = g => Math.pow([...g.members].reduce((s, c) => s + byCluster[c], 0), 0.7);
+  // Unseen accounts are many but say little, so they get at most a third of the circle.
+  const seenWeight = groups.filter(g => g.name !== 'No content seen').reduce((s, g) => s + rawWeight(g), 0);
+  const weight = g => (g.name === 'No content seen' && seenWeight ? Math.min(rawWeight(g), seenWeight / 2) : rawWeight(g));
+  const gap = 0.05;
+  const total = groups.reduce((s, g) => s + weight(g), 0);
+  let angle = -Math.PI / 2;
+  sectors = groups.map(g => {
+    const span = Math.max(0.14, (2 * Math.PI - gap * groups.length) * weight(g) / total);
+    const s = { name: g.name, members: g.members, start: angle, span: span, count: [...g.members].reduce((n, c) => n + byCluster[c], 0) };
+    angle += span + gap;
+    return s;
+  });
+  // Scale spans back to a full circle if minimum widths pushed past it.
+  const used = sectors.reduce((s, x) => s + x.span + gap, 0);
+  if (used > 2 * Math.PI) {
+    const k = (2 * Math.PI - gap * sectors.length) / (used - gap * sectors.length);
+    angle = -Math.PI / 2;
+    sectors.forEach(s => { s.span *= k; s.start = angle; angle += s.span + gap; });
+  }
+  let r0 = 70;
+  RINGS.forEach(statuses => {
+    const ring = visible.filter(n => statuses.indexOf(n.status) >= 0);
+    if (!ring.length) return;
+    let ringOuter = r0;
+    sectors.forEach(sec => {
+      const list = ring.filter(n => sec.members.has(n.cluster))
+        .sort((a, b) => b.attention - a.attention || a.account.localeCompare(b.account));
+      let rowR = r0;
+      let i = 0;
+      while (i < list.length) {
+        const row = [];
+        let width = 0;
+        let tallest = 0;
+        const arc = rowR * sec.span;
+        while (i < list.length && (row.length === 0 || width + 2 * list[i].r + 2 <= arc)) {
+          row.push(list[i]);
+          width += 2 * list[i].r + 2;
+          tallest = Math.max(tallest, 2 * list[i].r);
+          i++;
+        }
+        let cursor = (arc - width) / 2;
+        row.forEach(n => {
+          const theta = sec.start + (cursor + n.r + 1) / rowR;
+          const rr = rowR + tallest / 2;
+          n.x = rr * Math.cos(theta);
+          n.y = rr * Math.sin(theta);
+          n.theta = theta;
+          cursor += 2 * n.r + 2;
+        });
+        rowR += tallest + 2;
+      }
+      ringOuter = Math.max(ringOuter, rowR);
+    });
+    r0 = ringOuter + 20;
+  });
+  outer = r0;
+}
+
+const world = $('world');
+function draw(relayout) {
+  const visible = nodes.filter(n => active.has(n.status));
+  if (relayout || !sectors.length) layout(visible);
+  world.innerHTML = '';
+  const guides = el('g', {}, world);
+  el('circle', { cx: 0, cy: 0, r: outer - 10, fill: 'none', stroke: 'var(--grid)' }, guides);
+  sectors.forEach(s => {
+    const a = s.start + s.span / 2;
+    const x = (outer + 8) * Math.cos(a);
+    const y = (outer + 8) * Math.sin(a);
+    const t = el('text', { x: x, y: y, class: 'sector', 'text-anchor': Math.cos(a) > 0.2 ? 'start' : Math.cos(a) < -0.2 ? 'end' : 'middle',
+      'dominant-baseline': Math.sin(a) > 0.2 ? 'hanging' : Math.sin(a) < -0.2 ? 'auto' : 'middle' }, guides);
+    t.textContent = `${s.name} · ${s.count}`;
+    [s.start, s.start + s.span].forEach(edge => el('line', { x1: 40 * Math.cos(edge), y1: 40 * Math.sin(edge),
+      x2: (outer - 10) * Math.cos(edge), y2: (outer - 10) * Math.sin(edge), stroke: 'var(--grid)', 'stroke-width': 1 }, guides));
+  });
+  const q = state.query;
+  const match = n => !q || n.account.toLowerCase().indexOf(q) >= 0;
+  if (state.links) {
+    const links = el('g', {}, world);
+    visible.filter(n => n.kind === 'engaged' && match(n)).forEach(n => el('line', { x1: 0, y1: 0, x2: n.x, y2: n.y,
+      stroke: 'var(--engaged)', 'stroke-opacity': 0.22, 'stroke-width': 1 }, links));
+  }
+  const dots = el('g', {}, world);
+  visible.forEach(n => {
+    const c = el('circle', { cx: n.x, cy: n.y, r: n.r, class: 'node', fill: `var(--${n.kind})`,
+      stroke: n.status === 'Close friend' ? 'var(--ink)' : 'var(--plane)', 'stroke-width': n.status === 'Close friend' ? 1.5 : 1,
+      opacity: match(n) ? 1 : 0.15 }, dots);
+    c.addEventListener('mousemove', e => showTip(e, n));
+    c.addEventListener('mouseleave', () => { $('tip').style.display = 'none'; });
+    c.addEventListener('click', () => window.open('https://www.instagram.com/' + encodeURIComponent(n.account) + '/', '_blank'));
+  });
+  el('circle', { cx: 0, cy: 0, r: 20, fill: 'var(--ink)' }, world);
+  const you = el('text', { x: 0, y: 1, 'text-anchor': 'middle', 'dominant-baseline': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 600 }, world);
+  you.textContent = 'You';
+  const candidates = q ? visible.filter(match)
+    : state.labels ? visible.slice().sort((a, b) => b.attention - a.attention).filter(n => n.attention > 0) : [];
+  const labels = el('g', {}, world);
+  const taken = [];
+  candidates.forEach(n => {
+    if (taken.length >= (q ? 60 : 24)) return;
+    // Skip a label that would overlap one already placed; the tooltip still names every dot.
+    const right = Math.cos(n.theta) >= 0;
+    const w = n.account.length * 5.6;
+    const x = n.x + (right ? n.r + 3 : -n.r - 3 - w);
+    const box = { x1: x - 2, x2: x + w + 2, y1: n.y - 8, y2: n.y + 5 };
+    if (taken.some(b => box.x1 < b.x2 && box.x2 > b.x1 && box.y1 < b.y2 && box.y2 > b.y1)) return;
+    taken.push(box);
+    const t = el('text', { x: n.x + (right ? n.r + 3 : -n.r - 3), y: n.y + 3, class: 'label', 'text-anchor': right ? 'start' : 'end' }, labels);
+    t.textContent = n.account;
+  });
+  apply();
+}
+
+function showTip(e, n) {
+  const rows = [
+    `<b>@${esc(n.account)}</b>`,
+    `${esc(n.status)} <span class="k">·</span> ${esc(n.relation)}`,
+    n.themes ? `<span class="k">Themes</span> ${esc(n.themes)}` : `<span class="k">No content seen yet</span>`,
+    `<span class="k">Seen</span> ${n.seen} <span class="k">· Liked</span> ${n.liked} <span class="k">· Searched</span> ${n.searched}`,
+    n.followSince ? `<span class="k">You follow since</span> ${esc(n.followSince)}` : '',
+    n.followerSince ? `<span class="k">Follows you since</span> ${esc(n.followerSince)}` : '',
+    n.lastActive ? `<span class="k">Last active</span> ${esc(n.lastActive)}` : '',
+    n.region ? `<span class="k">Region</span> ${esc(n.region)}` : '',
+    `<span class="k">Click to open the profile</span>`,
+  ].filter(Boolean);
+  const tip = $('tip');
+  tip.innerHTML = rows.join('<br>');
+  tip.style.display = 'block';
+  const box = document.querySelector('main').getBoundingClientRect();
+  const x = e.clientX - box.left + 14;
+  const y = e.clientY - box.top + 14;
+  tip.style.left = Math.min(x, box.width - tip.offsetWidth - 8) + 'px';
+  tip.style.top = Math.min(y, box.height - tip.offsetHeight - 8) + 'px';
+}
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+// Zoom and pan
+const svg = $('svg');
+function fit() {
+  const box = svg.getBoundingClientRect();
+  state.scale = Math.min(box.width, box.height) / (2 * outer + 150);
+  state.tx = box.width / 2;
+  state.ty = box.height / 2;
+}
+function apply() {
+  world.setAttribute('transform', `translate(${state.tx},${state.ty}) scale(${state.scale})`);
+}
+svg.addEventListener('wheel', e => {
+  e.preventDefault();
+  const box = svg.getBoundingClientRect();
+  const px = e.clientX - box.left;
+  const py = e.clientY - box.top;
+  const k = Math.exp(-e.deltaY * 0.0015);
+  state.tx = px - (px - state.tx) * k;
+  state.ty = py - (py - state.ty) * k;
+  state.scale *= k;
+  apply();
+}, { passive: false });
+let drag = null;
+svg.addEventListener('mousedown', e => { drag = { x: e.clientX - state.tx, y: e.clientY - state.ty }; svg.classList.add('dragging'); });
+window.addEventListener('mousemove', e => { if (drag) { state.tx = e.clientX - drag.x; state.ty = e.clientY - drag.y; apply(); } });
+window.addEventListener('mouseup', () => { drag = null; svg.classList.remove('dragging'); });
+
+draw(true);
+fit();
+apply();
+</script>
+</body>
+</html>

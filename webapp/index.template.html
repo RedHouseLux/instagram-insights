@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instagram Insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- One family, three voices: Condensed 700 carries the section headings, Sans the prose, Mono every number
+     and micro-label. Staying inside Plex keeps the infographic treatment from importing a second identity. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap">
+<style>
+/* {{CSS}} */
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Instagram Insights</h1>
+      <p class="lede">Read straight from your own Sheet and Drive folder. Nothing to drop, nothing to upload.</p>
+    </div>
+    <div class="top-actions">
+      <button id="theme" type="button" class="icon-btn" title="Switch light/dark" aria-label="Switch light or dark theme">◐</button>
+      <button id="mode" type="button" title="Switch between weekly and monthly buckets">Weekly</button>
+      <button id="refresh" type="button" title="Checks Drive right now. Doesn't reload this page — after a code update, reload the tab first.">Check Drive now</button>
+    </div>
+  </header>
+  <p id="identity" class="mono identity"></p>
+  <div id="toast" class="toast" hidden><span id="toast-text" class="toast-text"></span></div>
+
+  <div id="skeleton" class="skeleton" hidden aria-hidden="true">
+    <div class="tiles">
+      <div class="skel skel-tile"></div><div class="skel skel-tile"></div><div class="skel skel-tile"></div>
+      <div class="skel skel-tile"></div><div class="skel skel-tile"></div><div class="skel skel-tile"></div>
+    </div>
+    <div class="skel skel-panel"></div>
+    <div class="skel skel-panel"></div>
+  </div>
+
+  <div id="empty" hidden>
+    <div class="panel empty-card">
+      <h2>Waiting for your first export</h2>
+      <ol>
+        <li>Drop an Instagram export (the .zip, HTML format) into the <a id="folder-link" href="#" target="_blank">Instagram Exports</a> Drive folder.</li>
+        <li>It's picked up automatically within a day, or right away from the Sheet's <b>Instagram Insights → Process new exports now</b> menu.</li>
+      </ol>
+      <button id="check-empty" type="button">Check now</button>
+      <p id="note" hidden></p>
+    </div>
+  </div>
+
+  <div id="dash" hidden>
+    <div class="bar-row">
+      <select id="month" aria-label="Period"></select>
+      <span id="period" class="mono"></span>
+    </div>
+    <p id="note2" hidden></p>
+
+    <!-- The hero states the bucket and how much of it is actually covered, before any chart argues anything.
+         Numbering below is not decoration: the sections run feed → time → people → self → risk, which is the
+         order the evidence builds in, and each number is a step in that argument. -->
+    <section class="hero" id="hero">
+      <div class="hero-main">
+        <span class="eyebrow" id="hero-eyebrow"></span>
+        <h2 class="hero-h" id="hero-title"></h2>
+        <p class="hero-sub" id="hero-sub"></p>
+      </div>
+      <div class="hero-cov">
+        <div class="cov-track"><i id="cov-fill"></i></div>
+        <span class="mono" id="cov-label"></span>
+      </div>
+    </section>
+
+    <div class="tiles" id="tiles"></div>
+
+    <section class="sec" id="sec-feed">
+      <h2 class="sec-h"><span class="sec-n">01</span><span class="sec-i" data-icon="feed"></span>What the feed showed you</h2>
+      <div class="cols cols-donut">
+        <div class="panel panel-centre"><div id="theme-donut"></div><div class="legend" id="theme-legend"></div></div>
+        <div class="panel" id="themes"></div>
+      </div>
+      <div class="hls" id="theme-highlights"></div>
+      <div class="panel panel-centre" id="sec-slope"><h3 class="sub">Movement since the bucket before · above the line grew, below it shrank</h3><div id="theme-slope"></div></div>
+    </section>
+
+    <section class="sec" id="sec-time">
+      <h2 class="sec-h"><span class="sec-n">02</span><span class="sec-i" data-icon="clock"></span>When it took your time</h2>
+      <div class="panel">
+        <h3 class="sub">Minutes per day, in the window Instagram kept</h3>
+        <div id="daily"></div>
+        <p id="daily-note" class="mono" style="margin-top:10px"></p>
+      </div>
+      <div class="panel" id="sec-hours">
+        <h3 class="sub">Hour by hour</h3>
+        <div id="hours"></div>
+        <p id="hours-note" class="mono" style="margin-top:10px"></p>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-people">
+      <h2 class="sec-h"><span class="sec-n">03</span><span class="sec-i" data-icon="users"></span>Who filled it</h2>
+      <div class="pow" id="pow" hidden></div>
+      <div class="cols">
+        <div class="panel">
+          <h3 class="sub">Most seen</h3>
+          <div id="top"></div>
+        </div>
+        <div class="panel" id="sec-quiet">
+          <h3 class="sub">Quiet interests · seen often, never liked or searched</h3>
+          <div id="quiet"></div>
+        </div>
+      </div>
+      <div class="panel" id="sec-netprev" hidden>
+        <h3 class="sub">Your network, in miniature</h3>
+        <div class="netprev">
+          <div class="netprev-svg" id="netprev"></div>
+          <div class="netprev-body">
+            <p class="bel-m" id="netprev-say"></p>
+            <ul class="np-legend" id="netprev-legend"></ul>
+            <p style="margin-top:12px"><a id="netprev-link" href="#" target="_blank">Open the full network view →</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-feeling">
+      <h2 class="sec-h"><span class="sec-n">04</span><span class="sec-i" data-icon="pulse"></span>How it felt</h2>
+      <div class="panel">
+        <h3 class="sub">Emotional tone of the captions you were shown · items per 100 seen</h3>
+        <div id="emotions"></div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-profile">
+      <h2 class="sec-h"><span class="sec-n">05</span><span class="sec-i" data-icon="person"></span>Who it thinks you are</h2>
+      <div class="cols cols-radar">
+        <div class="panel panel-centre"><h3 class="sub">Personality · Big Five proxy</h3><div id="radar-big5"></div></div>
+        <div class="panel panel-centre"><h3 class="sub">What it feeds · desire proxies</h3><div id="radar-desire"></div></div>
+      </div>
+      <div class="panel" id="profile"></div>
+    </section>
+
+    <section class="sec" id="sec-belonging" hidden>
+      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="users"></span>Whether you belong</h2>
+      <p class="lede" style="margin-bottom:14px">Four things belonging is made of. An Instagram export can
+        speak to two of them and is silent on the other two — those rows say so rather than being dropped,
+        because a missing row reads as nothing to report, which is the opposite of what is true.</p>
+      <div id="belonging"></div>
+      <div class="panel" id="bel-needs">
+        <h3 class="sub">What would make this measurable</h3>
+        <div id="bel-needs-list"></div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-risks">
+      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="alert"></span>Where the friction is</h2>
+      <div class="cols cols-matrix">
+        <div class="panel panel-centre"><div id="risk-matrix"></div></div>
+        <div class="panel" id="risks"></div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-signals">
+      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="search"></span>What to watch</h2>
+      <div class="panel" id="signals"></div>
+    </section>
+
+    <p id="week-note" class="mono" hidden></p>
+
+    <footer>
+      <p id="log" class="mono"></p>
+      <p>Read live from your Sheet, which the daily check and Check Drive now both keep current. Estimated minutes are a floor built from Instagram's own timestamps, and themes come from keyword rules, not from a judgement about you. <a id="network-link" href="#" target="_blank">Open the network view →</a></p>
+    </footer>
+  </div>
+</div>
+
+<div id="tipcard" class="tipcard" role="status" aria-live="polite"></div>
+
+<script>
+/* {{CHARTS}} */
+</script>
+<script>
+/* {{APP}} */
+</script>
+</body>
+</html>

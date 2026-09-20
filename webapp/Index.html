@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instagram Insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- One family, three voices: Condensed 700 carries the section headings, Sans the prose, Mono every number
+     and micro-label. Staying inside Plex keeps the infographic treatment from importing a second identity. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap">
+<style>
+:root {
+  --ground: #f6f6f4; --panel: #ffffff; --ink: #14161a; --ink-2: #4c5158; --muted: #85898f; --line: #e3e3de;
+  --seen: #2a78d6; --accent: #eb6834;
+  --low: #0ca30c; --medium: #fab219; --high: #ec835a; --critical: #d03b3b;
+  --better: #006300; --worse: #b3261e;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* Categorical series, in fixed assignment order — never cycled, never reordered by rank. The order is not
+     arbitrary: it was chosen by searching all orderings for the one whose WORST adjacent pair is furthest
+     apart under protanopia, deuteranopia and tritanopia (worst adjacent CVD ΔE = 11.2, against a target of 8),
+     because the same seven hues pass or fail purely on which two end up side by side. Every hue also clears
+     the lightness band, the chroma floor and 3:1 contrast against BOTH surfaces, which is why light and dark
+     share one set. A seventh category folds into --other rather than inventing an eighth hue. */
+  --c1: #2a78d6; --c2: #eb6834; --c3: #0f9b9b; --c4: #b8860b; --c5: #d4326e; --c6: #7a5af0;
+  --other: #9aa0a8;
+  /* Untagged is NOT the same thing as a collapsed tail of real themes, so it does not share their grey. */
+  --untagged: #c9ccd1;
+  /* The tail ramp. Every theme now gets its own slice, which would mean inventing seven more categorical
+     hues — and seven more hues is exactly the thing that stops being separable. So the tail is not
+     categorical at all: it is one hue stepped light→dark, and the step encodes the theme's RANK, which is
+     real information rather than decoration (the tail is sorted by size, so the ramp and the order agree).
+     Checked monotonic in OKLab L and >= 3:1 against both surfaces. Identity never rests on these steps
+     alone — every slice is named in the legend and in the hover card. */
+  --t1: #8a93a3; --t2: #7a8496; --t3: #6a7589; --t4: #5b667b; --t5: #4d586d; --t6: #3f4a5e; --t7: #333d4f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #121317; --panel: #1a1c21; --ink: #f0f1f4; --ink-2: #b6bac1; --muted: #82868d; --line: #2b2e34;
+    --seen: #4f95e0; --accent: #dc6230; --better: #0ca30c; --worse: #f08a80; --untagged: #4a4e56;
+    /* Dark re-steps the ramp rather than flipping it: the same hue, re-anchored so light→dark still runs
+       from most to least prominent against a dark surface. */
+    --t1: #c3c9d4; --t2: #b2b9c6; --t3: #a1a9b8; --t4: #9099aa; --t5: #7f899c; --t6: #6f7a8e; --t7: #5f6b80;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #121317; --panel: #1a1c21; --ink: #f0f1f4; --ink-2: #b6bac1; --muted: #82868d; --line: #2b2e34;
+  --seen: #4f95e0; --accent: #dc6230; --better: #0ca30c; --worse: #f08a80; --untagged: #4a4e56;
+  --t1: #c3c9d4; --t2: #b2b9c6; --t3: #a1a9b8; --t4: #9099aa; --t5: #7f899c; --t6: #6f7a8e; --t7: #5f6b80;
+}
+* { box-sizing: border-box; }
+/* [hidden] is only a display:none of normal weight, so any later rule that sets display — .panel-centre's
+   flex, say — silently beats it and the "hidden" element keeps rendering. Caught with the slope chart, which
+   has nothing to draw until a second bucket exists and was showing an empty panel anyway. */
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 18px; padding-block: 28px 64px; }
+h1 { font-family: var(--cond); font-size: 30px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.005em; }
+h2 { font-size: 17px; margin: 34px 0 10px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+/* ── Infographic spread ──────────────────────────────────────────────────────────────────────────────
+   Sections are numbered because the order is an argument, not a menu: feed → time → people → feeling →
+   self → friction → what to watch. The number and the rule carry that; the icon only labels the subject. */
+.sec { margin-top: 44px; }
+.sec-h { display: flex; align-items: center; gap: 12px; font-family: var(--cond); font-size: 24px; font-weight: 700;
+  letter-spacing: -0.005em; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--ink);
+  text-wrap: balance; }
+.sec-n { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.06em; flex-shrink: 0; }
+.sec-i { display: inline-flex; color: var(--ink-2); flex-shrink: 0; }
+.hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px;
+  background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 12px; padding: 18px 20px; margin: 14px 0 18px; }
+.hero-main { min-width: 0; }
+.hero-h { font-family: var(--cond); font-size: 32px; font-weight: 700; line-height: 1.05; margin: 4px 0 6px; letter-spacing: -0.01em; }
+.hero-sub { color: var(--ink-2); margin: 0; font-size: 14px; }
+.hero-cov { min-width: 190px; }
+.cov-track { height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--ink) 9%, transparent); overflow: hidden; }
+.cov-track i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.hero-cov .mono { display: block; margin-top: 5px; }
+
+/* ── Chart surfaces ──────────────────────────────────────────────────────────────────────────────── */
+/* The flex column shrink-wraps its children, so a chart div with width:100% resolves against an auto width
+   and collapses to nothing. Giving the wrappers a real width is what lets an uncapped chart fill the panel. */
+.panel-centre { display: flex; flex-direction: column; align-items: center; }
+.panel-centre > div { width: 100%; display: flex; justify-content: center; }
+.panel-centre .sub { align-self: flex-start; }
+/* Each chart gets its own ceiling rather than one shared 360px cap. An SVG scales its text with the box, so
+   the cap is really a type-size decision: too low and the chart is a postage stamp in a 700px panel, too high
+   and 10px labels render at 24px. These are set so each one's labels land near their authored size. */
+.ch { width: 100%; height: auto; display: block; }
+.ch-radar { max-width: 480px; }
+.ch-matrix { max-width: 520px; }
+.ch-donut { max-width: 320px; }
+.ch-scatter { max-width: 560px; }
+.ch-slope { max-width: 100%; }
+.ch-ring, .ch-spoke { fill: none; stroke: var(--line); stroke-width: 1; }
+.ch-area { fill: color-mix(in srgb, var(--seen) 22%, transparent); stroke: var(--seen); stroke-width: 2; }
+.ch-dot { fill: var(--seen); stroke: var(--panel); stroke-width: 1.5; }
+.ch-axis { font-family: var(--sans); font-size: 9.5px; fill: var(--ink-2); }
+.ch-axis-v { font-family: var(--mono); font-size: 11px; font-weight: 600; fill: var(--ink); }
+.ch-tick { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); }
+.ch-cell { fill: color-mix(in srgb, var(--ink) 4%, transparent); }
+.ch-cell-low { fill: color-mix(in srgb, var(--low) 12%, transparent); }
+.ch-cell-medium { fill: color-mix(in srgb, var(--medium) 18%, transparent); }
+.ch-cell-high { fill: color-mix(in srgb, var(--high) 22%, transparent); }
+.ch-cell-critical { fill: color-mix(in srgb, var(--critical) 26%, transparent); }
+.ch-code { font-family: var(--mono); font-size: 10px; font-weight: 600; fill: var(--ink); }
+.ch-slice { stroke: var(--panel); stroke-width: 2; }
+.ch-centre-v { font-family: var(--cond); font-size: 24px; font-weight: 700; fill: var(--ink); }
+.ch-centre-k { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); }
+.ch-line { fill: var(--muted); stroke: var(--muted); stroke-width: 1.2; opacity: 0.35; }
+.ch-line-up { fill: var(--accent); stroke: var(--accent); stroke-width: 2.4; opacity: 1; }
+.ch-line-down { fill: var(--seen); stroke: var(--seen); stroke-width: 2.4; opacity: 1; }
+.ch-slope-l { font-family: var(--mono); font-size: 10px; fill: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 12px; width: 100%; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.legend i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+/* These floors are the real size control. A chart capped at 480px still renders at 315px if its PANEL is
+   345px — which is what two columns of a ~730px window gives you, and why raising the caps alone changed
+   nothing visible. Pairs that contain a chart stack instead of splitting until there is genuine room. */
+.cols.cols-donut { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+.cols.cols-matrix { grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+.cols.cols-radar { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+.ch-diag { stroke: var(--ink-2); stroke-width: 1.4; stroke-dasharray: 4 4; opacity: .6; }
+.ch-pt { fill: var(--muted); opacity: .45; }
+.ch-pt-up { fill: var(--accent); opacity: 1; }
+.ch-pt-down { fill: var(--seen); opacity: 1; }
+.ch-slice { transition: opacity .12s ease; cursor: pointer; }
+.ch-slice.is-dim { opacity: .28; }
+.ch-slice:focus { outline: none; }
+.ch-slice:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+/* Reserved height: without it the panel jumps every time a slice is hovered and the text length changes. */
+.detail { width: 100%; min-height: 52px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.detail b { display: block; font-size: 13px; }
+.detail-l { font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+
+/* ── Diverging emotions ──────────────────────────────────────────────────────────────────────────────
+   Heavy left, light right, around a real centre line — so the balance is a shape, not seven numbers to
+   compare. Blue and orange rather than red and green: this is a polarity, not a verdict on the reader. */
+.emo { display: grid; grid-template-columns: 22px 150px 1fr 1fr 44px; align-items: center; gap: 4px 8px; padding: 5px 0; }
+.emo-i { color: var(--ink-2); display: inline-flex; }
+.emo-n { font-size: 13px; }
+.emo-l, .emo-r { height: 14px; display: flex; }
+.emo-l { justify-content: flex-end; border-right: 2px solid var(--line); padding-right: 2px; }
+.emo-r { border-left: 2px solid var(--line); padding-left: 2px; margin-left: -2px; }
+.emo-l i { background: var(--seen); border-radius: 3px 0 0 3px; }
+.emo-r i { background: var(--accent); border-radius: 0 3px 3px 0; }
+.emo-v { font-family: var(--mono); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.emo-head { display: grid; grid-template-columns: 22px 150px 1fr 1fr 44px; gap: 8px; margin-bottom: 6px; }
+.emo-head b { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.emo-head .h-l { grid-column: 3; text-align: right; }
+.emo-head .h-r { grid-column: 4; }
+.method { display: grid; grid-template-columns: 46px 1fr; gap: 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.method:last-child { border-bottom: 0; }
+.method-v { font-family: var(--mono); font-size: 18px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.method b { font-size: 13px; font-weight: 600; display: block; }
+.method-h { font-size: 12px; color: var(--muted); }
+p { margin: 0 0 10px; }
+.lede { color: var(--ink-2); max-width: 64ch; }
+.mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em; color: var(--muted); }
+a { color: var(--seen); }
+.bar-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0 6px; }
+select, button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 7px 12px; cursor: pointer; }
+button:hover { border-color: var(--seen); }
+button:disabled { opacity: 0.6; cursor: default; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--seen); outline-offset: 2px; }
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.icon-btn { padding: 7px 10px; line-height: 1; font-size: 15px; }
+.identity { margin: 10px 0 20px; }
+.toast { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--ink); color: var(--ground);
+  padding: 18px 24px; border-radius: 12px; font-size: 15px; text-align: center; line-height: 1.5; cursor: pointer;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); z-index: 10; max-width: min(90vw, 480px); }
+.toast-error { background: var(--worse); }
+.toast-text { display: block; transition: opacity 0.35s ease, transform 0.35s ease; opacity: 1; transform: translateY(0); }
+.toast-text.is-changing { opacity: 0; transform: translateY(5px); }
+@media (prefers-reduced-motion: reduce) {
+  .toast-text { transition: none; }
+}
+.empty-card { border: 1.5px dashed var(--line); text-align: left; }
+.empty-card h2 { margin-top: 0; }
+.empty-card ol { max-width: 56ch; margin: 12px 0; color: var(--ink-2); padding-left: 20px; }
+.empty-card li { margin-bottom: 5px; }
+#note { color: var(--worse); font-size: 14px; margin: 12px 0 0; }
+.skeleton { display: flex; flex-direction: column; gap: 14px; }
+.skeleton[hidden] { display: none; }
+.skel { background: linear-gradient(100deg, var(--line) 30%, color-mix(in srgb, var(--line) 50%, var(--panel)) 50%, var(--line) 70%);
+  background-size: 300% 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius: 12px; }
+.skel-tile { height: 92px; }
+.skel-panel { height: 140px; }
+@keyframes shimmer { 0% { background-position: 150% 0; } 100% { background-position: -150% 0; } }
+#dash.busy { opacity: 0.55; pointer-events: none; transition: opacity 0.15s; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 10px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.tile-v { font-size: 27px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile-k { font-size: 13px; font-weight: 600; margin-top: 2px; }
+.tile-s { font-size: 12px; color: var(--muted); }
+.tile-d { font-family: var(--mono); font-size: 11px; margin-top: 6px; color: var(--muted); }
+.tile-d.better { color: var(--better); }
+.tile-d.worse { color: var(--worse); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.bar { background: color-mix(in srgb, var(--ink) 8%, transparent); border-radius: 4px; height: 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; }
+.r-low { background: var(--low); } .r-medium { background: var(--medium); } .r-high { background: var(--high); }
+.r-critical { background: var(--critical); } .r-seen { background: var(--seen); }
+.chip { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 99px; color: #fff; }
+.chip.r-low { background: var(--low); } .chip.r-medium { background: var(--medium); color: #3a2a00; }
+.chip.r-high { background: var(--high); color: #3a1200; } .chip.r-critical { background: var(--critical); }
+.risk { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.risk:last-child { border-bottom: 0; }
+.risk-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+/* Same mono face and weight the matrix prints its codes in, so the eye matches R9 here to R9 there. */
+.risk-c { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink-2);
+  background: color-mix(in srgb, var(--ink) 8%, transparent); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; }
+.risk-n { font-weight: 600; }
+.trend { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+.trend.worse { color: var(--worse); } .trend.better { color: var(--better); } .trend.flat { color: var(--muted); }
+.risk-s { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: auto; }
+.risk-e { font-size: 13px; color: var(--ink-2); margin-top: 7px; }
+.risk-m { font-size: 13px; color: var(--muted); margin-top: 2px; }
+#daily { display: flex; align-items: flex-end; gap: 4px; height: 130px; }
+.day { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 4px; }
+.day i { display: block; width: 100%; max-width: 46px; background: var(--seen); border-radius: 4px 4px 0 0; }
+.day span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.theme { display: grid; grid-template-columns: minmax(96px, 150px) 1fr 52px 62px; gap: 10px; align-items: center; padding: 5px 0; font-size: 13px; }
+.theme-n { color: var(--ink-2); }
+.theme-v { font-family: var(--mono); font-size: 12px; text-align: right; }
+.theme-l { font-size: 11px; color: var(--muted); }
+.signal { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.signal:last-child { border-bottom: 0; }
+.signal-l { font-size: 12px; }
+.signal-n { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.signal-v { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.signal-m { color: var(--ink-2); }
+.signal-t { color: var(--muted); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+.sub { font-size: 13px; font-weight: 600; margin: 0 0 10px; color: var(--ink-2); }
+.heat { display: grid; grid-template-columns: 34px repeat(24, 1fr); gap: 2px; align-items: center; }
+.heat .h { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: center; }
+.heat .wd { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.heat .cell { aspect-ratio: 1; border-radius: 3px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.item:last-child { border-bottom: 0; }
+.item b { font-weight: 600; }
+.item .n { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.item .m { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.item .bar { grid-column: 1 / -1; margin-top: 3px; }
+.pgroup { margin-bottom: 14px; }
+.pgroup:last-child { margin-bottom: 0; }
+.prow { display: grid; grid-template-columns: minmax(120px, 210px) 1fr 44px; gap: 10px; align-items: center; font-size: 13px; padding: 4px 0; }
+.prow .v { font-family: var(--mono); font-size: 12px; text-align: right; }
+.prow .was { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink-2); opacity: .55; }
+.track { position: relative; }
+/* The two named themes under the bar chart. A left rail rather than a full card border, so they read as a
+   footnote to the chart above them instead of competing with it for weight. */
+.hls { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 12px; }
+.hl { display: grid; gap: 2px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; border-left-width: 3px; }
+.hl-up { border-left-color: var(--accent); }
+.hl-down { border-left-color: var(--muted); }
+.hl-care { border-left-color: var(--c5); }
+.hl-flat { border-left-color: var(--line); }
+.hl-k { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.hl-n { font-size: 17px; font-weight: 600; }
+.hl-s { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.hl-w { font-size: 12px; color: var(--muted); }
+footer { margin-top: 42px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+@media (max-width: 620px) {
+  .theme { grid-template-columns: 96px 1fr 50px; }
+  .theme-l { display: none; }
+  .signal { grid-template-columns: 1fr; }
+  /* The two-up chart rows collapse rather than squeezing an SVG below the width its labels need. */
+  .cols.cols-donut, .cols.cols-matrix, .cols.cols-radar { grid-template-columns: 1fr; }
+  .sec-h { font-size: 20px; }
+  .hero-h { font-size: 26px; }
+  /* Emotion rows keep the centre line but give up the fixed label column, which is what breaks first. */
+  .emo, .emo-head { grid-template-columns: 20px 104px 1fr 1fr 38px; }
+  .emo-n { font-size: 12px; }
+}
+@media (max-width: 480px) {
+  .top { flex-direction: column; }
+  .top-actions { align-self: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+  .skel { animation: none; background: var(--line); }
+}
+.legend-note { width: 100%; margin: 10px 0 0; line-height: 1.45; text-transform: none; letter-spacing: 0; }
+/* Subtopic chips sit under their theme's bar, indented to the bar's own column so the hierarchy is spatial
+   rather than stated. Muted by default: they are a qualification of the number above, not a rival to it. */
+.subs { display: flex; flex-wrap: wrap; gap: 5px; margin: -2px 0 9px 116px; }
+.sub-chip { display: inline-flex; align-items: baseline; gap: 5px; font-size: 11px; color: var(--ink-2);
+  background: color-mix(in srgb, var(--ink) 5%, transparent); border-radius: 5px; padding: 2px 7px; }
+.sub-chip b { font-weight: 500; }
+.sub-chip span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+@media (max-width: 620px) { .subs { margin-left: 96px; } }
+
+/* ── Slice hover card ────────────────────────────────────────────────────────────────────────────────
+   The subtopics used to live in a fixed block under the donut, which meant the answer to "what is inside
+   this slice" sat a long way from the slice, and reserving height for it padded the panel whether or not
+   anything was hovered. It follows the pointer now. Pointer-events stay off so the card can never sit
+   between the cursor and the slice it describes — that is what makes a donut flicker on hover. */
+.tipcard {
+  position: fixed; z-index: 40; max-width: 280px; pointer-events: none;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  font-size: 12px; line-height: 1.45;
+  opacity: 0; transform: translateY(4px); transition: opacity .12s ease, transform .12s ease;
+}
+.tipcard.is-on { opacity: 1; transform: translateY(0); }
+.tipcard-h { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.tipcard-h i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.tipcard-h b { font-size: 13px; }
+.tipcard-v { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: auto; }
+.tipcard-sub { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+.tipcard-sub span:last-child { font-family: var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tipcard-note { color: var(--ink-2); }
+/* Keyboard focus can't follow a pointer, so a tabbed slice anchors the card under the chart instead. */
+.tipcard.is-anchored { position: absolute; }
+@media (prefers-reduced-motion: reduce) { .tipcard { transition: none; } }
+
+/* ── Profile of the week ─────────────────────────────────────────────────────────────────────────── */
+.pow { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
+  border-left: 4px solid var(--accent); background: var(--panel); border: 1px solid var(--line);
+  border-left: 4px solid var(--accent); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+.pow-mark { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel)); color: var(--accent);
+  font-family: var(--cond); font-size: 22px; font-weight: 700; }
+.pow-body { flex: 1 1 240px; min-width: 0; }
+.pow-h { font-family: var(--cond); font-size: 22px; font-weight: 700; line-height: 1.15; margin: 0; word-break: break-word; }
+.pow-why { font-size: 13px; color: var(--ink-2); margin: 4px 0 0; }
+.pow-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pow-stat { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 99px;
+  border: 1px solid var(--line); color: var(--ink-2); }
+.pow-stat b { color: var(--ink); font-weight: 600; }
+
+/* ── Network preview ─────────────────────────────────────────────────────────────────────────────── */
+.netprev { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.netprev-svg { flex: 0 0 auto; }
+.netprev-body { flex: 1 1 220px; min-width: 0; }
+.netprev .ch-ring { opacity: .55; }
+.np-dot { stroke: var(--panel); stroke-width: 1; }
+.np-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 10px 0 0; padding: 0; list-style: none; }
+.np-legend li { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.np-legend i { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Belonging ───────────────────────────────────────────────────────────────────────────────────────
+   Four rows that must not look like four equal measurements, because two of them are not measurements at
+   all. The status chip and the dashed border on an unmeasured row carry that difference without relying on
+   the reader noticing an empty score. */
+.bel { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--panel); margin-bottom: 10px; }
+.bel.is-absent { border-style: dashed; background: color-mix(in srgb, var(--ink) 2%, var(--panel)); }
+.bel-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.bel-n { font-family: var(--cond); font-size: 19px; font-weight: 700; }
+.bel-chip { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.bel-chip.is-measured { color: var(--better); border-color: color-mix(in srgb, var(--better) 45%, var(--line)); }
+.bel-chip.is-proxy { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.bel-score { margin-left: auto; font-family: var(--mono); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bel-score.is-none { font-size: 13px; color: var(--muted); font-weight: 400; }
+.bel-track { height: 6px; border-radius: 99px; margin: 10px 0 8px; overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.bel-track i { display: block; height: 100%; border-radius: 99px; background: var(--seen); }
+.bel-track.is-proxy i { background: var(--accent); }
+.bel-head { font-size: 14px; font-weight: 600; margin: 0 0 4px; }
+.bel-m { font-size: 13px; color: var(--ink-2); margin: 0 0 6px; }
+.bel-ev { font-family: var(--mono); font-size: 11.5px; color: var(--muted); word-break: break-word; }
+.bel-need { font-size: 12.5px; color: var(--ink-2); margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--line); }
+.bel-need b { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); display: block; margin-bottom: 3px; font-weight: 500; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Instagram Insights</h1>
+      <p class="lede">Read straight from your own Sheet and Drive folder. Nothing to drop, nothing to upload.</p>
+    </div>
+    <div class="top-actions">
+      <button id="theme" type="button" class="icon-btn" title="Switch light/dark" aria-label="Switch light or dark theme">◐</button>
+      <button id="mode" type="button" title="Switch between weekly and monthly buckets">Weekly</button>
+      <button id="refresh" type="button" title="Checks Drive right now. Doesn't reload this page — after a code update, reload the tab first.">Check Drive now</button>
+    </div>
+  </header>
+  <p id="identity" class="mono identity"></p>
+  <div id="toast" class="toast" hidden><span id="toast-text" class="toast-text"></span></div>
+
+  <div id="skeleton" class="skeleton" hidden aria-hidden="true">
+    <div class="tiles">
+      <div class="skel skel-tile"></div><div class="skel skel-tile"></div><div class="skel skel-tile"></div>
+      <div class="skel skel-tile"></div><div class="skel skel-tile"></div><div class="skel skel-tile"></div>
+    </div>
+    <div class="skel skel-panel"></div>
+    <div class="skel skel-panel"></div>
+  </div>
+
+  <div id="empty" hidden>
+    <div class="panel empty-card">
+      <h2>Waiting for your first export</h2>
+      <ol>
+        <li>Drop an Instagram export (the .zip, HTML format) into the <a id="folder-link" href="#" target="_blank">Instagram Exports</a> Drive folder.</li>
+        <li>It's picked up automatically within a day, or right away from the Sheet's <b>Instagram Insights → Process new exports now</b> menu.</li>
+      </ol>
+      <button id="check-empty" type="button">Check now</button>
+      <p id="note" hidden></p>
+    </div>
+  </div>
+
+  <div id="dash" hidden>
+    <div class="bar-row">
+      <select id="month" aria-label="Period"></select>
+      <span id="period" class="mono"></span>
+    </div>
+    <p id="note2" hidden></p>
+
+    <!-- The hero states the bucket and how much of it is actually covered, before any chart argues anything.
+         Numbering below is not decoration: the sections run feed → time → people → self → risk, which is the
+         order the evidence builds in, and each number is a step in that argument. -->
+    <section class="hero" id="hero">
+      <div class="hero-main">
+        <span class="eyebrow" id="hero-eyebrow"></span>
+        <h2 class="hero-h" id="hero-title"></h2>
+        <p class="hero-sub" id="hero-sub"></p>
+      </div>
+      <div class="hero-cov">
+        <div class="cov-track"><i id="cov-fill"></i></div>
+        <span class="mono" id="cov-label"></span>
+      </div>
+    </section>
+
+    <div class="tiles" id="tiles"></div>
+
+    <section class="sec" id="sec-feed">
+      <h2 class="sec-h"><span class="sec-n">01</span><span class="sec-i" data-icon="feed"></span>What the feed showed you</h2>
+      <div class="cols cols-donut">
+        <div class="panel panel-centre"><div id="theme-donut"></div><div class="legend" id="theme-legend"></div></div>
+        <div class="panel" id="themes"></div>
+      </div>
+      <div class="hls" id="theme-highlights"></div>
+      <div class="panel panel-centre" id="sec-slope"><h3 class="sub">Movement since the bucket before · above the line grew, below it shrank</h3><div id="theme-slope"></div></div>
+    </section>
+
+    <section class="sec" id="sec-time">
+      <h2 class="sec-h"><span class="sec-n">02</span><span class="sec-i" data-icon="clock"></span>When it took your time</h2>
+      <div class="panel">
+        <h3 class="sub">Minutes per day, in the window Instagram kept</h3>
+        <div id="daily"></div>
+        <p id="daily-note" class="mono" style="margin-top:10px"></p>
+      </div>
+      <div class="panel" id="sec-hours">
+        <h3 class="sub">Hour by hour</h3>
+        <div id="hours"></div>
+        <p id="hours-note" class="mono" style="margin-top:10px"></p>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-people">
+      <h2 class="sec-h"><span class="sec-n">03</span><span class="sec-i" data-icon="users"></span>Who filled it</h2>
+      <div class="pow" id="pow" hidden></div>
+      <div class="cols">
+        <div class="panel">
+          <h3 class="sub">Most seen</h3>
+          <div id="top"></div>
+        </div>
+        <div class="panel" id="sec-quiet">
+          <h3 class="sub">Quiet interests · seen often, never liked or searched</h3>
+          <div id="quiet"></div>
+        </div>
+      </div>
+      <div class="panel" id="sec-netprev" hidden>
+        <h3 class="sub">Your network, in miniature</h3>
+        <div class="netprev">
+          <div class="netprev-svg" id="netprev"></div>
+          <div class="netprev-body">
+            <p class="bel-m" id="netprev-say"></p>
+            <ul class="np-legend" id="netprev-legend"></ul>
+            <p style="margin-top:12px"><a id="netprev-link" href="#" target="_blank">Open the full network view →</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-feeling">
+      <h2 class="sec-h"><span class="sec-n">04</span><span class="sec-i" data-icon="pulse"></span>How it felt</h2>
+      <div class="panel">
+        <h3 class="sub">Emotional tone of the captions you were shown · items per 100 seen</h3>
+        <div id="emotions"></div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-profile">
+      <h2 class="sec-h"><span class="sec-n">05</span><span class="sec-i" data-icon="person"></span>Who it thinks you are</h2>
+      <div class="cols cols-radar">
+        <div class="panel panel-centre"><h3 class="sub">Personality · Big Five proxy</h3><div id="radar-big5"></div></div>
+        <div class="panel panel-centre"><h3 class="sub">What it feeds · desire proxies</h3><div id="radar-desire"></div></div>
+      </div>
+      <div class="panel" id="profile"></div>
+    </section>
+
+    <section class="sec" id="sec-belonging" hidden>
+      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="users"></span>Whether you belong</h2>
+      <p class="lede" style="margin-bottom:14px">Four things belonging is made of. An Instagram export can
+        speak to two of them and is silent on the other two — those rows say so rather than being dropped,
+        because a missing row reads as nothing to report, which is the opposite of what is true.</p>
+      <div id="belonging"></div>
+      <div class="panel" id="bel-needs">
+        <h3 class="sub">What would make this measurable</h3>
+        <div id="bel-needs-list"></div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-risks">
+      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="alert"></span>Where the friction is</h2>
+      <div class="cols cols-matrix">
+        <div class="panel panel-centre"><div id="risk-matrix"></div></div>
+        <div class="panel" id="risks"></div>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-signals">
+      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="search"></span>What to watch</h2>
+      <div class="panel" id="signals"></div>
+    </section>
+
+    <p id="week-note" class="mono" hidden></p>
+
+    <footer>
+      <p id="log" class="mono"></p>
+      <p>Read live from your Sheet, which the daily check and Check Drive now both keep current. Estimated minutes are a floor built from Instagram's own timestamps, and themes come from keyword rules, not from a judgement about you. <a id="network-link" href="#" target="_blank">Open the network view →</a></p>
+    </footer>
+  </div>
+</div>
+
+<div id="tipcard" class="tipcard" role="status" aria-live="polite"></div>
+
+<script>
+// SVG chart primitives and line icons for the dashboard. Deliberately dependency-free: a CDN <script> would
+// mean the browser announcing to a third party every time this page is opened, which is a strange trade for a
+// tool whose whole claim is that nothing leaves your own Google account. Everything here is a few hundred
+// lines of path arithmetic, and it inherits the page's CSS variables, which a canvas library could not.
+//
+// Every shape takes its colour from `currentColor` or an explicit CSS custom property, so light and dark mode
+// are handled by the same tokens the rest of the page uses — no second palette, no theme-switching code here.
+var CH = (function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function n(tag, attrs, kids) {
+    var node = document.createElementNS(NS, tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'text') node.textContent = attrs[k];
+      else node.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { node.appendChild(c); });
+    return node;
+  }
+
+  /** A root <svg> that scales to its container and keeps its aspect ratio. */
+  function root(vbW, vbH, cls) {
+    return n('svg', {
+      viewBox: '0 0 ' + vbW + ' ' + vbH,
+      class: 'ch ' + (cls || ''),
+      preserveAspectRatio: 'xMidYMid meet',
+      role: 'img',
+    });
+  }
+
+  /** Splits a long axis label into at most two lines, so radar labels never overrun the viewBox. */
+  function wrap(label, per) {
+    var words = String(label).split(/\s+/);
+    var lines = [''];
+    words.forEach(function (w) {
+      var line = lines[lines.length - 1];
+      if (!line) lines[lines.length - 1] = w;
+      else if ((line + ' ' + w).length <= per) lines[lines.length - 1] = line + ' ' + w;
+      else lines.push(w);
+    });
+    return lines.slice(0, 2);
+  }
+
+  // ── Radar ────────────────────────────────────────────────────────────────────────────────────────────
+  // Honest only when every axis shares one scale, which is why it is used for the 0–100 proxies and nothing
+  // else. Rings are labelled so the reader can tell 40 from 80 without counting, and each vertex carries a
+  // dot — a bare polygon makes it too easy to misread where an axis actually lands.
+  function radar(axes, opts) {
+    opts = opts || {};
+    var max = opts.max || 100;
+    // Wide enough for the longest axis label to sit outside the polygon without leaving the viewBox:
+    // "Conscientiousness" is one unbreakable 17-character word, and at 9.5px it needs ~81px of run-out
+    // from the right-hand vertex. Sizing to the text rather than to the shape is what stops it clipping.
+    var W = 380, H = 290, cx = 190, cy = 142, r = 92;
+    var svg = root(W, H, 'ch-radar');
+    var count = axes.length;
+    var angle = function (i) { return (Math.PI * 2 * i) / count - Math.PI / 2; };
+    var at = function (i, frac) {
+      return [cx + Math.cos(angle(i)) * r * frac, cy + Math.sin(angle(i)) * r * frac];
+    };
+
+    [0.25, 0.5, 0.75, 1].forEach(function (frac) {
+      var pts = axes.map(function (_, i) { return at(i, frac).join(','); }).join(' ');
+      svg.appendChild(n('polygon', { points: pts, class: 'ch-ring' }));
+    });
+    // Ticks sit on the due-left radius, not the vertical: an axis always starts at the top, so a tick placed
+    // there lands underneath the first axis label and its value — "Openness 86" with "100" printed through it.
+    // Due left is free for both the 5- and 6-axis cases (no vertex falls at 180°), which is why it is used.
+    [0.5, 1].forEach(function (frac) {
+      svg.appendChild(n('text', {
+        x: cx - r * frac, y: cy + 3, class: 'ch-tick', 'text-anchor': 'middle',
+        text: String(Math.round(max * frac)),
+      }));
+    });
+
+    axes.forEach(function (_, i) {
+      var p = at(i, 1);
+      svg.appendChild(n('line', { x1: cx, y1: cy, x2: p[0], y2: p[1], class: 'ch-spoke' }));
+    });
+
+    var poly = axes.map(function (a, i) { return at(i, Math.max(0, Math.min(1, a.value / max))).join(','); }).join(' ');
+    svg.appendChild(n('polygon', { points: poly, class: 'ch-area' }));
+    axes.forEach(function (a, i) {
+      var p = at(i, Math.max(0, Math.min(1, a.value / max)));
+      svg.appendChild(n('circle', { cx: p[0], cy: p[1], r: 3.5, class: 'ch-dot' }));
+    });
+
+    axes.forEach(function (a, i) {
+      var p = at(i, 1.17);
+      var ang = angle(i);
+      var anchor = Math.abs(Math.cos(ang)) < 0.3 ? 'middle' : (Math.cos(ang) > 0 ? 'start' : 'end');
+      var lines = wrap(a.label, 13);
+      var t = n('text', { x: p[0], y: p[1] - (lines.length - 1) * 5, class: 'ch-axis', 'text-anchor': anchor });
+      lines.forEach(function (line, k) {
+        t.appendChild(n('tspan', { x: p[0], dy: k ? 11 : 0, text: line }));
+      });
+      t.appendChild(n('tspan', { x: p[0], dy: 12, class: 'ch-axis-v', text: String(Math.round(a.value)) }));
+      svg.appendChild(t);
+    });
+    return svg;
+  }
+
+  // ── Risk matrix ──────────────────────────────────────────────────────────────────────────────────────
+  // Likelihood × impact, both 1–5, so position carries the meaning that a bar chart of scores throws away:
+  // 5×1 and 1×5 share a score of 5 and are completely different problems. Several risks routinely land in the
+  // same cell, so a cell holds their codes rather than one dot hiding four others.
+  function matrix(cells, opts) {
+    opts = opts || {};
+    var W = 330, H = 300, pad = 42, size = (W - pad - 14) / 5;
+    var svg = root(W, H, 'ch-matrix');
+    var band = function (score) {
+      return score >= 15 ? 'critical' : score >= 10 ? 'high' : score >= 5 ? 'medium' : 'low';
+    };
+    for (var L = 1; L <= 5; L++) {
+      for (var I = 1; I <= 5; I++) {
+        var x = pad + (L - 1) * size;
+        var y = pad + (5 - I) * size;
+        svg.appendChild(n('rect', {
+          x: x, y: y, width: size - 2, height: size - 2, rx: 3,
+          class: 'ch-cell ch-cell-' + band(L * I),
+        }));
+      }
+    }
+    cells.forEach(function (c) {
+      var x = pad + (c.likelihood - 1) * size;
+      var y = pad + (5 - c.impact) * size;
+      var codes = c.codes;
+      var perRow = codes.length > 2 ? 2 : codes.length;
+      codes.forEach(function (code, k) {
+        var col = k % perRow, row = Math.floor(k / perRow);
+        var rows = Math.ceil(codes.length / perRow);
+        svg.appendChild(n('text', {
+          x: x + (size - 2) * (col + 0.5) / perRow,
+          y: y + (size - 2) * (row + 0.5) / rows + 4,
+          class: 'ch-code', 'text-anchor': 'middle', text: code,
+        }));
+      });
+    });
+    for (var t = 1; t <= 5; t++) {
+      svg.appendChild(n('text', { x: pad + (t - 0.5) * size - 1, y: H - 20, class: 'ch-tick', 'text-anchor': 'middle', text: String(t) }));
+      svg.appendChild(n('text', { x: pad - 8, y: pad + (5 - t) * size + size / 2, class: 'ch-tick', 'text-anchor': 'end', text: String(t) }));
+    }
+    svg.appendChild(n('text', { x: pad + size * 2.5, y: H - 6, class: 'ch-axis', 'text-anchor': 'middle', text: 'Likelihood →' }));
+    svg.appendChild(n('text', {
+      x: 12, y: pad + size * 2.5, class: 'ch-axis', 'text-anchor': 'middle',
+      transform: 'rotate(-90 12 ' + (pad + size * 2.5) + ')', text: 'Impact →',
+    }));
+    return svg;
+  }
+
+  // ── Donut ────────────────────────────────────────────────────────────────────────────────────────────
+  // Composition of one whole, capped at six named slices plus Other — past that, a categorical palette stops
+  // being distinguishable and the chart starts lying about how separable the parts are.
+  function donut(slices, opts) {
+    opts = opts || {};
+    var W = 210, H = 210, cx = 105, cy = 105, rOuter = 92, rInner = 58;
+    var svg = root(W, H, 'ch-donut');
+    var total = slices.reduce(function (s, x) { return s + x.value; }, 0) || 1;
+    var a0 = -Math.PI / 2;
+    var paths = [];
+    slices.forEach(function (s, i) {
+      var sweep = (s.value / total) * Math.PI * 2;
+      // A slice at or above half the circle needs the large-arc flag, or the path renders inside out.
+      var large = sweep > Math.PI ? 1 : 0;
+      var a1 = a0 + sweep;
+      var p = function (a, r) { return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+      var o0 = p(a0, rOuter), o1 = p(a1, rOuter), i1 = p(a1, rInner), i0 = p(a0, rInner);
+      var seg = n('path', {
+        d: 'M' + o0 + 'A' + rOuter + ',' + rOuter + ' 0 ' + large + ' 1 ' + o1
+          + 'L' + i1 + 'A' + rInner + ',' + rInner + ' 0 ' + large + ' 0 ' + i0 + 'Z',
+        fill: s.color, class: 'ch-slice', tabindex: '0', role: 'button',
+        'aria-label': s.label + ', ' + Math.round(100 * s.value / total) + ' percent',
+      });
+      paths.push(seg);
+      svg.appendChild(seg);
+      a0 = a1;
+    });
+
+    var centreV = n('text', { x: cx, y: cy - 4, class: 'ch-centre-v', 'text-anchor': 'middle', text: opts.centre || '' });
+    var centreK = n('text', { x: cx, y: cy + 14, class: 'ch-centre-k', 'text-anchor': 'middle', text: opts.centreLabel || '' });
+    svg.appendChild(centreV);
+    svg.appendChild(centreK);
+
+    // Hover and keyboard focus drive the same handler, so the detail this chart reveals is reachable without
+    // a pointer. Dimming the others rather than brightening the hovered one keeps the highlighted slice at
+    // exactly the colour the legend shows it in — a highlight that changes the hue would break that match.
+    if (opts.onPick) {
+      // onPick receives the slice and, when a pointer drove the pick, where that pointer was — which is what
+      // lets the caller put a hover card next to the slice instead of in a fixed block under the chart.
+      // A keyboard pick passes no position on purpose: there is no cursor to sit beside, so the caller
+      // anchors the card instead of dropping it wherever the mouse was last left.
+      var pick = function (i, evt) {
+        paths.forEach(function (p, k) { p.classList.toggle('is-dim', i !== null && k !== i); });
+        if (i === null) { centreV.textContent = opts.centre || ''; centreK.textContent = opts.centreLabel || ''; }
+        else {
+          centreV.textContent = Math.round(100 * slices[i].value / total) + '%';
+          centreK.textContent = String(slices[i].label).toUpperCase().slice(0, 18);
+        }
+        opts.onPick(i === null ? null : slices[i], evt || null);
+      };
+      paths.forEach(function (p, i) {
+        p.addEventListener('mouseenter', function (e) { pick(i, e); });
+        // Without this the card is placed once on entry and then stays put while the pointer travels the
+        // width of the slice, which on the big slices means it ends up a long way from the cursor.
+        p.addEventListener('mousemove', function (e) { if (opts.onMove) opts.onMove(slices[i], e); });
+        p.addEventListener('focus', function () { pick(i, null); });
+        p.addEventListener('click', function (e) { pick(i, e); });
+      });
+      svg.addEventListener('mouseleave', function () { pick(null); });
+      svg.addEventListener('focusout', function (e) {
+        if (!svg.contains(e.relatedTarget)) pick(null);
+      });
+    }
+    return svg;
+  }
+
+  // ── Scatter ──────────────────────────────────────────────────────────────────────────────────────────
+  // Before on x, after on y, with the line y = x drawn through it. Every point's side of that diagonal says
+  // whether it grew or shrank and its distance says by how much, which a slope chart can only show by making
+  // the reader trace thirteen crossing lines. The diagonal is the chart: without it this is just a cloud.
+  function scatter(points, opts) {
+    opts = opts || {};
+    var W = 420, H = 380, pad = 48, plot = W - pad - 22;
+    var svg = root(W, H, 'ch-scatter');
+    var max = Math.max.apply(null, points.map(function (p) { return Math.max(p.x, p.y); })) || 1;
+    max = Math.ceil(max * 100 / 5) * 5 / 100; // round the axis up to a whole 5 percentage points
+    var X = function (v) { return pad + (v / max) * plot; };
+    var Y = function (v) { return (H - pad) - (v / max) * (H - pad - 22); };
+
+    [0.25, 0.5, 0.75, 1].forEach(function (f) {
+      svg.appendChild(n('line', { x1: X(max * f), y1: 22, x2: X(max * f), y2: H - pad, class: 'ch-ring' }));
+      svg.appendChild(n('line', { x1: pad, y1: Y(max * f), x2: X(max), y2: Y(max * f), class: 'ch-ring' }));
+      svg.appendChild(n('text', { x: X(max * f), y: H - pad + 14, class: 'ch-tick', 'text-anchor': 'middle', text: (100 * max * f).toFixed(0) + '%' }));
+      svg.appendChild(n('text', { x: pad - 6, y: Y(max * f) + 3, class: 'ch-tick', 'text-anchor': 'end', text: (100 * max * f).toFixed(0) + '%' }));
+    });
+    svg.appendChild(n('line', { x1: X(0), y1: Y(0), x2: X(max), y2: Y(max), class: 'ch-diag' }));
+    svg.appendChild(n('text', { x: X(max) - 4, y: Y(max) + 14, class: 'ch-tick', 'text-anchor': 'end', text: 'no change' }));
+
+    points.forEach(function (p) {
+      var cls = 'ch-pt' + (p.highlight ? ' ch-pt-' + p.highlight : '');
+      svg.appendChild(n('circle', { cx: X(p.x), cy: Y(p.y), r: p.highlight ? 6 : 4, class: cls }));
+      // Only the named movers are labelled. Thirteen labels on thirteen points is a word cloud, not a chart;
+      // the unlabelled dots still carry the distribution, which is what they are there for.
+      if (p.highlight) {
+        svg.appendChild(n('text', {
+          x: X(p.x) + 9, y: Y(p.y) - 7, class: 'ch-slope-l', text: p.label,
+        }));
+      }
+    });
+    svg.appendChild(n('text', { x: pad + plot / 2, y: H - 8, class: 'ch-axis', 'text-anchor': 'middle', text: opts.xLabel || 'before' }));
+    svg.appendChild(n('text', {
+      x: 12, y: (H - pad) / 2, class: 'ch-axis', 'text-anchor': 'middle',
+      transform: 'rotate(-90 12 ' + ((H - pad) / 2) + ')', text: opts.yLabel || 'after',
+    }));
+    return svg;
+  }
+
+  // ── Slope ────────────────────────────────────────────────────────────────────────────────────────────
+  // Two moments, one line each: the form that makes "which of these moved" a shape rather than a subtraction
+  // the reader has to perform. Only the named movers are drawn in colour; everything else recedes.
+  function slope(items, opts) {
+    opts = opts || {};
+    // Sized for a full-width panel. An SVG scales its type with its box, so a narrow viewBox stretched across
+    // 900px renders 10px labels at 24px; authoring the box near its real display width keeps the text honest
+    // and gives the lines room to actually cross, which is the whole point of the form.
+    // The left gutter fits the longest theme name ("Psychology & Relationships") without clipping.
+    var W = 760, H = 320, left = 200, right = W - 108, top = 28, bottom = H - 34;
+    var svg = root(W, H, 'ch-slope');
+    var max = Math.max.apply(null, items.map(function (i) { return Math.max(i.from, i.to); })) || 1;
+    var y = function (v) { return bottom - (v / max) * (bottom - top); };
+    [left, right].forEach(function (x) {
+      svg.appendChild(n('line', { x1: x, y1: top - 8, x2: x, y2: bottom + 6, class: 'ch-spoke' }));
+    });
+    items.forEach(function (it) {
+      var cls = 'ch-line' + (it.highlight ? ' ch-line-' + it.highlight : '');
+      svg.appendChild(n('line', { x1: left, y1: y(it.from), x2: right, y2: y(it.to), class: cls }));
+      svg.appendChild(n('circle', { cx: left, cy: y(it.from), r: it.highlight ? 4 : 2.5, class: cls }));
+      svg.appendChild(n('circle', { cx: right, cy: y(it.to), r: it.highlight ? 4 : 2.5, class: cls }));
+      if (it.highlight) {
+        svg.appendChild(n('text', { x: left - 8, y: y(it.from) + 4, class: 'ch-slope-l', 'text-anchor': 'end', text: it.label }));
+        svg.appendChild(n('text', { x: right + 8, y: y(it.to) + 4, class: 'ch-slope-l', text: (100 * it.to).toFixed(1) + '%' }));
+      }
+    });
+    svg.appendChild(n('text', { x: left, y: bottom + 20, class: 'ch-tick', 'text-anchor': 'middle', text: opts.fromLabel || 'before' }));
+    svg.appendChild(n('text', { x: right, y: bottom + 20, class: 'ch-tick', 'text-anchor': 'middle', text: opts.toLabel || 'now' }));
+    return svg;
+  }
+
+  // ── Line icons ───────────────────────────────────────────────────────────────────────────────────────
+  // Monochrome, stroked, 24×24, drawn on one grid so they sit together as a set. They take their colour from
+  // the element around them, which is what keeps them legible in both themes without a second set of assets.
+  var ICONS = {
+    anxiety: 'M3 9c2-2 3 2 5 0s3 2 5 0 3 2 5 0M3 15c2-2 3 2 5 0s3 2 5 0 3 2 5 0',
+    sadness: 'M12 3c3 5 5 7.5 5 10a5 5 0 0 1-10 0c0-2.5 2-5 5-10z',
+    anger: 'M13 2 4 14h6l-1 8 9-12h-6z',
+    fear: 'M12 3 2 20h20zM12 10v4M12 17v.5',
+    hope: 'M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 12c0-3 2.5-5 6-5 0 3-2.5 5-6 5z',
+    joy: 'M12 3v2M4.2 6.2l1.4 1.4M21 12h-2M3 12h2M19.8 6.2l-1.4 1.4M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM10 13c.6.8 3.4.8 4 0',
+    love: 'M12 20S3.5 14.5 3.5 8.8A4.3 4.3 0 0 1 12 6.7a4.3 4.3 0 0 1 8.5 2.1C20.5 14.5 12 20 12 20z',
+    feed: 'M3 5h18v14H3zM3 10h18M8 10v9',
+    person: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-6 8-6s8 2 8 6',
+    pulse: 'M3 12h4l2-6 3 12 2.5-8 1.5 2h5',
+    clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3.5 2',
+    users: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5M17 5.2a3.5 3.5 0 0 1 0 6.6M18.5 14.4c2.1.7 3.5 2.2 3.5 4.4',
+    alert: 'M12 3 2 20h20zM12 9v5M12 17v.5',
+    search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3',
+    quiet: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM8.5 14c1.8-1.4 5.2-1.4 7 0M9 9.5v.5M15 9.5v.5',
+  };
+
+  function icon(name, size) {
+    var svg = root(24, 24, 'ch-icon');
+    svg.setAttribute('width', size || 20);
+    svg.setAttribute('height', size || 20);
+    svg.setAttribute('aria-hidden', 'true');
+    svg.appendChild(n('path', {
+      d: ICONS[name] || ICONS.feed,
+      fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+    }));
+    return svg;
+  }
+
+  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, icon: icon, icons: ICONS };
+}());
+
+</script>
+<script>
+// The dashboard UI. Data comes from the real Sheet, via google.script.run into Dashboard.gs — this file only
+// draws it. Every draw* function below only ever reads plain-object arrays from table(name); it has no idea
+// whether those came from a live server call, so the rendering logic never has to change when the data source does.
+(function () {
+  'use strict';
+
+  const TABLE_KEY = {
+    Monthly: 'months', Risks: 'risks', Daily: 'daily', Hourly: 'hourly', Themes: 'themes',
+    Top: 'top', 'Quiet interests': 'quiet', Profile: 'profile', Signals: 'signals', Log: 'log',
+    Weekly: 'weeks', 'Weekly themes': 'weeklyThemes', 'Weekly top': 'weeklyTop',
+    Subthemes: 'subthemes', 'Weekly subthemes': 'weeklySubthemes',
+    'Weekly risks': 'weeklyRisks', 'Weekly signals': 'weeklySignals', 'Weekly profile': 'weeklyProfile',
+    'Weekly quiet': 'weeklyQuiet', 'Weekly hourly': 'weeklyHourly',
+    Belonging: 'belonging', 'Weekly belonging': 'weeklyBelonging',
+  };
+  // Monthly tab name → its weekly twin. bucketTable() below picks between them off the current mode, so each
+  // draw* function names the monthly tab once and stays bucket-agnostic.
+  const WEEKLY_TWIN = {
+    Themes: 'Weekly themes', Subthemes: 'Weekly subthemes', Top: 'Weekly top', Risks: 'Weekly risks', Signals: 'Weekly signals',
+    Profile: 'Weekly profile', 'Quiet interests': 'Weekly quiet', Hourly: 'Weekly hourly',
+    Belonging: 'Weekly belonging',
+  };
+  const $ = sel => document.querySelector(sel);
+  const el = (tag, attrs, children) => {
+    const node = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(k => {
+      if (k === 'class') node.className = attrs[k];
+      else if (k === 'text') node.textContent = attrs[k];
+      else if (k === 'html') node.innerHTML = attrs[k];
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(c => node.appendChild(c));
+    return node;
+  };
+  const fmt = {
+    int: v => (v === '' || v === null || isNaN(v) ? '—' : Math.round(v).toLocaleString()),
+    one: v => (v === '' || v === null || isNaN(v) ? '—' : (+v).toFixed(1)),
+    pct: v => (v === '' || v === null || isNaN(v) ? '—' : (100 * +v).toFixed(1) + '%'),
+    month: m => {
+      const [y, mm] = String(m).split('-');
+      return new Date(Date.UTC(+y, +mm - 1, 1)).toLocaleString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    },
+    // "2026-W38" reads as the Monday it starts on, which is what anyone actually recognises a week by.
+    week: (key, start) => (start
+      ? 'Week of ' + new Date(start + 'T12:00:00Z').toLocaleString(undefined,
+        { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+      : String(key)),
+  };
+
+  /** How many real calendar days a named month ("2026-09") has. */
+  function daysInMonth(ym) {
+    const [y, m] = String(ym).split('-').map(Number);
+    return new Date(y, m, 0).getDate();
+  }
+
+  let payload = null;
+  let current = '';
+  // Weekly is the default: Instagram keeps about a week of view history, so a week is the window its data
+  // is actually shaped like, while a month has to be assembled out of several deliveries and sits partial
+  // until the last one lands.
+  let mode = 'week';
+  const isWeek = () => mode === 'week';
+  const bucketKey = () => (isWeek() ? 'Week' : 'Month');
+  const bucketRows = () => table(isWeek() ? 'Weekly' : 'Monthly');
+  let toastTimer = null;
+  let checkTimer = null;
+
+  // Shown one at a time, rotating, while a check is in flight — so "Refresh now" reads as doing
+  // something, not as having silently frozen. Long enough to reward actually reading them.
+  const CHECKING_PHRASES = [
+    'You didn’t watch the feed. The feed, as it turns out, was watching you — and taking excellent notes.',
+    'Meta already knows what you like, who you follow, and roughly when you’re awake. Counting it twice seems only fair.',
+    'Somewhere in Menlo Park, a spreadsheet grew a little happier each time you opened this app. We’re here to even the score.',
+    'Reading your exports. Sorting your months. Judging absolutely nothing — that part is still your job.',
+    'Every post counted. Every pause counted. Every “2am, just one more” — especially that one.',
+    'How many advertisers does it take to conclude you might want a new mattress? Forty-one, apparently, and still counting.',
+    'This won’t take forever. Probably. Instagram’s memory is longer than most marriages.',
+    'Your Drive folder has been very patient with you. Return the favor for a few more seconds.',
+    'Nothing builds character quite like learning exactly how many hours you handed to a rectangle.',
+    'Sifting a year of scrolling like a monk illuminating a manuscript — if the manuscript were mostly reels and regret.',
+    'Sorting the scroll, separating the signal from the sales pitch.',
+    'You never asked the algorithm what it thought of you. It’s about to tell you anyway.',
+    'Somewhere, an advertiser is grateful you exist. Somewhere else, so is this dashboard — for entirely different reasons.',
+    'Think of this as an audit conducted by the one auditor who isn’t secretly trying to sell you something.',
+    'Meta spent a year quietly learning your habits. This should take considerably less than a year to read back.',
+    'The feed decided what you’d see. You’re about to decide what it meant.',
+    'Nothing here ever leaves your own Google account — which already makes it more discreet than the app you’re auditing.',
+    'Checking for exports Meta left lying around outside the folder, the way it leaves everything else lying around, everywhere.',
+  ];
+
+  // If a check runs long enough for the first tier to feel repetitive, the copy stops being coy about the
+  // wait and starts making the wait itself the joke — a big export just genuinely takes longer to read
+  // honestly than a small one, and pretending otherwise would be the one dishonest number in this whole app.
+  const LONG_CHECK_PHRASES = [
+    'Still here. A year of scrolling doesn’t summarize itself in the time it takes to summarize a week — patience is the toll for thoroughness.',
+    'This is taking a moment, which is only fair: Instagram took considerably longer to collect all of it in the first place.',
+    'Somewhere between “almost done” and “actually done” lies most of software. At last check, we’re somewhere in that gap.',
+    'Good things come to those who wait. So, reportedly, does an honest risk index.',
+    'The bigger the export, the longer the count — the same arithmetic that made your feed feel endless is, for once, working in your favor.',
+    'Rome wasn’t built in a day, and apparently neither is an honest tally of your year on Instagram.',
+    'If this feels slow, consider: nobody made you scroll for a year, but someone is now reading all of it back to you, without complaint. Mostly.',
+    'Hang on a little longer — thoroughness and instant gratification were never going to be friends, and this dashboard chose thoroughness.',
+  ];
+  // How long a check runs before the copy stops being merely witty and starts being witty about the wait.
+  const LONG_CHECK_AFTER_MS = 17000;
+  // Mirrors CONFIG.MIN_TREND_COVERAGE in Code.gs. The server already applies it when choosing a baseline;
+  // the client needs it only to explain WHY a comparison is missing, never to compute one.
+  const MIN_TREND_COVERAGE = 0.5;
+
+  function table(name) {
+    const key = TABLE_KEY[name];
+    return (payload && payload[key]) || [];
+  }
+  /** Rows of a tab for the bucket currently selected, already filtered to it. */
+  function bucketTable(monthlyName) {
+    const name = isWeek() && WEEKLY_TWIN[monthlyName] ? WEEKLY_TWIN[monthlyName] : monthlyName;
+    return table(name).filter(r => r[bucketKey()] === current);
+  }
+  function note(message) {
+    document.querySelectorAll('#note, #note2').forEach(box => {
+      box.textContent = message;
+      box.hidden = !message;
+    });
+  }
+  const TOAST_HOLD_MS = 9000;
+  // Rotation is slow enough to actually read a full sentence, with a crossfade so one thought visibly
+  // leaves before the next arrives, instead of the text just snapping from one line to another.
+  const CHECKING_INTERVAL_MS = 4300;
+  const TOAST_FADE_MS = 350;
+  function setToastText(message) {
+    const label = $('#toast-text');
+    if (!label) { $('#toast').textContent = message; return; } // defensive: template out of sync
+    if (!label.textContent) { label.textContent = message; return; } // first show, nothing to fade from
+    label.classList.add('is-changing');
+    window.setTimeout(() => {
+      label.textContent = message;
+      label.classList.remove('is-changing');
+    }, TOAST_FADE_MS);
+  }
+  function toast(message, isError) {
+    const box = $('#toast');
+    box.hidden = false;
+    box.classList.toggle('toast-error', !!isError);
+    setToastText(message);
+    armToastTimer();
+  }
+  function armToastTimer() {
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $('#toast').hidden = true; }, TOAST_HOLD_MS);
+  }
+  function startChecking() {
+    const box = $('#toast');
+    clearTimeout(toastTimer);
+    box.classList.remove('toast-error');
+    box.hidden = false;
+    $('#toast-text').textContent = ''; // so the very first phrase of this run fades in too, not just appears
+    const startedAt = Date.now();
+    let i = Math.floor(Math.random() * CHECKING_PHRASES.length);
+    let j = Math.floor(Math.random() * LONG_CHECK_PHRASES.length);
+    const show = () => {
+      if (Date.now() - startedAt < LONG_CHECK_AFTER_MS) {
+        setToastText(CHECKING_PHRASES[i % CHECKING_PHRASES.length]);
+        i++;
+      } else {
+        // The wait outlasted the first tier's patience, not just the user's — from here the copy is about
+        // the wait itself instead of pretending this is still a quick check.
+        setToastText(LONG_CHECK_PHRASES[j % LONG_CHECK_PHRASES.length]);
+        j++;
+      }
+    };
+    show();
+    checkTimer = setInterval(show, CHECKING_INTERVAL_MS);
+  }
+  function stopChecking() {
+    clearInterval(checkTimer);
+    checkTimer = null;
+    $('#toast').hidden = true;
+  }
+
+  // ── Talking to the server ────────────────────────────────────────────────────
+  function callServer(fn) {
+    return new Promise((resolve, reject) => {
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        reject(new Error('This page only works when opened through its Apps Script web app URL, not as a local file.'));
+        return;
+      }
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn]();
+    });
+  }
+  const fetchPayload = () => callServer('getDashboardPayload');
+  const runCheck = () => callServer('checkForNewExports');
+
+  function setSkeleton(show) {
+    $('#skeleton').hidden = !show;
+    if (show) {
+      $('#empty').hidden = true;
+      $('#dash').hidden = true;
+    }
+  }
+  function setBusy(busy) {
+    $('#dash').classList.toggle('busy', busy);
+  }
+
+  function updateIdentity() {
+    const box = $('#identity');
+    box.innerHTML = '';
+    if (!payload) return;
+    box.appendChild(document.createTextNode(`Last checked ${payload.generatedAt}  ·  `));
+    box.appendChild(el('a', { href: payload.exportsFolderUrl, target: '_blank', text: 'Drive folder' }));
+    box.appendChild(document.createTextNode('  ·  '));
+    box.appendChild(el('a', { href: payload.sheetUrl, target: '_blank', text: 'Open Sheet' }));
+    const folderLink = $('#folder-link');
+    if (folderLink) folderLink.href = payload.exportsFolderUrl;
+    // Both entry points to the network view — the footer link and the preview's own — take the same URL.
+    ['#network-link', '#netprev-link'].forEach(sel => {
+      const a = $(sel);
+      if (a && payload.webAppUrl) a.href = payload.webAppUrl + '?view=network';
+    });
+  }
+
+  async function afterLoad() {
+    setSkeleton(false);
+    note('');
+    const months = bucketRows().map(r => r[bucketKey()]);
+    if (!months.includes(current)) current = months[months.length - 1] || '';
+    render();
+    updateIdentity();
+  }
+
+  async function init() {
+    setSkeleton(true);
+    startChecking();
+    try {
+      payload = await fetchPayload();
+      await afterLoad();
+    } catch (e) {
+      setSkeleton(false);
+      $('#empty').hidden = false;
+      $('#dash').hidden = true;
+      note('Could not load your dashboard: ' + e.message);
+    } finally {
+      stopChecking();
+    }
+    wireControls();
+  }
+
+  function strayText(stray) {
+    if (!stray) return '';
+    // The tidying is reported first, because it's the part that changed your Drive. Whether a delivery could
+    // then be read is a separate sentence - it never stops the delivery being filed.
+    const bits = [];
+    if (stray.moved) {
+      const what = stray.moved === 1 ? 'delivery' : 'deliveries';
+      bits.push(`Filed ${stray.moved} Meta ${what} into Instagram Exports.`);
+    }
+    if (stray.jsonFormat) {
+      const n = stray.jsonFormat === 1 ? 'One of them is' : `${stray.jsonFormat} of them are`;
+      bits.push(`${n} Meta's JSON export, which this can't read — request that month again from`
+        + ' Instagram choosing Format: HTML.');
+    }
+    if (stray.watching) bits.push(`${stray.watching} has nothing readable in it yet; Drive may still be filling it in.`);
+    if (!bits.length) return '';
+    if (stray.timedOut) bits.push('Stopped early on its time limit — it will carry on next check.');
+    return ' ' + bits.join(' ');
+  }
+
+  async function refreshNow() {
+    const btn = $('#refresh');
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Checking Drive…';
+    setBusy(true);
+    startChecking();
+    try {
+      const check = await runCheck();
+      payload = await fetchPayload();
+      await afterLoad();
+      stopChecking();
+      toast((check.busy ? 'Another check is already running — try again shortly.'
+        : check.processed > 0 ? `Processed ${check.processed} export${check.processed > 1 ? 's' : ''}.`
+        : 'No new exports.') + strayText(check.stray));
+    } catch (e) {
+      stopChecking();
+      toast('Could not check for new exports: ' + e.message, true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+      setBusy(false);
+    }
+  }
+
+  // ── Drawing ─────────────────────────────────────────────────────────────────
+  function render() {
+    const rows = bucketRows();
+    const key = bucketKey();
+    // Falling back matters on a first run: weeks only exist once an export has been processed under a build
+    // that writes them, so an older sheet has months and no weeks at all.
+    if (!rows.length && isWeek()) { mode = 'month'; return render(); }
+    $('#empty').hidden = rows.length > 0;
+    $('#dash').hidden = rows.length === 0;
+    $('#mode').textContent = isWeek() ? 'Weekly' : 'Monthly';
+    if (!rows.length) return;
+
+    if (!rows.some(r => r[key] === current)) current = rows[rows.length - 1][key];
+    const picker = $('#month');
+    picker.innerHTML = '';
+    rows.slice().reverse().forEach(r => picker.appendChild(el('option', {
+      value: r[key],
+      text: isWeek() ? fmt.week(r.Week, r['Week start']) : fmt.month(r.Month),
+    })));
+    picker.value = current;
+
+    const row = rows.find(r => r[key] === current);
+    const index = rows.findIndex(r => r[key] === current);
+    const before = index > 0 ? rows[index - 1] : null;
+    // Coverage is counted in days of viewing history, out of seven for a week and out of the calendar for a
+    // month — so the denominator follows whichever bucket is on screen.
+    const span = isWeek() ? 7 : daysInMonth(row.Month);
+    const coverage = row.Coverage;
+    const partial = coverage !== '' && coverage !== null && coverage !== undefined && +coverage < 1;
+    const coverageNote = partial
+      ? ` · ${Math.round(+coverage * span)} of ${span} days of viewing history`
+      : '';
+    $('#period').textContent = `${row['Period start']} → ${row['Period end']} · viewing window from ${row['View window start']}`
+      + ` · ${fmt.int(row['Items seen'])} items seen${coverageNote}`;
+
+    // Every section now has data in both buckets, so nothing is hidden by mode. What a week cannot give is
+    // confidence: risks, indicators and signals read seven days of evidence rather than thirty, and the first
+    // bucket of all has nothing behind it to compare against. Both facts are said out loud instead of being
+    // handled by hiding the sections, which is what left five of them blank before.
+    ['#sec-risks', '#sec-hours', '#sec-quiet', '#sec-profile', '#sec-signals'].forEach(sel => {
+      const n = $(sel);
+      if (n) n.hidden = false;
+    });
+    const weekNote = $('#week-note');
+    if (weekNote) {
+      weekNote.hidden = !isWeek();
+      weekNote.textContent = before
+        ? 'Risks, indicators and signals below are computed from this week alone and compared with the week '
+          + 'before. Seven days is thin evidence — read them as provisional, and switch to Monthly for the '
+          + 'steadier version.'
+        : 'This is the first week on record, so there is nothing yet to compare it against: risks, indicators '
+          + 'and signals below show levels without a trend.';
+    }
+
+    drawSectionIcons();
+    drawHero(row, coverage, span);
+    drawTiles(row, before);
+    drawThemeDonut();
+    drawThemes();
+    drawThemeHighlights(row, before);
+    drawThemeSlope(row, before);
+    drawAccounts();
+    drawProfileOfWeek();
+    drawNetworkPreview();
+    drawBelonging();
+    drawDaily();
+    drawEmotions();
+    drawRadars();
+    drawRiskMatrix();
+    drawRisks();
+    drawHours();
+    drawProfile();
+    drawSignals();
+    drawLog();
+  }
+
+  /** Section-heading icons, stamped once from the data-icon attribute the template carries. */
+  function drawSectionIcons() {
+    document.querySelectorAll('.sec-i[data-icon]').forEach(slot => {
+      if (slot.firstChild) return;
+      slot.appendChild(CH.icon(slot.getAttribute('data-icon'), 22));
+    });
+  }
+
+  function drawHero(row, coverage, span) {
+    const covered = coverage === '' || coverage === null || coverage === undefined ? null : +coverage;
+    $('#hero-eyebrow').textContent = isWeek() ? 'Week in review' : 'Month in review';
+    $('#hero-title').textContent = isWeek() ? fmt.week(row.Week, row['Week start']) : fmt.month(row.Month);
+    $('#hero-sub').textContent = `${fmt.int(row['Items seen'])} items seen · ${fmt.int(row['Distinct accounts'])} accounts`
+      + ` · ${fmt.int(row['Liked posts'])} liked`;
+    const fill = $('#cov-fill');
+    fill.style.width = covered === null ? '100%' : `${Math.round(100 * covered)}%`;
+    $('#cov-label').textContent = covered === null
+      ? 'viewing history complete'
+      : `${Math.round(covered * span)} of ${span} days of viewing history`;
+  }
+
+  // Every theme gets its own slice. The six largest take the categorical hues, in fixed assignment order.
+  // The rest do NOT get invented hues — six is where a categorical palette stops being separable, and an
+  // eighth and ninth hue would only look like information. They take steps of one ramp instead, light to
+  // dark, so the step encodes the theme's RANK rather than pretending to be an identity: the tail is sorted
+  // by size, so ramp and order agree by construction. Below the ramp's depth a theme still gets a slice and
+  // still gets its own hover card — it shares the last step, which is honest, because by then the slices are
+  // a fraction of a percent each and the card is what is actually being read.
+  const SERIES = ['--c1', '--c2', '--c3', '--c4', '--c5', '--c6'];
+  const TAIL = ['--t1', '--t2', '--t3', '--t4', '--t5', '--t6', '--t7'];
+  function themeSlices() {
+    const rows = bucketTable('Themes').filter(t => t.Theme !== 'Other' && t.Seen > 0)
+      .sort((a, b) => b.Seen - a.Seen);
+    const named = rows.map((t, i) => ({
+      label: t.Theme,
+      value: +t.Seen,
+      color: i < SERIES.length
+        ? `var(${SERIES[i]})`
+        : `var(${TAIL[Math.min(i - SERIES.length, TAIL.length - 1)]})`,
+      theme: t.Theme,
+      tail: i >= SERIES.length,
+      rank: i + 1,
+    }));
+    // Untagged is not a theme and never shares the themes' colours: it is the share no keyword rule reached,
+    // which is a fact about the rules rather than about the feed.
+    const other = bucketTable('Themes').find(t => t.Theme === 'Other');
+    if (other && +other.Seen > 0) {
+      named.push({ label: 'No theme matched', value: +other.Seen, color: 'var(--untagged)', untagged: true, rank: named.length + 1 });
+    }
+    return named;
+  }
+
+  /**
+   * The hover card. One node, reused: building it per slice would mean a new element on every mouseenter,
+   * and the card is the thing the reader looks at most in this section.
+   */
+  const tip = {
+    node: () => $('#tipcard'),
+    show(build, evt, anchorTo) {
+      const card = tip.node();
+      if (!card) return;
+      card.innerHTML = '';
+      build(card);
+      card.classList.add('is-on');
+      if (evt) {
+        card.classList.remove('is-anchored');
+        tip.place(evt);
+      } else if (anchorTo) {
+        // Keyboard: there is no pointer, so sit the card under the chart rather than wherever the mouse
+        // happens to have been left — which is usually off-screen or over a different section entirely.
+        const box = anchorTo.getBoundingClientRect();
+        card.classList.remove('is-anchored');
+        card.style.left = `${box.left}px`;
+        card.style.top = `${box.bottom + 8}px`;
+      }
+    },
+    place(evt) {
+      const card = tip.node();
+      if (!card) return;
+      const box = card.getBoundingClientRect();
+      const pad = 14;
+      // Flip rather than clamp near an edge: a clamped card sits under the cursor and the slice it is
+      // describing stops being hoverable, which reads as the chart flickering.
+      let x = evt.clientX + pad;
+      let y = evt.clientY + pad;
+      if (x + box.width > window.innerWidth - 8) x = evt.clientX - box.width - pad;
+      if (y + box.height > window.innerHeight - 8) y = evt.clientY - box.height - pad;
+      card.style.left = `${Math.max(8, x)}px`;
+      card.style.top = `${Math.max(8, y)}px`;
+    },
+    hide() {
+      const card = tip.node();
+      if (card) { card.classList.remove('is-on'); card.innerHTML = ''; }
+    },
+  };
+
+  /** What one theme slice reveals: its subtopics, or why it has none. */
+  function sliceCard(slice, total) {
+    const subs = bucketTable('Subthemes');
+    return card => {
+      card.appendChild(el('div', { class: 'tipcard-h' }, [
+        el('i', { style: `background:${slice.color}` }),
+        el('b', { text: slice.label }),
+        el('span', { class: 'tipcard-v', text: `${(100 * slice.value / total).toFixed(1)}%` }),
+      ]));
+      if (slice.untagged) {
+        card.appendChild(el('p', {
+          class: 'tipcard-note',
+          text: 'Items no keyword rule matched — about half of what Instagram logs carries no caption at '
+            + 'all. Add rules in the Settings tab to reach the ones that do.',
+        }));
+        return;
+      }
+      const mine = subs.filter(x => x.Theme === slice.theme).sort((a, b) => b.Seen - a.Seen).slice(0, 6);
+      if (!mine.length) {
+        card.appendChild(el('p', { class: 'tipcard-note', text: 'No subtopic rule matched inside this theme yet.' }));
+      } else {
+        mine.forEach(x => card.appendChild(el('div', { class: 'tipcard-sub' }, [
+          el('span', { text: x.Subtopic }),
+          el('span', { text: fmt.pct(x['Share of theme']) }),
+        ])));
+      }
+      card.appendChild(el('p', {
+        class: 'tipcard-note',
+        style: 'margin-top:6px',
+        text: `${fmt.int(slice.value)} theme tags · rank ${slice.rank}`,
+      }));
+    };
+  }
+
+  function drawThemeDonut() {
+    const box = $('#theme-donut');
+    const legend = $('#theme-legend');
+    if (!box) return;
+    box.innerHTML = '';
+    legend.innerHTML = '';
+    const slices = themeSlices();
+    if (!slices.length) return;
+    const total = slices.reduce((n, s) => n + s.value, 0);
+    // A donut asserts parts of one whole, and theme TAGS are that whole — items are not, because one post can
+    // carry two themes and be counted under both. Sizing the slices by tags and then labelling the middle
+    // "items seen" would put 651 next to a bar list saying 321, with the same theme reading 12% here and 25%
+    // there. The centre names what is actually being divided up, and the note below says why they differ.
+    const svg = CH.donut(slices, {
+      centre: fmt.int(total),
+      centreLabel: 'THEME TAGS',
+      onMove: (slice, evt) => tip.place(evt),
+      onPick: (slice, evt) => {
+        if (!slice) { tip.hide(); return; }
+        tip.show(sliceCard(slice, total), evt, box);
+      },
+    });
+    box.appendChild(svg);
+    // A card left open while the page scrolls away under it points at nothing.
+    window.addEventListener('scroll', tip.hide, { passive: true });
+    // Identity is never carried by colour alone: every slice is also named here, in the same order. With the
+    // tail disaggregated this list is now the chart's index — which is why it stays full-length rather than
+    // being trimmed to the hues that happen to be categorical.
+    slices.forEach(s => {
+      legend.appendChild(el('span', {}, [
+        el('i', { style: `background:${s.color}` }),
+        el('span', { text: `${s.label} · ${(100 * s.value / total).toFixed(0)}%` }),
+      ]));
+    });
+    legend.appendChild(el('p', {
+      class: 'mono legend-note',
+      text: 'Every theme is its own slice. The six largest carry the named colours; below those, the shade '
+        + 'steps with rank rather than standing for a theme. Share of theme tags, not of posts — a post about '
+        + 'AI at work carries both themes, so these percentages are smaller than the per-item shares beside them.',
+    }));
+  }
+
+  function drawThemeSlope(row, before) {
+    const sec = $('#sec-slope');
+    const box = $('#theme-slope');
+    if (!box) return;
+    box.innerHTML = '';
+    // A slope chart needs two moments. With only one bucket on record there is nothing to slope between,
+    // so the section goes away rather than drawing a flat line that implies stability nobody measured.
+    if (!before) { sec.hidden = true; return; }
+    sec.hidden = false;
+    const now = bucketTable('Themes').filter(t => t.Theme !== 'Other');
+    const prevRows = (isWeek() ? table('Weekly themes') : table('Themes'))
+      .filter(t => t[bucketKey()] === before[bucketKey()]);
+    const prevShare = name => {
+      const found = prevRows.find(t => t.Theme === name);
+      return found ? +found['Seen share'] : 0;
+    };
+    const items = now.map(t => ({
+      label: t.Theme,
+      from: prevShare(t.Theme),
+      to: +t['Seen share'],
+      highlight: t.Theme === row['Emerging theme'] ? 'up' : t.Theme === row['Ignored theme'] ? 'down' : null,
+    })).filter(i => i.from > 0 || i.to > 0);
+    if (!items.length) { sec.hidden = true; return; }
+    // Scatter rather than slope. Thirteen themes make thirteen crossing lines, and reading one of them means
+    // tracing it across the gap; as points against the line y = x, the side tells you grew-or-shrank and the
+    // distance tells you by how much, with no tracing at all. The diagonal IS the chart here.
+    box.appendChild(CH.scatter(items.map(i => ({
+      label: i.label, x: i.from, y: i.to, highlight: i.highlight,
+    })), {
+      xLabel: isWeek() ? 'share last week' : 'share last month',
+      yLabel: isWeek() ? 'share this week' : 'share this month',
+    }));
+  }
+
+  // The seven emotion rules split into a heavy and a light pole. Which side a name sits on is fixed here
+  // rather than inferred, so a rule renamed in Settings lands on the neutral side instead of silently
+  // flipping the chart's meaning.
+  const EMO = [
+    { name: 'Anxiety & stress', icon: 'anxiety', side: 'heavy' },
+    { name: 'Fear & threat', icon: 'fear', side: 'heavy' },
+    { name: 'Anger & injustice', icon: 'anger', side: 'heavy' },
+    { name: 'Sadness & loneliness', icon: 'sadness', side: 'heavy' },
+    { name: 'Hope & growth', icon: 'hope', side: 'light' },
+    { name: 'Love & connection', icon: 'love', side: 'light' },
+    { name: 'Joy & fun', icon: 'joy', side: 'light' },
+  ];
+  function drawEmotions() {
+    const box = $('#emotions');
+    if (!box) return;
+    box.innerHTML = '';
+    const rows = bucketTable('Profile').filter(p => /Emotional tone/i.test(p.Framework));
+    if (!rows.length) return;
+    const valueOf = name => {
+      const found = rows.find(r => r.Dimension === name);
+      return found ? +found.Score : 0;
+    };
+    const max = Math.max(1, Math.max.apply(null, rows.map(r => +r.Score)));
+    const head = el('div', { class: 'emo-head' }, [
+      el('b', { class: 'h-l', text: 'heavier' }),
+      el('b', { class: 'h-r', text: 'lighter' }),
+    ]);
+    box.appendChild(head);
+    EMO.forEach(e => {
+      const v = valueOf(e.name);
+      const width = `${(100 * v / max).toFixed(1)}%`;
+      const leftBar = el('div', { class: 'emo-l' }, e.side === 'heavy' ? [el('i', { style: `width:${width}` })] : []);
+      const rightBar = el('div', { class: 'emo-r' }, e.side === 'light' ? [el('i', { style: `width:${width}` })] : []);
+      const iconSlot = el('span', { class: 'emo-i' });
+      iconSlot.appendChild(CH.icon(e.icon, 18));
+      box.appendChild(el('div', { class: 'emo', title: `${e.name}: ${v} items per 100 seen` }, [
+        iconSlot,
+        el('span', { class: 'emo-n', text: e.name }),
+        leftBar,
+        rightBar,
+        el('span', { class: 'emo-v', text: String(v) }),
+      ]));
+    });
+  }
+
+  function drawRadars() {
+    const groups = [
+      { box: '#radar-big5', match: /Big Five/i },
+      // The two desire frameworks share one 0–100 scale and describe one thing, so they read as one shape
+      // rather than two three-spoke fragments that would each be too sparse to have a form at all.
+      { box: '#radar-desire', match: /Desire/i },
+    ];
+    const rows = bucketTable('Profile');
+    groups.forEach(g => {
+      const box = $(g.box);
+      if (!box) return;
+      box.innerHTML = '';
+      const axes = rows.filter(p => g.match.test(p.Framework))
+        .map(p => ({ label: String(p.Dimension).split('·')[0].trim(), value: +p.Score }));
+      if (axes.length < 3) return; // fewer than three spokes is a shape with no area to read
+      box.appendChild(CH.radar(axes, { max: 100 }));
+    });
+  }
+
+  function drawRiskMatrix() {
+    const box = $('#risk-matrix');
+    if (!box) return;
+    box.innerHTML = '';
+    const rows = bucketTable('Risks').filter(r => r.Likelihood && r.Impact);
+    if (!rows.length) return;
+    // Several risks routinely share a cell — five sat on 3×3 in the first real month — so a cell carries
+    // every code that lands in it. One dot per cell would hide four of them.
+    const byCell = {};
+    rows.forEach(r => {
+      const key = r.Likelihood + 'x' + r.Impact;
+      (byCell[key] = byCell[key] || { likelihood: +r.Likelihood, impact: +r.Impact, codes: [] }).codes.push(r.Code);
+    });
+    box.appendChild(CH.matrix(Object.keys(byCell).map(k => byCell[k])));
+  }
+
+  function delta(now, then, kind) {
+    if (then === '' || then === null || then === undefined || isNaN(then) || !before0(then)) return null;
+    const diff = +now - +then;
+    if (!isFinite(diff) || Math.abs(diff) < 1e-9) return { text: `same as last ${isWeek() ? 'week' : 'month'}`, dir: 'flat' };
+    const up = diff > 0;
+    const size = kind === 'pct' ? (100 * Math.abs(diff)).toFixed(1) + ' pts' : Math.abs(diff) >= 10 ? fmt.int(Math.abs(diff)) : fmt.one(Math.abs(diff));
+    return { text: `${up ? '▲' : '▼'} ${size} vs last ${isWeek() ? 'week' : 'month'}`, dir: up ? 'up' : 'down' };
+  }
+  function before0(v) {
+    return v !== '' && v !== null && v !== undefined;
+  }
+
+  function drawTiles(row, before) {
+    const tiles = [
+      // The risk index is left out of a week for the same reason the Risks section is: it is scored against
+      // month-scale thresholds and the month before, and seven days is not enough for it to mean anything.
+      { k: 'Risk index', label: 'Risk index', value: fmt.int(row['Risk index']), sub: 'out of 100', worse: 'up', monthOnly: true },
+      { k: 'Est. minutes per active day', label: 'Minutes a day', value: fmt.one(row['Est. minutes per active day']), sub: 'estimated floor', worse: 'up' },
+      { k: 'Seen per day', label: 'Items a day', value: fmt.one(row['Seen per day']), sub: 'posts and videos', worse: 'up' },
+      { k: 'Active ratio', label: 'Active ratio', value: fmt.pct(row['Active ratio']), sub: 'likes, follows, searches per item', worse: 'down', kind: 'pct' },
+      { k: 'Quiet interests', label: 'Quiet interests', value: fmt.int(row['Quiet interests']), sub: 'seen often, never touched', worse: 'up' },
+      { k: 'Sessions per active day', label: 'Sessions a day', value: fmt.one(row['Sessions per active day']), sub: 'times you picked it up', worse: 'up' },
+    ];
+    const box = $('#tiles');
+    box.innerHTML = '';
+    tiles.filter(t => !(t.monthOnly && isWeek())).forEach(t => {
+      const d = before ? delta(row[t.k], before[t.k], t.kind) : null;
+      const cls = d && d.dir !== 'flat' ? (d.dir === t.worse ? 'worse' : 'better') : 'flat';
+      const parts = [
+        el('div', { class: 'tile-v', text: t.value }),
+        el('div', { class: 'tile-k', text: t.label }),
+        el('div', { class: 'tile-s', text: t.sub }),
+      ];
+      // With nothing before it there is no comparison to draw, so none is drawn — a placeholder like
+      // "first week" is just an empty promise taking up the space a real number will occupy later.
+      if (d) parts.push(el('div', { class: 'tile-d ' + cls, text: d.text }));
+      box.appendChild(el('div', { class: 'tile' }, parts));
+    });
+  }
+
+  function ratingClass(rating) {
+    const name = String(rating).replace(/[^A-Za-z]/g, '');
+    return 'r-' + (name || 'Low').toLowerCase();
+  }
+  function trendClass(trend) {
+    if (!trend) return 'flat';
+    if (trend.indexOf('▲') === 0) return 'worse';
+    if (trend.indexOf('▼') === 0) return 'better';
+    return 'flat';
+  }
+
+  function drawRisks() {
+    const rows = bucketTable('Risks').sort((a, b) => b.Score - a.Score);
+    const box = $('#risks');
+    box.innerHTML = '';
+    rows.forEach(r => {
+      const bar = el('div', { class: 'bar' }, [el('i', { class: ratingClass(r.Rating), style: `width:${(100 * r.Score / 25).toFixed(1)}%` })]);
+      const head = [
+        // The code is what ties this row to its square on the matrix beside it. Without it the matrix is a
+        // grid of R-numbers with nothing to look them up in, which is how it shipped.
+        el('span', { class: 'risk-c', text: r.Code }),
+        el('span', { class: 'risk-n', text: r.Risk }),
+        el('span', { class: 'chip ' + ratingClass(r.Rating), text: String(r.Rating).replace(/[^A-Za-z]/g, '') }),
+      ];
+      if (r.Trend) {
+        const isPartial = r.Trend === 'Partial month';
+        head.push(el('span', {
+          class: 'trend ' + trendClass(r.Trend),
+          title: isPartial ? 'Built from an incomplete set of deliveries so far — no trend shown' : 'vs last month',
+          text: r.Trend,
+        }));
+      }
+      head.push(el('span', { class: 'risk-s', text: `${r.Likelihood}×${r.Impact} = ${r.Score}` }));
+      box.appendChild(el('div', { class: 'risk' }, [
+        el('div', { class: 'risk-h' }, head),
+        bar,
+        el('div', { class: 'risk-e', text: r.Evidence }),
+        el('div', { class: 'risk-m', text: r.Mitigation }),
+      ]));
+    });
+  }
+
+  function drawDaily() {
+    // Daily rows are stored per real date under their month, so a week selects them by date range rather
+    // than by key — the same seven days the weekly bucket was built from.
+    const all = table('Daily').filter(d => d['In view window'] === 'Yes');
+    let rows;
+    if (isWeek()) {
+      const row = bucketRows().find(r => r.Week === current);
+      const start = row && row['Week start'];
+      if (!start) return;
+      const end = new Date(new Date(start + 'T12:00:00Z').getTime() + 6 * 86400000)
+        .toISOString().slice(0, 10);
+      rows = all.filter(d => d.Date >= start && d.Date <= end);
+    } else {
+      rows = all.filter(d => d.Month === current);
+    }
+    const box = $('#daily');
+    box.innerHTML = '';
+    if (!rows.length) return;
+    const max = Math.max.apply(null, rows.map(d => d['Est. minutes'])) || 1;
+    rows.forEach(d => {
+      const height = Math.max(2, Math.round(100 * d['Est. minutes'] / max));
+      box.appendChild(el('div', { class: 'day', title: `${d.Date} (${d.Weekday}) · ${d['Est. minutes']} min · ${d['Items seen']} items · ${d.Sessions} sessions` }, [
+        el('i', { style: `height:${height}%` }),
+        el('span', { text: d.Date.slice(8) }),
+      ]));
+    });
+    $('#daily-note').textContent = `${rows.length} days Instagram kept, ${fmt.int(rows.reduce((n, d) => n + d['Est. minutes'], 0))} minutes in total.`;
+  }
+
+  function drawThemes() {
+    const rows = bucketTable('Themes')
+      .filter(t => t.Theme !== 'Other')
+      .sort((a, b) => b['Seen share'] - a['Seen share']).slice(0, 10);
+    const box = $('#themes');
+    box.innerHTML = '';
+    const max = rows.length ? rows[0]['Seen share'] : 1;
+    const subs = bucketTable('Subthemes');
+    rows.forEach(t => {
+      box.appendChild(el('div', { class: 'theme' }, [
+        el('span', { class: 'theme-n', text: t.Theme }),
+        el('div', { class: 'bar' }, [el('i', { class: 'r-seen', style: `width:${(100 * t['Seen share'] / max).toFixed(1)}%` })]),
+        el('span', { class: 'theme-v', text: fmt.pct(t['Seen share']) }),
+        el('span', { class: 'theme-l', text: t.Liked ? `${t.Liked} liked` : '' }),
+      ]));
+      // Subtopics answer "what KIND of this theme", which the bar above cannot. Three at most: past that
+      // they stop being a summary of the theme and become a second chart competing with the first.
+      const mine = subs.filter(s => s.Theme === t.Theme)
+        .sort((a, b) => b.Seen - a.Seen).slice(0, 3);
+      if (!mine.length) return;
+      box.appendChild(el('div', { class: 'subs' }, mine.map(s => el('span', {
+        class: 'sub-chip',
+        title: `${s.Subtopic}: ${s.Seen} of the ${t.Seen} items tagged ${t.Theme}`,
+      }, [
+        el('b', { text: s.Subtopic }),
+        el('span', { text: fmt.pct(s['Share of theme']) }),
+      ]))));
+    });
+  }
+
+  /**
+   * The two themes worth naming out of the ten bars above: the one climbing fastest, and the one filling the
+   * most of the feed while earning the least of the attention. Both are single facts, so they are stated as
+   * sentences rather than drawn as another chart.
+   */
+  function drawThemeHighlights(row, before) {
+    const box = $('#theme-highlights');
+    if (!box) return;
+    box.innerHTML = '';
+    const period = isWeek() ? 'week' : 'month';
+    const cards = [];
+
+    if (row['Emerging theme']) {
+      cards.push({
+        kind: 'up',
+        label: 'Rising fastest',
+        name: row['Emerging theme'],
+        stat: `+${(100 * +row['Emerging change']).toFixed(1)} pts of your feed vs last ${period}`,
+        why: 'Bigger share of what you were shown than it held before.',
+      });
+    } else {
+      // Three different reasons produce an empty "Emerging theme", and saying the wrong one is worse than
+      // saying nothing. The server refuses a baseline whose coverage is below CONFIG.MIN_TREND_COVERAGE, so
+      // a previous bucket can exist and still be unusable — reporting that as "nothing rose" would be false.
+      const prevCov = before ? +before.Coverage : null;
+      const thin = before && !isNaN(prevCov) && prevCov < MIN_TREND_COVERAGE;
+      const prevSpan = isWeek() ? 7 : daysInMonth(before ? before.Month : '');
+      cards.push({
+        kind: 'flat',
+        label: 'Rising fastest',
+        name: '—',
+        stat: !before ? `Needs a previous ${period} to compare against`
+          : thin ? `Last ${period} covered ${Math.round(prevCov * prevSpan)} of ${prevSpan} days`
+            : `No theme gained share this ${period}`,
+        why: thin ? 'Too little viewing history behind it to be a fair baseline.' : '',
+      });
+    }
+
+    // A gap measured against very few likes is arithmetic, not evidence. Both cards say which it is.
+    const likes = +row['Liked posts'] || 0;
+    const thinLikes = likes < 5
+      ? `Only ${likes} like${likes === 1 ? '' : 's'} this ${period} — thin evidence, read it as a hint.` : '';
+
+    if (row['Cared-for theme']) {
+      cards.push({
+        kind: 'care',
+        label: 'Cared about most',
+        name: row['Cared-for theme'],
+        stat: `${(100 * +row['Cared-for gap']).toFixed(1)} pts more of your likes than of your feed`,
+        why: thinLikes || 'You go out of your way for this one.',
+      });
+    }
+
+    if (row['Ignored theme']) {
+      cards.push({
+        kind: 'down',
+        label: 'Most ignored',
+        name: row['Ignored theme'],
+        stat: `${(100 * +row['Ignored gap']).toFixed(1)} pts more of your feed than of your likes`,
+        why: thinLikes || 'Shown to you constantly, acted on rarely.',
+      });
+    }
+
+    cards.forEach(c => {
+      box.appendChild(el('div', { class: 'hl hl-' + c.kind }, [
+        el('span', { class: 'hl-k', text: c.label }),
+        el('b', { class: 'hl-n', text: c.name }),
+        el('span', { class: 'hl-s', text: c.stat }),
+        el('span', { class: 'hl-w', text: c.why }),
+      ]));
+    });
+  }
+
+  function drawHours() {
+    const rows = bucketTable('Hourly');
+    const box = $('#hours');
+    box.innerHTML = '';
+    if (!rows.length) return;
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const max = Math.max.apply(null, rows.map(r => r.Count)) || 1;
+    const grid = el('div', { class: 'heat' });
+    grid.appendChild(el('span', {}));
+    for (let h = 0; h < 24; h++) grid.appendChild(el('span', { class: 'h', text: h % 3 === 0 ? String(h) : '' }));
+    days.forEach((day, i) => {
+      grid.appendChild(el('span', { class: 'wd', text: day }));
+      for (let h = 0; h < 24; h++) {
+        const found = rows.find(r => r['Weekday no'] === i + 1 && r.Hour === h);
+        const count = found ? found.Count : 0;
+        const cell = el('div', { class: 'cell', title: `${day} ${String(h).padStart(2, '0')}:00 · ${count} items` });
+        if (count) {
+          cell.style.background = 'var(--seen)';
+          cell.style.opacity = (0.18 + 0.82 * Math.sqrt(count / max)).toFixed(2);
+        }
+        grid.appendChild(cell);
+      }
+    });
+    box.appendChild(grid);
+    const busiest = rows.slice().sort((a, b) => b.Count - a.Count)[0];
+    $('#hours-note').textContent = busiest
+      ? `Busiest hour: ${busiest.Weekday} at ${String(busiest.Hour).padStart(2, '0')}:00 with ${busiest.Count} items. Times are local.`
+      : '';
+  }
+
+  function drawAccounts() {
+    const top = bucketTable('Top').filter(t => t.List === 'Accounts seen').slice(0, 8);
+    const topBox = $('#top');
+    topBox.innerHTML = '';
+    const maxSeen = top.length ? top[0].Count : 1;
+    top.forEach(t => {
+      topBox.appendChild(el('div', { class: 'item' }, [
+        el('b', { text: t.Name }),
+        el('span', { class: 'n', text: `${t.Count} seen${t.Liked ? ` · ${t.Liked} liked` : ''}` }),
+        el('div', { class: 'bar' }, [el('i', { class: 'r-seen', style: `width:${(100 * t.Count / maxSeen).toFixed(1)}%` })]),
+        el('span', { class: 'm', text: t.Themes || '' }),
+      ]));
+    });
+    const quiet = bucketTable('Quiet interests').slice(0, 8);
+    const quietBox = $('#quiet');
+    quietBox.innerHTML = '';
+    if (!quiet.length) quietBox.appendChild(el('p', { class: 'm', text: 'No account was seen often enough without a like, search or follow.' }));
+    quiet.forEach(q => {
+      quietBox.appendChild(el('div', { class: 'item' }, [
+        el('b', { text: q.Account }),
+        el('span', { class: 'n', text: `${q['Times seen']} seen` }),
+        el('span', { class: 'm', text: [q['You follow'] === 'Yes' ? 'you follow them' : 'not followed', q['Vs previous'], q.Themes].filter(Boolean).join(' · ') }),
+      ]));
+    });
+  }
+
+  /**
+   * Every score in this section is now a shape — two radars and a diverging chart — so repeating them as
+   * bars would say the same thing twice and make the page longer without making it clearer. What the bars
+   * did carry, and the shapes cannot, is the arithmetic behind each number: that is what stays here.
+   * These are proxies built from keyword rules over what you were SHOWN, not a measurement of you, and the
+   * method being readable at a glance is the only thing that keeps that honest.
+   */
+  /**
+   * The one account worth naming this bucket. Ranked on reciprocal contact first — notes and reposts are
+   * the only surface in an export where both sides showed up — and only when there is none does it fall
+   * back to who filled the most screen. Those two answer different questions ("who did you meet" versus
+   * "what was pushed at you"), so the card always says which rule fired rather than presenting them as the
+   * same kind of finding. Without that line, an account the algorithm insisted on would read as a friend.
+   */
+  function drawProfileOfWeek() {
+    const box = $('#pow');
+    if (!box) return;
+    box.innerHTML = '';
+    const top = bucketTable('Top');
+    const mutual = top.filter(t => t.List === 'Notes & reposts').sort((a, b) => b.Count - a.Count)[0];
+    const seen = top.filter(t => t.List === 'Accounts seen').sort((a, b) => b.Count - a.Count)[0];
+    const pick = mutual || seen;
+    if (!pick) { box.hidden = true; return; }
+    box.hidden = false;
+    const net = (payload.network && payload.network.nodes) || [];
+    const node = net.find(n => String(n.account).toLowerCase() === String(pick.Name).toLowerCase());
+    const stats = [];
+    if (mutual) stats.push(['exchanges', pick.Count]);
+    else stats.push(['seen', pick.Count]);
+    if (pick.Liked) stats.push(['liked', pick.Liked]);
+    if (node) {
+      if (node.status) stats.push(['status', node.status]);
+      if (node.seen && mutual) stats.push(['seen', node.seen]);
+    }
+    box.appendChild(el('div', { class: 'pow-mark', text: String(pick.Name).replace(/^@/, '').slice(0, 2).toUpperCase() }));
+    box.appendChild(el('div', { class: 'pow-body' }, [
+      el('span', { class: 'eyebrow', text: isWeek() ? 'Most engaging profile this week' : 'Most engaging profile this month' }),
+      el('p', { class: 'pow-h', text: '@' + String(pick.Name).replace(/^@/, '') }),
+      el('p', {
+        class: 'pow-why',
+        text: mutual
+          ? 'Ranked on notes and reposts — the one surface in the export where you and they both showed up. '
+            + 'This is contact, not consumption.'
+          : 'No note or repost exchange landed in this bucket, so this is the account that filled the most '
+            + 'screen instead. Being shown something often is not the same as engaging with it.',
+      }),
+      el('div', { class: 'pow-stats' }, stats.map(([k, v]) =>
+        el('span', { class: 'pow-stat' }, [el('b', { text: String(v) }), document.createTextNode(' ' + k)]))),
+      pick.Themes ? el('p', { class: 'bel-ev', style: 'margin-top:8px', text: pick.Themes }) : el('span', {}),
+    ]));
+  }
+
+  /**
+   * A still of the network graph, at a size that fits beside text. Deliberately not interactive and
+   * deliberately unlabelled: its job is to show that a shape exists and is worth opening, not to be read.
+   * Same rings, same colour rule and same dot sizing as the full view, so the preview is not a different
+   * picture of the same data — only a smaller one.
+   */
+  const NET_RINGS = [
+    ['Close friend', 'Inner circle'],
+    ['Engaged follow', 'Quiet follow', 'Active follow'],
+    ['Dormant follow', 'Fan'],
+    ['Chosen, not followed', 'Pushed by feed'],
+  ];
+  function drawNetworkPreview() {
+    const sec = $('#sec-netprev');
+    const box = $('#netprev');
+    if (!sec || !box) return;
+    const nodes = (payload.network && payload.network.nodes) || [];
+    if (!nodes.length) { sec.hidden = true; return; }
+    sec.hidden = false;
+    box.innerHTML = '';
+    const S = 210, c = S / 2;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', `0 0 ${S} ${S}`);
+    svg.setAttribute('width', S);
+    svg.setAttribute('height', S);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', `${nodes.length} accounts, arranged in rings by how close they are to you`);
+    const mk = (tag, attrs) => {
+      const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.keys(attrs).forEach(k => n.setAttribute(k, attrs[k]));
+      return n;
+    };
+    let shown = 0;
+    NET_RINGS.forEach((statuses, ri) => {
+      const radius = 24 + ri * 26;
+      svg.appendChild(mk('circle', { cx: c, cy: c, r: radius, class: 'ch-ring' }));
+      const ring = nodes.filter(n => statuses.indexOf(n.status) >= 0)
+        .sort((a, b) => b.attention - a.attention)
+        // One ring of 400 dots is a filled disc, not a network. The cap keeps each ring readable at this
+        // size; the caption below says how many accounts the whole picture actually stands for.
+        .slice(0, 8 + ri * 14);
+      ring.forEach((n, i) => {
+        const a = (i / ring.length) * Math.PI * 2 - Math.PI / 2;
+        const kind = n.liked + n.searched > 0 ? 'engaged' : n.seen > 0 ? 'seen' : 'unseen';
+        svg.appendChild(mk('circle', {
+          cx: (c + Math.cos(a) * radius).toFixed(1),
+          cy: (c + Math.sin(a) * radius).toFixed(1),
+          r: Math.min(5, 1.6 + Math.sqrt(n.attention) * 0.5).toFixed(1),
+          class: 'np-dot',
+          fill: kind === 'engaged' ? 'var(--seen)' : kind === 'seen' ? 'var(--accent)' : 'var(--other)',
+        }));
+        shown += 1;
+      });
+    });
+    svg.appendChild(mk('circle', { cx: c, cy: c, r: 5, fill: 'var(--ink)' }));
+    box.appendChild(svg);
+
+    const engaged = nodes.filter(n => n.liked + n.searched > 0).length;
+    $('#netprev-say').textContent = `${fmt.int(nodes.length)} accounts sit in your network across every export `
+      + `processed so far, ${fmt.int(engaged)} of which you have liked or searched at least once. Rings run from `
+      + `the people closest to you at the centre outward to accounts the feed pushes at you. `
+      + `${shown} of them are drawn here — open the full view for all of them, with names, themes and filters.`;
+    const legend = $('#netprev-legend');
+    legend.innerHTML = '';
+    [['var(--seen)', 'you liked or searched them'], ['var(--accent)', 'seen, no reaction'], ['var(--other)', 'not seen in any export']]
+      .forEach(([col, text]) => legend.appendChild(el('li', {}, [
+        el('i', { style: `background:${col}` }), el('span', { text: text }),
+      ])));
+  }
+
+  /**
+   * Belonging. Two of these four dimensions are measured, two are not measurable from an Instagram export at
+   * all — and the unmeasurable pair is rendered at the same size as the others, with a dashed border and no
+   * score, rather than being left out. Leaving them out would let the section read as "belonging, measured",
+   * when the honest reading is "belonging, two-quarters visible". The row itself carries what would have to
+   * arrive for it to become real.
+   */
+  function drawBelonging() {
+    const sec = $('#sec-belonging');
+    const box = $('#belonging');
+    if (!sec || !box) return;
+    const rows = bucketTable('Belonging');
+    if (!rows.length) { sec.hidden = true; return; }
+    sec.hidden = false;
+    box.innerHTML = '';
+    rows.forEach(r => {
+      const measured = r.Status === 'Measured';
+      const proxy = r.Status === 'Proxy only';
+      const scored = r.Score !== '' && r.Score !== null && !isNaN(r.Score);
+      const card = el('div', { class: 'bel' + (scored ? '' : ' is-absent') });
+      card.appendChild(el('div', { class: 'bel-h' }, [
+        el('span', { class: 'bel-n', text: r.Dimension }),
+        el('span', { class: 'bel-chip' + (measured ? ' is-measured' : proxy ? ' is-proxy' : ''), text: r.Status }),
+        scored
+          ? el('span', { class: 'bel-score', text: String(Math.round(r.Score)) })
+          : el('span', { class: 'bel-score is-none', text: 'no score' }),
+      ]));
+      if (scored) {
+        card.appendChild(el('div', { class: 'bel-track' + (proxy ? ' is-proxy' : '') }, [
+          el('i', { style: `width:${Math.max(2, Math.min(100, +r.Score))}%` }),
+        ]));
+      }
+      card.appendChild(el('p', { class: 'bel-head', text: r.Headline }));
+      card.appendChild(el('p', { class: 'bel-m', text: r['What it measures'] }));
+      if (r.Evidence && r.Evidence !== '—') card.appendChild(el('div', { class: 'bel-ev', text: r.Evidence }));
+      box.appendChild(card);
+    });
+
+    // The same "what it would take" text, gathered — so the answer to "how do I improve this" is one list
+    // rather than something to reassemble from four cards.
+    const needs = $('#bel-needs-list');
+    needs.innerHTML = '';
+    rows.forEach(r => needs.appendChild(el('div', { class: 'method' }, [
+      el('span', { class: 'method-v', text: r.Status === 'Measured' ? '✓' : '—' }),
+      el('div', {}, [
+        el('b', { text: r.Dimension }),
+        el('span', { class: 'method-h', text: r['What it would take'] }),
+      ]),
+    ])));
+  }
+
+  function drawProfile() {
+    const rows = bucketTable('Profile').filter(p => !/Emotional tone/i.test(p.Framework));
+    const box = $('#profile');
+    box.innerHTML = '';
+    if (!rows.length) return;
+    box.appendChild(el('h3', { class: 'sub', text: 'How each of these is computed' }));
+    rows.forEach(p => {
+      const change = p.Previous === '' || p.Previous === null || isNaN(p.Previous)
+        ? '' : ` · was ${fmt.int(p.Previous)}`;
+      box.appendChild(el('div', { class: 'method' }, [
+        el('span', { class: 'method-v', text: fmt.int(p.Score) }),
+        el('div', {}, [
+          el('b', { text: String(p.Dimension).split('·')[0].trim() }),
+          el('span', { class: 'method-h', text: p['How it is computed'] + change }),
+        ]),
+      ]));
+    });
+  }
+
+  function drawSignals() {
+    const rows = bucketTable('Signals');
+    const order = { '🔴 Alert': 0, '⚠️ Watch': 1, 'ℹ️ Info': 2, '✅ OK': 3 };
+    rows.sort((a, b) => (order[a.Level] === undefined ? 4 : order[a.Level]) - (order[b.Level] === undefined ? 4 : order[b.Level]));
+    const box = $('#signals');
+    box.innerHTML = '';
+    rows.forEach(s => {
+      box.appendChild(el('div', { class: 'signal' }, [
+        el('span', { class: 'signal-l', text: s.Level }),
+        el('div', {}, [
+          el('div', { class: 'signal-n' }, [
+            el('b', { text: s.Signal }),
+            el('span', { class: 'signal-v', text: s.Previous === '' ? String(s.Value) : `${s.Value} (was ${s.Previous})` }),
+          ]),
+          el('div', { class: 'signal-m', text: s['What it means'] }),
+          el('div', { class: 'signal-t', text: 'Try: ' + s.Try }),
+        ]),
+      ]));
+    });
+  }
+
+  function drawLog() {
+    const rows = table('Log').filter(l => l.Month);
+    $('#log').textContent = rows.length
+      ? `${rows.length} export${rows.length > 1 ? 's' : ''} processed: ` + rows.map(l => l.Month).join(', ')
+      : '';
+  }
+
+  // ── Theme toggle ──────────────────────────────────────────────────────────────
+  function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') document.documentElement.dataset.theme = saved;
+    $('#theme').addEventListener('click', () => {
+      const current = document.documentElement.dataset.theme
+        || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('theme', next);
+    });
+  }
+
+  // ── Wiring ──────────────────────────────────────────────────────────────────
+  function wireControls() {
+    $('#month').addEventListener('change', e => { current = e.target.value; render(); });
+    $('#refresh').addEventListener('click', refreshNow);
+    const checkEmpty = $('#check-empty');
+    if (checkEmpty) checkEmpty.addEventListener('click', refreshNow);
+    initTheme();
+    const modeBtn = $('#mode');
+    if (modeBtn) {
+      try {
+        const saved = window.localStorage.getItem('insights-bucket');
+        if (saved === 'month' || saved === 'week') mode = saved;
+      } catch (e) { /* private window, blocked storage: the default stands */ }
+      modeBtn.addEventListener('click', () => {
+        mode = isWeek() ? 'month' : 'week';
+        current = ''; // keys aren't interchangeable between buckets, so reselect the latest one
+        try { window.localStorage.setItem('insights-bucket', mode); } catch (e) { /* not worth failing over */ }
+        render();
+      });
+    }
+
+    // The result toast holds for a while on its own, but pauses for as long as you're actually reading
+    // it, and a click dismisses it outright. Only for the held result, not the rotating "checking" phrases.
+    const toastBox = $('#toast');
+    toastBox.addEventListener('mouseenter', () => { if (!checkTimer) clearTimeout(toastTimer); });
+    toastBox.addEventListener('mouseleave', () => { if (!checkTimer) armToastTimer(); });
+    toastBox.addEventListener('click', () => { if (!checkTimer) toastBox.hidden = true; });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+  window.__insights = { table: table, reload: refreshNow, payload: () => payload };
+})();
+
+</script>
+</body>
+</html>
