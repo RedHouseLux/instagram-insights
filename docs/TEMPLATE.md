@@ -1,5 +1,7 @@
 # Creating the "Make a copy" template
 
+***English** · [Italiano](TEMPLATE.it.md)*
+
 The landing page's step 2 offers a one-click copy. That link needs a **template spreadsheet** — a copy of
 your working sheet with the script attached and every trace of your own data removed. Until you create it,
 the button falls back to the manual README route, so nothing on the page is broken in the meantime.
@@ -46,13 +48,13 @@ separate, empty sheet.
    https://docs.google.com/spreadsheets/d/THIS_PART_HERE/edit
    ```
 
-8. **Paste it into the landing page.** In `docs/index.html`, find:
+8. **Paste it into the landing page.** In **both** `docs/index.html` and `docs/it/index.html`, find:
 
    ```js
    var TEMPLATE_SHEET_ID = '';
    ```
 
-   Put the ID between the quotes and commit. The button becomes a real one-click copy; the page builds the
+   Put the ID between the quotes in **both files** and commit. The button becomes a real one-click copy; the page builds the
    `/copy` URL itself.
 
 ## Verify it before announcing it

@@ -1,5 +1,7 @@
 # Instagram Insights
 
+***English** · [Italiano](README.it.md) · [Project site](https://redhouselux.github.io/instagram-insights/)*
+
 A Google Sheet that reads your monthly Instagram data export from a Drive folder and builds a dashboard with themes, activity rhythm, behavioural indicators and risk signals, compared month over month. It runs entirely inside your Google account; nothing is sent to an AI or any other service.
 
 ## One-time setup (about 5 minutes)

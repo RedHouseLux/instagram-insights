@@ -30,6 +30,11 @@ const CONFIG = {
   VIEW_WINDOW_MIN_ITEMS: 5,
   // Network tab: the latest months that count as "recent" when deciding whether an account is active, quiet or dormant.
   NETWORK_RECENT_MONTHS: 3,
+  // Language of the text this script WRITES into the sheet: 'en' or 'it'. It does not rename tabs or
+  // columns — those are identifiers the rest of the code reads by, and translating them would break both
+  // the pipeline and every sheet already in existence. The dashboard has its own, independent switch.
+  // After changing this, run "Reprocess everything" so past buckets are rewritten in the new language.
+  LANGUAGE: 'en',
   // Belonging → Connected: the number of distinct reciprocal contacts that scores 100. Not a finding about
   // people in general — it is the reference this dashboard measures breadth against, and the score is
   // meaningless without it, which is why the tab prints it beside every score.
@@ -194,6 +199,123 @@ const LEVEL = { OK: '✅ OK', Info: 'ℹ️ Info', Watch: '⚠️ Watch', Alert:
 
 const RATING = [[4, '🟢 Low'], [9, '🟡 Medium'], [15, '🟠 High'], [25, '🔴 Critical']];
 const RATING_COLORS = { Low: '#e3f4e3', Medium: '#fdf0cf', High: '#fde2d4', Critical: '#f9dcdc' };
+
+/**
+ * Italian for the text this script writes into the sheet, keyed by the exact English string. A key that is
+ * missing falls through to English, so a half-finished translation degrades to readable rather than blank.
+ *
+ * Deliberately NOT covered: the one-line "evidence" and "what it means" sentences, which are built at
+ * runtime with numbers interpolated into them. Those need the sentence itself parameterised before they can
+ * be translated, which is a change to every risk and signal rather than a dictionary entry. They stay in
+ * English for now, and that is visible rather than hidden.
+ */
+const SHEET_STRINGS = {
+  it: {
+    // ── Risk names ───────────────────────────────────────────────────────────
+    'Excessive use': 'Uso eccessivo',
+    'Sleep disruption': 'Disturbo del sonno',
+    'Attention fragmentation': 'Frammentazione dell’attenzione',
+    'Passive consumption': 'Consumo passivo',
+    'Emotional load': 'Carico emotivo',
+    'Negative news diet': 'Dieta di notizie negative',
+    'Physical strain': 'Sforzo fisico',
+    'Commercial manipulation': 'Manipolazione commerciale',
+    'Data exposure': 'Esposizione dei dati',
+    'Feed concentration': 'Concentrazione del feed',
+    'Unwanted contact': 'Contatti indesiderati',
+    // ── Categories and signal areas ──────────────────────────────────────────
+    'Digital wellbeing': 'Benessere digitale',
+    'Attention': 'Attenzione',
+    'Mental health': 'Salute mentale',
+    'Physical health': 'Salute fisica',
+    'Money': 'Denaro',
+    'Privacy': 'Privacy',
+    'Information': 'Informazione',
+    'Safety': 'Sicurezza',
+    'Wellbeing': 'Benessere',
+    'Body': 'Corpo',
+    'Mind': 'Mente',
+    'Social': 'Sociale',
+    // ── Mitigations ──────────────────────────────────────────────────────────
+    'Set a daily limit (Instagram → Settings → Time management, or Digital Wellbeing) and keep the app off the home screen.':
+      'Imposta un limite giornaliero (Instagram → Impostazioni → Gestione del tempo, o Benessere digitale) e tieni l’app fuori dalla schermata principale.',
+    'Phone out of the bedroom; app limit after 23:30.':
+      'Telefono fuori dalla camera da letto; limite all’app dopo le 23:30.',
+    'Choose 2–3 themes that serve your current goals; mute the rest for a month.':
+      'Scegli 2–3 temi utili ai tuoi obiettivi attuali; silenzia il resto per un mese.',
+    'Unfollow accounts you only scroll past; search for what you actually want to see.':
+      'Smetti di seguire gli account che scorri e basta; cerca ciò che vuoi davvero vedere.',
+    'Mute the accounts driving it (Top tab) and notice how you feel after scrolling.':
+      'Silenzia gli account che lo alimentano (scheda Top) e osserva come ti senti dopo aver scrollato.',
+    'Batch news into one daily slot, ideally not in bed.':
+      'Concentra le notizie in un solo momento della giornata, possibilmente non a letto.',
+    'If a symptom is real, book a physio or dentist; check desk and phone posture.':
+      'Se un sintomo è reale, prenota un fisioterapista o un dentista; controlla la postura alla scrivania e col telefono.',
+    'Wait 48 hours before paying for any course, coaching or product found in the feed.':
+      'Aspetta 48 ore prima di pagare qualsiasi corso, percorso di coaching o prodotto trovato nel feed.',
+    'Accounts Center → Ad preferences: remove advertisers and ad topics; disconnect off-Meta activity.':
+      'Centro gestione account → Preferenze per le inserzioni: rimuovi inserzionisti e argomenti; scollega l’attività fuori da Meta.',
+    'Balance the top accounts with sources that see things differently.':
+      'Bilancia gli account principali con fonti che la vedono diversamente.',
+    'Tighten who can message and tag you (Settings → Messages and story replies).':
+      'Restringi chi può scriverti e taggarti (Impostazioni → Messaggi e risposte alle storie).',
+    // ── Signal names ─────────────────────────────────────────────────────────
+    'Late-night activity (00:00–05:59)': 'Attività notturna (00:00–05:59)',
+    'Items seen per day': 'Elementi visti al giorno',
+    'Active vs passive': 'Attivo contro passivo',
+    'Quiet interests': 'Interessi silenziosi',
+    'Focus spread': 'Dispersione del focus',
+    'Body-discomfort content': 'Contenuti su disturbi fisici',
+    'Anxiety & fear tone': 'Tono di ansia e paura',
+    'News load': 'Carico di notizie',
+    'Sales-funnel exposure': 'Esposizione a funnel di vendita',
+    'Money & work focus': 'Focus su denaro e lavoro',
+    'Advertisers holding your data': 'Inserzionisti che detengono i tuoi dati',
+    'New Meta labels': 'Nuove etichette Meta',
+    'Blocked or reported': 'Bloccati o segnalati',
+    // ── Signal tips ──────────────────────────────────────────────────────────
+    'Phone out of the bedroom, or an app limit after 23:30.':
+      'Telefono fuori dalla camera, o un limite all’app dopo le 23:30.',
+    'If it jumped, see which theme grew in Themes.':
+      'Se è salito di colpo, guarda quale tema è cresciuto nella scheda Themes.',
+    'Unfollow accounts you never engage with.':
+      'Smetti di seguire gli account con cui non interagisci mai.',
+    'Ask why you keep watching the top ones; mute any that drain you.':
+      'Chiediti perché continui a guardare i primi; silenzia quelli che ti prosciugano.',
+    'Pick the 2–3 themes that serve what you are building now.':
+      'Scegli i 2–3 temi utili a ciò che stai costruendo adesso.',
+    'If the symptom is real, a physio or dentist beats more reels.':
+      'Se il sintomo è reale, un fisioterapista o un dentista vale più di altri reel.',
+    'Mute the accounts driving it (see Top).':
+      'Silenzia gli account che lo alimentano (vedi Top).',
+    'Batch news into one daily slot.':
+      'Concentra le notizie in un solo momento della giornata.',
+    'Treat coaching funnels as ads, not as care or a plan.':
+      'Tratta i funnel di coaching come pubblicità, non come cura o come un piano.',
+    'Name the decision behind it and give it a date.':
+      'Dai un nome alla decisione che c’è dietro e mettici una data.',
+    'Accounts Center → Ad preferences: review and hide advertisers.':
+      'Centro gestione account → Preferenze per le inserzioni: controlla e nascondi gli inserzionisti.',
+    'Full list in the Meta tab.': 'Elenco completo nella scheda Meta.',
+    'Details in Actions.': 'Dettagli nella scheda Actions.',
+    // ── Belonging ────────────────────────────────────────────────────────────
+    'Connected': 'Connesso',
+    'Seen': 'Visto',
+    'Heard': 'Ascoltato',
+    'Invested in': 'Investito',
+    'Measured': 'Misurato',
+    'Proxy only': 'Solo indiretto',
+    'Not measurable yet': 'Non ancora misurabile',
+    'Not in this export': 'Non presente in questo export',
+    'No data this bucket': 'Nessun dato in questo intervallo',
+  },
+};
+
+/** Translate one sheet string. Unknown keys and English both return the input unchanged. */
+function T_(text) {
+  const table = SHEET_STRINGS[CONFIG.LANGUAGE];
+  return (table && table[text] !== undefined) ? table[text] : text;
+}
 
 const RISKS = [
   { code: 'R1', name: 'Excessive use', category: 'Digital wellbeing', impact: 3,
@@ -1611,7 +1733,8 @@ function analyzeExport_(exp, rules, prev) {
   // Signals: rule-based risk flags
   const signals = [];
   const signal = (area, name, value, previous, level, meaning, tip, fmt) => signals.push(
-    [month, area, name, fmtVal_(value, fmt), previous === null ? '' : fmtVal_(previous, fmt), LEVEL[level], meaning, tip]);
+    [month, T_(area), T_(name), fmtVal_(value, fmt), previous === null ? '' : fmtVal_(previous, fmt),
+      LEVEL[level], meaning, T_(tip)]);
   signal('Wellbeing', 'Late-night activity (00:00–05:59)', lateShare, pv('Late-night share'),
     lateShare >= 0.25 ? 'Alert' : lateShare >= 0.12 ? 'Watch' : 'OK',
     `Share of your logged activity between midnight and 6am; ${lateDates.size} of ${activeDates.size} active days had some.`,
@@ -1730,6 +1853,11 @@ function analyzeExport_(exp, rules, prev) {
   const seenScore = reached && engagedAccounts !== null ? Math.round(100 * engagedAccounts / reached) : '';
 
   const tieList = notePartners.slice(0, 8).map(e => e[0] + ' ×' + e[1]).join(' · ');
+  // Dimension and Status stay English here on purpose, unlike the risk and signal text above. The dashboard
+  // keys off both — `Status === 'Measured'` picks the chip colour, and the dimension name selects a
+  // translation — so writing Italian into these two columns would break the dashboard's own language
+  // switch, which is the layer that should be translating them. Every other column here is prose and is
+  // translated below.
   const belongingRows = [
     [month, 'Connected', notePartners.length ? 'Measured' : 'No data this bucket', connectedScore,
       notePartners.length
@@ -1856,8 +1984,8 @@ function assessRisks_(month, monthly, prevMonthly, prevScores, coverage) {
     // clears the same bar.
     const trend = coverage < CONFIG.MIN_TREND_COVERAGE ? 'Partial month'
       : before === '' ? (prevScores ? 'new' : '') : score > before ? `▲ +${score - before}` : score < before ? `▼ −${before - score}` : '＝';
-    return [month, risk.code, risk.name, risk.category, likelihood, risk.impact, score, ratingFor_(score), before, trend,
-      risk.evidence(m), risk.mitigation];
+    return [month, risk.code, T_(risk.name), T_(risk.category), likelihood, risk.impact, score, ratingFor_(score),
+      before, trend, risk.evidence(m), T_(risk.mitigation)];
   });
   return { rows: rows, index: Math.round(100 * total / max) };
 }

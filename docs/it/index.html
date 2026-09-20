@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Instagram Insights — see your own digital footprint</title>
-<meta name="description" content="A dashboard that reads your own Instagram data export and shows you your themes, rhythm, attention and risk signals. Runs entirely inside your own Google account. Free, open, work in progress.">
-<link rel="canonical" href="https://redhouselux.github.io/instagram-insights/">
+<title>Instagram Insights — guarda la tua impronta digitale</title>
+<meta name="description" content="Una dashboard che legge il tuo export di dati Instagram e ti mostra temi, ritmi, attenzione e segnali di rischio. Gira interamente dentro il tuo account Google. Gratuito, aperto, in lavorazione.">
+<link rel="canonical" href="https://redhouselux.github.io/instagram-insights/it/">
 <link rel="alternate" hreflang="en" href="https://redhouselux.github.io/instagram-insights/">
 <link rel="alternate" hreflang="it" href="https://redhouselux.github.io/instagram-insights/it/">
 <link rel="alternate" hreflang="x-default" href="https://redhouselux.github.io/instagram-insights/">
-<meta property="og:title" content="Instagram Insights — see your own digital footprint">
-<meta property="og:description" content="Read your own Instagram export inside your own Google account. Nothing is uploaded, nothing is sent to an AI. Free and open.">
+<meta property="og:title" content="Instagram Insights — guarda la tua impronta digitale">
+<meta property="og:description" content="Leggi il tuo export Instagram dentro il tuo account Google. Niente viene caricato, niente viene mandato a un'AI. Gratuito e aperto.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://redhouselux.github.io/instagram-insights/">
+<meta property="og:locale" content="it_IT">
+<meta property="og:url" content="https://redhouselux.github.io/instagram-insights/it/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -150,7 +151,7 @@ footer a { color: var(--ink-2); }
   background: var(--ink); color: var(--ground); padding: 11px 20px; border-radius: 10px; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
-/* ── Language switcher ────────────────────────────────────────────── */
+/* ── Language switcher ───────────────────────────────────────────────────── */
 .lang { display: inline-flex; align-items: center; gap: 2px; font-family: var(--mono); font-size: 12px;
   border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .lang a, .lang b { padding: 8px 10px; text-decoration: none; line-height: 1; }
@@ -165,228 +166,225 @@ footer a { color: var(--ink-2); }
   <header class="bar">
     <div class="brand">Instagram <span>Insights</span></div>
     <nav class="bar-links">
-      <a class="btn" href="#how">How it works</a>
-      <a class="btn" href="#start">Get started</a>
-      <span class="lang"><b>EN</b><a href="it/">IT</a></span>
-      <button class="btn" id="theme" type="button" aria-label="Switch light or dark theme">◐</button>
+      <a class="btn" href="#how">Come funziona</a>
+      <a class="btn" href="#start">Inizia</a>
+      <span class="lang"><a href="../">EN</a><b>IT</b></span>
+      <button class="btn" id="theme" type="button" aria-label="Passa al tema chiaro o scuro">◐</button>
     </nav>
   </header>
 
   <div class="hero">
-    <span class="eyebrow">A Blockcert project · free · open · work in progress</span>
-    <h1>You have a digital footprint. You have never actually seen it.</h1>
-    <p class="lede">Instagram knows what it showed you, when, how often, and what you did about it.
-      It just never shows you. This turns your own data export into a dashboard you can read — themes,
-      rhythm, attention, the accounts you keep watching without ever admitting it, and where the friction is.</p>
+    <span class="eyebrow">Un progetto Blockcert · gratuito · aperto · in lavorazione</span>
+    <h1>Hai un'impronta digitale. Non l'hai mai vista davvero.</h1>
+    <p class="lede">Instagram sa cosa ti ha mostrato, quando, quante volte e cosa ne hai fatto.
+      Semplicemente non te lo dice mai. Questo trasforma il tuo export di dati in una dashboard leggibile —
+      temi, ritmi, attenzione, gli account che continui a guardare senza mai ammetterlo, e dove sta l'attrito.</p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg" href="#start">Set up your own copy</a>
-      <a class="btn btn-lg" href="https://github.com/RedHouseLux/instagram-insights" target="_blank" rel="noopener">Read the code</a>
+      <a class="btn btn-primary btn-lg" href="#start">Crea la tua copia</a>
+      <a class="btn btn-lg" href="https://github.com/RedHouseLux/instagram-insights" target="_blank" rel="noopener">Leggi il codice</a>
     </div>
-    <p class="hero-note">Takes about 5 minutes. Needs a Google account and an Instagram data export.</p>
+    <p class="hero-note">Ci vogliono circa 5 minuti. Servono un account Google e un export di dati Instagram.</p>
   </div>
 
   <div class="promise">
-    <b>Your data never leaves your Google account.</b>
-    <p>This is not a service and there is no server of mine to send anything to. You run your own private
-      copy: the script lives in your Google Drive, reads the export sitting in your own folder, and writes
-      to your own spreadsheet. Nothing is uploaded, nothing is sent to an AI, and I cannot see any of it —
-      that is not a policy, it is just how the thing is built. The code is open, so you can check.</p>
+    <b>I tuoi dati non escono mai dal tuo account Google.</b>
+    <p>Questo non è un servizio e non esiste un mio server a cui mandare qualcosa. Fai girare una tua copia
+      privata: lo script vive nel tuo Google Drive, legge l'export che sta nella tua cartella e scrive sul tuo
+      foglio di calcolo. Niente viene caricato da nessuna parte, niente viene mandato a un'AI, e io non posso
+      vedere nulla — non è una promessa scritta in una policy, è semplicemente come è fatta la cosa.
+      Il codice è aperto, quindi puoi verificarlo.</p>
   </div>
 
-  <!-- ── Why ─────────────────────────────────────────────────────────── -->
   <section id="why">
-    <h2><span class="sec-n">01</span>Why bother</h2>
-    <p class="sub">The mission is narrow and worth saying plainly: <b>higher consciousness about our digital
-      footprints, and better digital well-being.</b> Not a detox app, not a lecture about screen time.
-      Evidence about your own behaviour, in your hands, that nobody else gets a copy of.</p>
+    <h2><span class="sec-n">01</span>Perché farlo</h2>
+    <p class="sub">La missione è ristretta e vale la pena dirla chiaramente: <b>maggiore consapevolezza delle
+      nostre impronte digitali, e un migliore benessere digitale.</b> Non è un'app per il detox, non è una
+      predica sul tempo davanti allo schermo. Sono prove sul tuo comportamento, in mano tua, di cui nessun
+      altro riceve una copia.</p>
     <div class="why">
       <div class="why-card">
-        <b>The feed is not neutral</b>
-        <p>What you see is chosen for you. Once it is laid out by theme and hour, you can see the shape of
-          that choice — and how much of your attention went somewhere you never picked.</p>
+        <b>Il feed non è neutro</b>
+        <p>Quello che vedi è scelto per te. Una volta messo in fila per tema e per ora, puoi vedere la forma
+          di quella scelta — e quanta della tua attenzione è finita dove non avevi scelto tu.</p>
       </div>
       <div class="why-card">
-        <b>Likes are performance</b>
-        <p>Likes are what you are willing to show. Repeated viewing is what actually held you. The gap
-          between those two is the most honest thing in the whole export.</p>
+        <b>I like sono una performance</b>
+        <p>I like sono ciò che sei disposto a mostrare. Le visualizzazioni ripetute sono ciò che ti ha
+          davvero trattenuto. Lo scarto fra le due è la cosa più onesta di tutto l'export.</p>
       </div>
       <div class="why-card">
-        <b>You cannot change what you cannot see</b>
-        <p>Late-night drift, a narrowing feed, an emotional tone creeping one way. These are measurable, and
-          measurable things can be answered.</p>
+        <b>Non puoi cambiare ciò che non vedi</b>
+        <p>La deriva notturna, un feed che si restringe, un tono emotivo che scivola da una parte.
+          Sono cose misurabili, e a ciò che è misurabile si può rispondere.</p>
       </div>
       <div class="why-card">
-        <b>It is your data</b>
-        <p>Meta must hand it over when you ask. Almost nobody does, because the export is a pile of
-          unreadable HTML. This makes it readable — and keeps it yours.</p>
+        <b>Sono dati tuoi</b>
+        <p>Meta è tenuta a consegnarteli se glieli chiedi. Quasi nessuno lo fa, perché l'export è un mucchio
+          di HTML illeggibile. Questo lo rende leggibile — e lo tiene tuo.</p>
       </div>
     </div>
   </section>
 
-  <!-- ── What you get ────────────────────────────────────────────────── -->
   <section id="how">
-    <h2><span class="sec-n">02</span>What you get</h2>
-    <p class="sub">A spreadsheet with about twenty tabs, and a private dashboard that reads it. Every number
-      is rule-based and every rule is visible and editable — nothing here is a judgement about you.</p>
+    <h2><span class="sec-n">02</span>Cosa ottieni</h2>
+    <p class="sub">Un foglio di calcolo con una ventina di schede, e una dashboard privata che lo legge.
+      Ogni numero nasce da una regola, ogni regola è visibile e modificabile — qui dentro non c'è nessun
+      giudizio su di te.</p>
     <div class="grid">
-      <div class="tile"><b>Themes</b><p>What the feed actually fed you, by share, with subtopics and month-on-month movement.</p></div>
-      <div class="tile"><b>Rhythm</b><p>Hour by hour and weekday by weekday. Estimated minutes, sessions, late-night share.</p></div>
-      <div class="tile"><b>Quiet interests</b><p>Accounts you kept seeing and never once reacted to — attention you give but do not express.</p></div>
-      <div class="tile"><b>Network</b><p>Everyone you follow, who follows you, and who the feed keeps pushing, drawn as a graph.</p></div>
-      <div class="tile"><b>Belonging</b><p>Seen, Heard, Invested in, Connected — scored where the data allows, and marked unmeasurable where it does not.</p></div>
-      <div class="tile"><b>Risk signals</b><p>Eleven behavioural indicators scored likelihood × impact, with what to try for each.</p></div>
+      <div class="tile"><b>Temi</b><p>Cosa ti ha davvero dato in pasto il feed, in percentuale, con sottotemi e movimento mese su mese.</p></div>
+      <div class="tile"><b>Ritmo</b><p>Ora per ora e giorno per giorno. Minuti stimati, sessioni, quota notturna.</p></div>
+      <div class="tile"><b>Interessi silenziosi</b><p>Account che hai continuato a vedere senza mai reagire — attenzione che dai ma non esprimi.</p></div>
+      <div class="tile"><b>Rete</b><p>Chi segui, chi ti segue e chi il feed continua a spingerti, disegnati come un grafo.</p></div>
+      <div class="tile"><b>Appartenenza</b><p>Visto, Ascoltato, Investito, Connesso — misurati dove i dati lo permettono, e segnalati come non misurabili dove non lo permettono.</p></div>
+      <div class="tile"><b>Segnali di rischio</b><p>Undici indicatori comportamentali valutati probabilità × impatto, ciascuno con qualcosa da provare.</p></div>
     </div>
     <div class="callout" style="margin-top:18px">
-      These are behavioural indicators built from keyword rules over what you were <em>shown</em>. They are
-      not a clinical assessment, not a security audit, and not a verdict on you. The formulas are printed
-      next to the numbers so you can disagree with them.
+      Sono indicatori comportamentali costruiti con regole di parole chiave su ciò che ti è stato
+      <em>mostrato</em>. Non sono una valutazione clinica, non sono un audit di sicurezza e non sono un
+      verdetto su di te. Le formule sono stampate accanto ai numeri, così puoi anche non essere d'accordo.
     </div>
   </section>
 
-  <!-- ── Get started ─────────────────────────────────────────────────── -->
   <section id="start">
-    <h2><span class="sec-n">03</span>Set it up</h2>
-    <p class="sub">Two things happen once, then it runs itself. If you get stuck at any step, open an
-      issue — a confusing step is a bug in this page, not in you.</p>
+    <h2><span class="sec-n">03</span>Come si installa</h2>
+    <p class="sub">Due cose si fanno una volta sola, poi va avanti da sé. Se ti blocchi da qualche parte,
+      apri una segnalazione — un passaggio poco chiaro è un difetto di questa pagina, non tuo.</p>
 
     <ol class="steps">
       <li>
-        <h3>Ask Instagram for your data</h3>
-        <p>Do this first — Meta can take a few hours to a day to send it.</p>
-        <p>In Instagram: <kbd>Accounts Centre</kbd> → <kbd>Your information and permissions</kbd> →
-          <kbd>Download your information</kbd>. Then:</p>
+        <h3>Chiedi i tuoi dati a Instagram</h3>
+        <p>Fallo per primo — Meta può metterci da qualche ora a un giorno per mandarteli.</p>
+        <p>Su Instagram: <kbd>Centro gestione account</kbd> → <kbd>Le tue informazioni e le tue autorizzazioni</kbd> →
+          <kbd>Scarica le tue informazioni</kbd>. Poi:</p>
         <ul>
-          <li><b>Format: HTML.</b> JSON exports are skipped.</li>
-          <li><b>Date range:</b> last month (or all time for your first one).</li>
-          <li><b>Media quality: low.</b> The photos are not needed and only make the file huge.</li>
+          <li><b>Formato: HTML.</b> Gli export in JSON vengono ignorati.</li>
+          <li><b>Intervallo di date:</b> l'ultimo mese (o tutto, se è il tuo primo export).</li>
+          <li><b>Qualità dei contenuti: bassa.</b> Le foto non servono e rendono solo enorme il file.</li>
         </ul>
-        <div class="callout">English and Italian exports both work. Other languages will parse
-          partially — the dates and field labels are what have been checked so far.</div>
+        <div class="callout">Gli export in italiano e in inglese funzionano entrambi. Altre lingue verranno
+          lette solo in parte — date ed etichette dei campi sono le cose verificate finora.</div>
       </li>
 
       <li>
-        <h3>Make your own copy of the sheet</h3>
-        <p>One click. You get a private copy in your own Drive, with the script already inside it —
-          no code to paste.</p>
-        <p><a class="btn btn-primary" id="copy-link" href="#" target="_blank" rel="noopener">Make a copy →</a></p>
-        <div class="callout">Prefer to read the code before running it? Every line is on
+        <h3>Crea la tua copia del foglio</h3>
+        <p>Un clic. Ottieni una copia privata nel tuo Drive, con lo script già dentro —
+          niente codice da incollare.</p>
+        <p><a class="btn btn-primary" id="copy-link" href="#" target="_blank" rel="noopener">Crea una copia →</a></p>
+        <div class="callout">Preferisci leggere il codice prima di eseguirlo? È tutto su
           <a href="https://github.com/RedHouseLux/instagram-insights" target="_blank" rel="noopener">GitHub</a>,
-          and the README has the manual paste-it-yourself route.</div>
+          e il README spiega anche come incollarlo a mano.</div>
       </li>
 
       <li>
-        <h3>Run setup once</h3>
-        <p>In your new sheet: <kbd>Extensions</kbd> → <kbd>Apps Script</kbd>, pick <kbd>setup</kbd> from the
-          function dropdown, and press Run.</p>
-        <p>Google will ask for permission to use your Drive, Sheets and triggers, and will warn you the app
-          is unverified. That warning is expected: it is <em>your</em> copy of the script, running as you,
-          and Google has not reviewed it because it was never submitted for review. Choose
-          <kbd>Advanced</kbd> → <kbd>Go to (project name)</kbd> to continue.</p>
-        <p>Setup creates an <b>Instagram Exports</b> folder in your Drive and links it. It also prints the
-          folder link so you can find it.</p>
+        <h3>Esegui setup una volta</h3>
+        <p>Nel foglio appena creato: <kbd>Estensioni</kbd> → <kbd>Apps Script</kbd>, scegli <kbd>setup</kbd>
+          dall'elenco delle funzioni e premi Esegui.</p>
+        <p>Google ti chiederà il permesso di usare Drive, Fogli e i trigger, e ti avviserà che l'app non è
+          verificata. Quell'avviso è normale: è la <em>tua</em> copia dello script, che gira come te, e
+          Google non l'ha esaminata perché non è mai stata sottoposta a verifica. Scegli
+          <kbd>Avanzate</kbd> → <kbd>Apri (nome del progetto)</kbd> per proseguire.</p>
+        <p>Il setup crea una cartella <b>Instagram Exports</b> nel tuo Drive e la collega. Ti stampa anche
+          il link della cartella, così la ritrovi.</p>
       </li>
 
       <li>
-        <h3>Drop the export in</h3>
-        <p>When Meta's email arrives, put the <kbd>.zip</kbd> straight into that
-          <b>Instagram Exports</b> folder — unzipping is optional, and the Drive app on your phone works fine.</p>
-        <p>Then reload the sheet and choose <kbd>Instagram Insights</kbd> →
-          <kbd>Process new exports now</kbd>. After that it checks by itself once a day, so every month you
-          only have to drop the new file in.</p>
+        <h3>Metti dentro l'export</h3>
+        <p>Quando arriva l'email di Meta, metti lo <kbd>.zip</kbd> direttamente nella cartella
+          <b>Instagram Exports</b> — scompattarlo è facoltativo, e l'app Drive del telefono va benissimo.</p>
+        <p>Poi ricarica il foglio e scegli <kbd>Instagram Insights</kbd> →
+          <kbd>Processa i nuovi export ora</kbd>. Da quel momento controlla da solo una volta al giorno,
+          quindi ogni mese ti basta buttare dentro il file nuovo.</p>
       </li>
 
       <li>
-        <h3>Open your dashboard</h3>
-        <p>The sheet is already readable, but the dashboard is nicer. In the Apps Script editor:
-          <kbd>Deploy</kbd> → <kbd>New deployment</kbd> → <kbd>Web app</kbd>, then set
-          <b>Execute as: Me</b> and <b>Who has access: Only myself</b>.</p>
-        <div class="callout"><b>Keep it on "Only myself."</b> That deployment runs as you and reads your
-          spreadsheet, so anyone you gave the link to would be reading your Instagram history through your
-          own account. This is also why there is no shared dashboard to hand you — the only safe version
-          is the one that belongs to you.</div>
+        <h3>Apri la tua dashboard</h3>
+        <p>Il foglio è già leggibile, ma la dashboard è più bella. Nell'editor Apps Script:
+          <kbd>Deploy</kbd> → <kbd>Nuovo deployment</kbd> → <kbd>App web</kbd>, poi imposta
+          <b>Esegui come: Me</b> e <b>Chi ha accesso: Solo me stesso</b>.</p>
+        <div class="callout"><b>Lascialo su "Solo me stesso".</b> Quel deployment gira come te e legge il tuo
+          foglio di calcolo, quindi chiunque avesse il link leggerebbe la tua cronologia Instagram passando
+          dal tuo account. È anche il motivo per cui non c'è una dashboard condivisa da darti: l'unica
+          versione sicura è quella che appartiene a te.</div>
       </li>
     </ol>
   </section>
 
-  <!-- ── Roadmap ─────────────────────────────────────────────────────── -->
   <section id="roadmap">
-    <h2><span class="sec-n">04</span>Where this is going</h2>
-    <span class="wip">Work in progress</span>
-    <p class="sub">This is unfinished and openly so. It starts at Instagram because that export is the
-      richest one Meta actually hands over — but Instagram is the starting point, not the point. Anything
-      that leaves a digital footprint you are entitled to read could be pulled into the same frame, always
-      under the same rule: <b>your data stays in your account.</b></p>
+    <h2><span class="sec-n">04</span>Dove sta andando</h2>
+    <span class="wip">Lavori in corso</span>
+    <p class="sub">Questo progetto non è finito, e lo dice apertamente. Parte da Instagram perché quello è
+      l'export più ricco che Meta consegni davvero — ma Instagram è il punto di partenza, non il punto.
+      Qualsiasi cosa lasci un'impronta digitale che hai il diritto di leggere può entrare nello stesso
+      quadro, sempre con la stessa regola: <b>i tuoi dati restano nel tuo account.</b></p>
     <ul class="road">
-      <li><span class="tag now">Working</span><div><b>Instagram</b><span>Themes, rhythm, quiet interests, network graph, belonging, risk register.</span></div></li>
-      <li><span class="tag next">Next</span><div><b>Belonging, properly</b><span>Two of its four dimensions cannot be measured from an Instagram export at all. The dashboard says so out loud instead of faking a score — closing that gap needs better sources.</span></div></li>
-      <li><span class="tag next">Next</span><div><b>Outward, not just inward</b><span>The dashboard describes consumption. The first feature that points outward — real places and groups near you, by interest — is designed and not yet built.</span></div></li>
-      <li><span class="tag">Later</span><div><b>Other footprints</b><span>Other platforms that offer real data exports, and a way to read several of them side by side.</span></div></li>
-      <li><span class="tag">Later</span><div><b>Longer memory</b><span>Most of what matters only becomes visible across a year, not a week. That needs time and exports, not code.</span></div></li>
+      <li><span class="tag now">Attivo</span><div><b>Instagram</b><span>Temi, ritmo, interessi silenziosi, grafo della rete, appartenenza, registro dei rischi.</span></div></li>
+      <li><span class="tag next">Prossimo</span><div><b>Appartenenza, davvero</b><span>Due delle sue quattro dimensioni non sono misurabili da un export Instagram. La dashboard lo dice ad alta voce invece di inventarsi un punteggio — colmare quel vuoto richiede fonti migliori.</span></div></li>
+      <li><span class="tag next">Prossimo</span><div><b>Verso l'esterno, non solo l'interno</b><span>La dashboard descrive il consumo. La prima funzione che guarda fuori — luoghi e gruppi reali vicino a te, per interesse — è progettata ma non ancora costruita.</span></div></li>
+      <li><span class="tag">Più avanti</span><div><b>Altre impronte</b><span>Altre piattaforme che offrono veri export di dati, e un modo per leggerne diverse affiancate.</span></div></li>
+      <li><span class="tag">Più avanti</span><div><b>Memoria più lunga</b><span>Quasi tutto ciò che conta diventa visibile su un anno, non su una settimana. Servono tempo ed export, non codice.</span></div></li>
     </ul>
-    <p class="sub" style="margin-top:18px">Requests and disagreements are genuinely useful here — especially
-      "this number is wrong and here is why". The rules behind every metric are editable in the
-      <b>Settings</b> tab of your own copy, so you can also just fix it for yourself.</p>
+    <p class="sub" style="margin-top:18px">Richieste e obiezioni qui servono davvero — soprattutto
+      "questo numero è sbagliato ed ecco perché". Le regole dietro ogni metrica sono modificabili nella
+      scheda <b>Settings</b> della tua copia, quindi puoi anche semplicemente sistemarlo per te.</p>
   </section>
 
-  <!-- ── Support ─────────────────────────────────────────────────────── -->
   <section id="support">
     <div class="support">
-      <h2>Free, and staying free</h2>
-      <p class="sub" style="margin: 0 auto 4px">There is nothing to buy, no account to make, no upsell and
-        no data of yours to sell — there could not be, since none of it ever reaches me. If it was useful
-        and you feel like it, you can put something in the tin. Entirely optional, and it changes nothing
-        about what you get.</p>
+      <h2>Gratuito, e resta gratuito</h2>
+      <p class="sub" style="margin: 0 auto 4px">Non c'è niente da comprare, nessun account da creare, nessun
+        upsell e nessun tuo dato da vendere — non potrebbe esserci, visto che niente di tuo arriva mai a me.
+        Se ti è stato utile e ne hai voglia, puoi lasciare qualcosa nel barattolo. È del tutto facoltativo e
+        non cambia nulla di quello che ottieni.</p>
       <p style="margin-top:20px">
-        <a class="btn btn-primary btn-lg" href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+        <a class="btn btn-primary btn-lg" href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">☕ Offrimi un caffè</a>
       </p>
     </div>
   </section>
 
-  <!-- ── Join in ─────────────────────────────────────────────────────── -->
   <section id="join">
-    <h2><span class="sec-n">05</span>Join in</h2>
-    <p class="sub">Tell me what broke, what was confusing, or what you found out about yourself that you did
-      not expect. That last one is the whole reason this exists.</p>
+    <h2><span class="sec-n">05</span>Partecipa</h2>
+    <p class="sub">Raccontami cosa si è rotto, cosa era poco chiaro, o cosa hai scoperto su di te che non ti
+      aspettavi. Quest'ultima è tutta la ragione per cui questo progetto esiste.</p>
     <div class="share">
-      <a class="btn" id="discuss" href="https://github.com/RedHouseLux/instagram-insights/discussions/1" target="_blank" rel="noopener">💬 Comment &amp; discuss</a>
-      <a class="btn" id="issue" href="https://github.com/RedHouseLux/instagram-insights/issues/new" target="_blank" rel="noopener">🐞 Report a problem</a>
+      <a class="btn" href="https://github.com/RedHouseLux/instagram-insights/discussions/1" target="_blank" rel="noopener">💬 Commenta e discuti</a>
+      <a class="btn" href="https://github.com/RedHouseLux/instagram-insights/issues/new" target="_blank" rel="noopener">🐞 Segnala un problema</a>
     </div>
-    <h3 style="margin-top:28px">Share it</h3>
-    <p class="sub">Most people do not know they can ask for this data at all.</p>
+    <h3 style="margin-top:28px">Condividi</h3>
+    <p class="sub">Quasi nessuno sa di poter chiedere questi dati.</p>
     <div class="share" style="justify-content:flex-start">
-      <a class="btn" id="sh-x" href="#" target="_blank" rel="noopener">Share on X</a>
+      <a class="btn" id="sh-x" href="#" target="_blank" rel="noopener">Condividi su X</a>
       <a class="btn" id="sh-li" href="#" target="_blank" rel="noopener">LinkedIn</a>
       <a class="btn" id="sh-fb" href="#" target="_blank" rel="noopener">Facebook</a>
       <a class="btn" id="sh-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
       <a class="btn" id="sh-tg" href="#" target="_blank" rel="noopener">Telegram</a>
-      <button class="btn" id="sh-copy" type="button">Copy link</button>
+      <button class="btn" id="sh-copy" type="button">Copia il link</button>
     </div>
   </section>
 
-  <!-- ── Thanks ──────────────────────────────────────────────────────── -->
   <section class="thanks">
-    <h2>Thank you for being here</h2>
-    <p>Every person who runs this, breaks it, argues with a number or tells someone else about it is doing
-      the actual work — making our own digital footprints something we can look at directly instead of
-      something that just happens to us. That is the whole project. Thank you for taking part.</p>
+    <h2>Grazie di essere qui</h2>
+    <p>Ogni persona che fa girare questo progetto, lo rompe, discute un numero o ne parla a qualcun altro sta
+      facendo il lavoro vero: rendere le nostre impronte digitali qualcosa che possiamo guardare in faccia,
+      invece di qualcosa che ci capita e basta. È tutto qui il progetto. Grazie di parteciparvi.</p>
   </section>
 
   <footer>
     <div class="foot-row">
-      <span>A <b>Blockcert</b> project · free and open · work in progress</span>
+      <span>Un progetto <b>Blockcert</b> · gratuito e aperto · in lavorazione</span>
       <span>
         <a href="https://github.com/RedHouseLux/instagram-insights" target="_blank" rel="noopener">GitHub</a> ·
-        <a href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">Support</a> ·
-        <a href="it/">Italiano</a>
+        <a href="https://buymeacoffee.com/blockcert" target="_blank" rel="noopener">Sostieni</a> ·
+        <a href="../">English</a>
       </span>
     </div>
-    <p style="margin-top:14px">Not affiliated with, endorsed by, or connected to Meta or Instagram.
-      Instagram is a trademark of Meta Platforms, Inc. This tool only reads the data export Meta already
-      gives you on request.</p>
+    <p style="margin-top:14px">Non affiliato, approvato o collegato in alcun modo a Meta o Instagram.
+      Instagram è un marchio di Meta Platforms, Inc. Questo strumento legge soltanto l'export di dati che
+      Meta ti fornisce già su richiesta.</p>
   </footer>
 </div>
 
 <div class="toast" id="toast" hidden></div>
+
 
 <script>
 (function () {
@@ -402,8 +400,8 @@ footer a { color: var(--ink-2); }
   if (TEMPLATE_SHEET_ID) {
     copy.href = 'https://docs.google.com/spreadsheets/d/' + TEMPLATE_SHEET_ID + '/copy';
   } else {
-    copy.href = REPO + '#one-time-setup-about-5-minutes';
-    copy.textContent = 'Set up from the README →';
+    copy.href = REPO + '/blob/main/README.it.md#installazione-una-tantum-circa-5-minuti';
+    copy.textContent = 'Installa dal README →';
     copy.classList.remove('btn-primary');
   }
 
@@ -423,8 +421,8 @@ footer a { color: var(--ink-2); }
 
   // ── Share ───────────────────────────────────────────────────────────────
   var url = location.href.split('#')[0];
-  var text = 'Instagram knows what it showed you, when, and what you did about it — it just never shows you. '
-    + 'This reads your own Instagram data export inside your own Google account. Nothing is uploaded.';
+  var text = 'Instagram sa cosa ti ha mostrato, quando e cosa ne hai fatto — semplicemente non te lo dice mai. '
+    + 'Questo legge il tuo export di dati Instagram dentro il tuo account Google. Niente viene caricato da nessuna parte.';
   var e = encodeURIComponent;
   var links = {
     'sh-x': 'https://twitter.com/intent/tweet?text=' + e(text) + '&url=' + e(url),
@@ -444,7 +442,7 @@ footer a { color: var(--ink-2); }
   document.getElementById('sh-copy').addEventListener('click', function () {
     // navigator.clipboard is unavailable on insecure origins and can reject even on https.
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () { say('Link copied'); },
+      navigator.clipboard.writeText(url).then(function () { say('Link copiato'); },
         function () { say(url); });
     } else {
       say(url);
@@ -452,5 +450,8 @@ footer a { color: var(--ink-2); }
   });
 })();
 </script>
+</body>
+</html>
+
 </body>
 </html>
