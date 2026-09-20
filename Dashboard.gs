@@ -9,6 +9,15 @@
  * so the client never has to guess how the google.script.run bridge marshals a Date. Every other column is
  * already plain text or a number (per TEXT_COLUMNS/NUMBER_FORMATS) and passes through unchanged.
  */
+/** The deployed web app's URL, or '' when there is no deployment. Never throws. */
+function webAppUrl_() {
+  try {
+    return ScriptApp.getService().getUrl() || '';
+  } catch (e) {
+    return '';
+  }
+}
+
 function serializeCell_(v) {
   return Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v)
     ? Utilities.formatDate(v, CONFIG.LOCAL_TIMEZONE, 'yyyy-MM-dd')
@@ -71,9 +80,26 @@ function getDashboardPayload() {
     // The page is served inside a sandboxed iframe on its own domain, so a plain relative link like
     // "?view=network" would resolve against that iframe's own URL, not the web app's real one. Handing
     // the client this absolute URL is what makes the network-view link actually work.
-    webAppUrl: ScriptApp.getService().getUrl(),
+    // Null whenever the script has no web-app deployment — which, now that the dashboard opens in a dialog,
+    // is the normal state rather than an error. The client hides the links that need a real URL.
+    webAppUrl: webAppUrl_(),
     generatedAt: Utilities.formatDate(new Date(), CONFIG.LOCAL_TIMEZONE, 'yyyy-MM-dd HH:mm'),
   };
+}
+
+/**
+ * The dashboard inside the Sheet, as a modal dialog — the same page a web-app deployment would serve, but
+ * with nothing to deploy. This exists because "Deploy → New deployment → Web app → Execute as → Who has
+ * access" was the single hardest step of the setup, and it is not a step that earns its difficulty: the
+ * dialog runs as the person who opened it, reads the same Sheet, and talks to the same getDashboardPayload
+ * over google.script.run. A deployment is still worth doing if you want the dashboard on its own URL, on a
+ * phone, or without opening the spreadsheet first — so it stays documented as optional, not as step one.
+ */
+function openDashboard() {
+  // Apps Script clamps a dialog to the browser window, so asking for more than fits is how you get "as big
+  // as this window allows" rather than a fixed, too-small box.
+  const page = HtmlService.createHtmlOutputFromFile('Index').setWidth(1600).setHeight(1000);
+  SpreadsheetApp.getUi().showModalDialog(page, 'Instagram Insights');
 }
 
 /** The dashboard's "Refresh now" button: runs the same check the daily trigger runs, and reports what it found. */

@@ -457,6 +457,7 @@ const DEFAULT_RULES = [
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Instagram Insights')
     .addItem('Setup (run once)', 'setup')
+    .addItem('Open dashboard', 'openDashboard')
     .addItem('Process new exports now', 'processNewExports')
     .addItem('Rebuild dashboard', 'buildDashboard')
     .addItem('Create Looker Studio report', 'createLookerStudioReport')

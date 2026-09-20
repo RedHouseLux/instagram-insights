@@ -216,6 +216,14 @@ footer a { color: var(--ink-2); }
   body { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
 }
 .give-claim { max-width: 62ch; margin: 14px auto 0; font-size: 14.5px; color: var(--ink-2); }
+
+/* The one sentence in the card that is the actual claim. A tinted underline rather than a highlighter
+   block: a solid fill fights the card's own accent tint and stops being readable in dark mode. */
+.why-card.is-key mark {
+  background: none; color: var(--ink); font-weight: 600;
+  box-shadow: inset 0 -0.55em 0 color-mix(in srgb, var(--accent) 30%, transparent);
+  padding: 0 2px;
+}
 </style>
 </head>
 <body>
@@ -277,7 +285,7 @@ footer a { color: var(--ink-2); }
       <div class="why-card is-key">
         <b>It is your data</b>
         <p>Meta must hand it over when you ask. Almost nobody does, because the export is a pile of
-          unreadable HTML. This makes it readable — and keeps it yours.</p>
+          unreadable HTML. <mark>This makes it readable — and keeps it yours.</mark></p>
       </div>
     </div>
   </section>
@@ -369,7 +377,7 @@ footer a { color: var(--ink-2); }
 
       <li>
         <h3>Make your own copy of the sheet</h3>
-        <p>One click. You get a private copy in your own Drive, with the script already inside it —
+        <p>One click. You get a private copy in your own Drive with the script already inside —
           no code to paste.</p>
         <p><a class="btn btn-primary" id="copy-link" href="#" target="_blank" rel="noopener">Make a copy →</a></p>
         <div class="callout">Prefer to read the code before running it? Every line is on
@@ -378,42 +386,51 @@ footer a { color: var(--ink-2); }
       </li>
 
       <li>
-        <h3>Run setup once</h3>
-        <p>In your new sheet: <kbd>Extensions</kbd> → <kbd>Apps Script</kbd>, pick <kbd>setup</kbd> from the
-          function dropdown, and press Run.</p>
+        <h3>Click <b>Setup</b> once, in the sheet's own menu</h3>
+        <p>Your copy has an <b>Instagram Insights</b> menu in the menu bar, next to Help. Choose
+          <kbd>Instagram Insights</kbd> → <kbd>Setup (run once)</kbd>. That is the whole setup — you never
+          need to open the script editor.</p>
         <p>Google will ask for permission to use your Drive, Sheets and triggers, and will warn you the app
           is unverified. That warning is expected: it is <em>your</em> copy of the script, running as you,
           and Google has not reviewed it because it was never submitted for review. Choose
           <kbd>Advanced</kbd> → <kbd>Go to (project name)</kbd> to continue.</p>
-        <p>Setup creates an <b>Instagram Exports</b> folder in your Drive and links it. It also prints the
-          folder link so you can find it.</p>
+        <div class="callout">If the menu is not there yet, reload the tab — it is added when the sheet opens.</div>
       </li>
 
       <li>
-        <h3>Drop the export in</h3>
-        <p>When Meta's email arrives, put the <kbd>.zip</kbd> straight into that
-          <b>Instagram Exports</b> folder — unzipping is optional, and the Drive app on your phone works fine.</p>
-        <p>Then reload the sheet and choose <kbd>Instagram Insights</kbd> →
-          <kbd>Process new exports now</kbd>. After that it checks by itself once a day, so every month you
-          only have to drop the new file in.</p>
-      </li>
-
-      <li>
-        <h3>Open your dashboard</h3>
-        <p>The sheet is already readable, but the dashboard is nicer. In the Apps Script editor:
-          <kbd>Deploy</kbd> → <kbd>New deployment</kbd> → <kbd>Web app</kbd>, then set
-          <b>Execute as: Me</b> and <b>Who has access: Only myself</b>.</p>
-        <div class="callout"><b>Keep it on "Only myself."</b> That deployment runs as you and reads your
-          spreadsheet, so anyone you gave the link to would be reading your Instagram history through your
-          own account. This is also why there is no shared dashboard to hand you — the only safe version
-          is the one that belongs to you.</div>
+        <h3>That's it — now it runs itself</h3>
+        <p>Because you set the export to go <b>straight to Google Drive on a weekly schedule</b> in step 1,
+          there is nothing left for you to do. Instagram drops each delivery into your Drive, the script
+          finds it, files it into the <b>Instagram Exports</b> folder and reads it. It checks once a day by
+          itself.</p>
+        <p>To see your data: <kbd>Instagram Insights</kbd> → <kbd>Open dashboard</kbd>. To make it check
+          Drive right now instead of waiting for tomorrow, use <kbd>Process new exports now</kbd>, or the
+          <b>Check Drive now</b> button in the dashboard.</p>
+        <div class="callout"><b>If you chose a one-off export instead of the schedule,</b> this is the one
+          step that stays manual: drop the <kbd>.zip</kbd> Meta emails you into the <b>Instagram Exports</b>
+          folder in your Drive, then run <kbd>Process new exports now</kbd>. Unzipping is optional, and the
+          Drive app on your phone works fine.</div>
       </li>
     </ol>
   </section>
 
   <!-- ── Roadmap ─────────────────────────────────────────────────────── -->
+  <section id="optional">
+    <h2><span class="sec-n">04</span>Optional: the dashboard on its own URL</h2>
+    <p class="sub">Opening the dashboard from the sheet's menu needs no setup at all, and for most people
+      that is enough. Deploying it as a web app gives it a URL of its own — handy on a phone, or to open
+      without going through the spreadsheet first.</p>
+    <p class="sub">In the sheet: <kbd>Extensions</kbd> → <kbd>Apps Script</kbd> → <kbd>Deploy</kbd> →
+      <kbd>New deployment</kbd> → <kbd>Web app</kbd>, with <b>Execute as: Me</b> and
+      <b>Who has access: Only myself</b>.</p>
+    <div class="callout"><b>Keep it on "Only myself."</b> That deployment runs as you and reads your
+      spreadsheet, so anyone you gave the link to would be reading your Instagram history through your own
+      account. This is also why there is no shared dashboard to hand you — the only safe version is the one
+      that belongs to you.</div>
+  </section>
+
   <section id="roadmap">
-    <h2><span class="sec-n">04</span>Where this is going</h2>
+    <h2><span class="sec-n">05</span>Where this is going</h2>
     <span class="wip">Work in progress</span>
     <p class="sub">This is unfinished and openly so. It starts at Instagram because that export is the
       richest one Meta actually hands over — but Instagram is the starting point, not the point. Anything
@@ -450,7 +467,7 @@ footer a { color: var(--ink-2); }
 
   <!-- ── Join in ─────────────────────────────────────────────────────── -->
   <section id="join">
-    <h2><span class="sec-n">05</span>Join in</h2>
+    <h2><span class="sec-n">06</span>Join in</h2>
     <p class="sub">Tell me what broke, what was confusing, or what you found out about yourself that you did
       not expect. That last one is the whole reason this exists.</p>
     <div class="share">

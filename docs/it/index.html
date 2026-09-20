@@ -217,6 +217,14 @@ footer a { color: var(--ink-2); }
   body { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
 }
 .give-claim { max-width: 62ch; margin: 14px auto 0; font-size: 14.5px; color: var(--ink-2); }
+
+/* The one sentence in the card that is the actual claim. A tinted underline rather than a highlighter
+   block: a solid fill fights the card's own accent tint and stops being readable in dark mode. */
+.why-card.is-key mark {
+  background: none; color: var(--ink); font-weight: 600;
+  box-shadow: inset 0 -0.55em 0 color-mix(in srgb, var(--accent) 30%, transparent);
+  padding: 0 2px;
+}
 </style>
 </head>
 <body>
@@ -279,7 +287,7 @@ footer a { color: var(--ink-2); }
       <div class="why-card is-key">
         <b>Sono dati tuoi</b>
         <p>Meta è tenuta a consegnarteli se glieli chiedi. Quasi nessuno lo fa, perché l'export è un mucchio
-          di HTML illeggibile. Questo lo rende leggibile — e lo tiene tuo.</p>
+          di HTML illeggibile. <mark>Questo lo rende leggibile — e lo tiene tuo.</mark></p>
       </div>
     </div>
   </section>
@@ -377,41 +385,50 @@ footer a { color: var(--ink-2); }
       </li>
 
       <li>
-        <h3>Esegui setup una volta</h3>
-        <p>Nel foglio appena creato: <kbd>Estensioni</kbd> → <kbd>Apps Script</kbd>, scegli <kbd>setup</kbd>
-          dall'elenco delle funzioni e premi Esegui.</p>
-        <p>Google ti chiederà il permesso di usare Drive, Fogli e i trigger, e ti avviserà che l'app non è
-          verificata. Quell'avviso è normale: è la <em>tua</em> copia dello script, che gira come te, e
-          Google non l'ha esaminata perché non è mai stata sottoposta a verifica. Scegli
+        <h3>Clicca <b>Setup</b> una volta, dal menu del foglio</h3>
+        <p>La tua copia ha un menu <b>Instagram Insights</b> nella barra dei menu, accanto a Guida. Scegli
+          <kbd>Instagram Insights</kbd> → <kbd>Setup (run once)</kbd>. L’installazione è tutta qui: non devi
+          mai aprire l’editor di script.</p>
+        <p>Google ti chiederà il permesso di usare Drive, Fogli e i trigger, e ti avviserà che l’app non è
+          verificata. Quell’avviso è normale: è la <em>tua</em> copia dello script, che gira come te, e
+          Google non l’ha esaminata perché non è mai stata sottoposta a verifica. Scegli
           <kbd>Avanzate</kbd> → <kbd>Apri (nome del progetto)</kbd> per proseguire.</p>
-        <p>Il setup crea una cartella <b>Instagram Exports</b> nel tuo Drive e la collega. Ti stampa anche
-          il link della cartella, così la ritrovi.</p>
+        <div class="callout">Se il menu non c’è ancora, ricarica la scheda: viene aggiunto all’apertura del foglio.</div>
       </li>
 
       <li>
-        <h3>Metti dentro l'export</h3>
-        <p>Quando arriva l'email di Meta, metti lo <kbd>.zip</kbd> direttamente nella cartella
-          <b>Instagram Exports</b> — scompattarlo è facoltativo, e l'app Drive del telefono va benissimo.</p>
-        <p>Poi ricarica il foglio e scegli <kbd>Instagram Insights</kbd> →
-          <kbd>Processa i nuovi export ora</kbd>. Da quel momento controlla da solo una volta al giorno,
-          quindi ogni mese ti basta buttare dentro il file nuovo.</p>
-      </li>
-
-      <li>
-        <h3>Apri la tua dashboard</h3>
-        <p>Il foglio è già leggibile, ma la dashboard è più bella. Nell'editor Apps Script:
-          <kbd>Deploy</kbd> → <kbd>Nuovo deployment</kbd> → <kbd>App web</kbd>, poi imposta
-          <b>Esegui come: Me</b> e <b>Chi ha accesso: Solo me stesso</b>.</p>
-        <div class="callout"><b>Lascialo su "Solo me stesso".</b> Quel deployment gira come te e legge il tuo
-          foglio di calcolo, quindi chiunque avesse il link leggerebbe la tua cronologia Instagram passando
-          dal tuo account. È anche il motivo per cui non c'è una dashboard condivisa da darti: l'unica
-          versione sicura è quella che appartiene a te.</div>
+        <h3>Fatto — da qui in poi va avanti da solo</h3>
+        <p>Siccome al passo 1 hai impostato l’esportazione <b>direttamente su Google Drive con cadenza
+          settimanale</b>, non ti resta nulla da fare. Instagram deposita ogni consegna nel tuo Drive, lo
+          script la trova, la sistema nella cartella <b>Instagram Exports</b> e la legge. Controlla da solo
+          una volta al giorno.</p>
+        <p>Per vedere i tuoi dati: <kbd>Instagram Insights</kbd> → <kbd>Open dashboard</kbd>. Per fargli
+          controllare Drive subito invece di aspettare domani, usa <kbd>Process new exports now</kbd>, o il
+          pulsante <b>Controlla Drive ora</b> nella dashboard.</p>
+        <div class="callout"><b>Se invece hai scelto un’esportazione una tantum,</b> questo è l’unico
+          passaggio che resta manuale: metti lo <kbd>.zip</kbd> che Meta ti manda via email nella cartella
+          <b>Instagram Exports</b> del tuo Drive, poi esegui <kbd>Process new exports now</kbd>.
+          Scompattarlo è facoltativo, e l’app Drive del telefono va benissimo.</div>
       </li>
     </ol>
   </section>
 
+  <section id="optional">
+    <h2><span class="sec-n">04</span>Facoltativo: la dashboard su un indirizzo tutto suo</h2>
+    <p class="sub">Aprire la dashboard dal menu del foglio non richiede alcuna configurazione, e per la
+      maggior parte delle persone basta così. Pubblicarla come app web le dà un indirizzo proprio — comodo
+      sul telefono, o per aprirla senza passare prima dal foglio di calcolo.</p>
+    <p class="sub">Nel foglio: <kbd>Estensioni</kbd> → <kbd>Apps Script</kbd> → <kbd>Deploy</kbd> →
+      <kbd>Nuovo deployment</kbd> → <kbd>App web</kbd>, con <b>Esegui come: Me</b> e
+      <b>Chi ha accesso: Solo me stesso</b>.</p>
+    <div class="callout"><b>Lascialo su "Solo me stesso".</b> Quel deployment gira come te e legge il tuo
+      foglio di calcolo, quindi chiunque avesse il link leggerebbe la tua cronologia Instagram passando dal
+      tuo account. È anche il motivo per cui non c’è una dashboard condivisa da darti: l’unica versione
+      sicura è quella che appartiene a te.</div>
+  </section>
+
   <section id="roadmap">
-    <h2><span class="sec-n">04</span>Dove sta andando</h2>
+    <h2><span class="sec-n">05</span>Dove sta andando</h2>
     <span class="wip">Lavori in corso</span>
     <p class="sub">Questo progetto non è finito, e lo dice apertamente. Parte da Instagram perché quello è
       l'export più ricco che Meta consegni davvero — ma Instagram è il punto di partenza, non il punto.
@@ -446,7 +463,7 @@ footer a { color: var(--ink-2); }
   </section>
 
   <section id="join">
-    <h2><span class="sec-n">05</span>Partecipa</h2>
+    <h2><span class="sec-n">06</span>Partecipa</h2>
     <p class="sub">Raccontami cosa si è rotto, cosa era poco chiaro, o cosa hai scoperto su di te che non ti
       aspettavi. Quest'ultima è tutta la ragione per cui questo progetto esiste.</p>
     <div class="share">

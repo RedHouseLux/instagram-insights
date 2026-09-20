@@ -113,6 +113,7 @@
       'chrome.window': 'finestra di visualizzazione dal',
       'week.note': 'Rischi, indicatori e segnali qui sotto sono calcolati solo su questa settimana e confrontati con la settimana precedente. Sette giorni sono poche prove — leggili come provvisori, e passa a Mensile per la versione più stabile.',
       'week.note.first': 'Questa è la prima settimana registrata, quindi non c’è ancora nulla con cui confrontarla: rischi, indicatori e segnali qui sotto mostrano i livelli senza una tendenza.',
+      'net.menu': 'Aprila dal Foglio: Instagram Insights \u2192 Apri la vista di rete',
       'quiet.none': 'Nessun account è stato visto abbastanza spesso senza like, ricerche o follow.',
       'profile.how': 'Come viene calcolato ciascuno',
       'signal.try': 'Prova:',
@@ -349,10 +350,20 @@
     box.appendChild(el('a', { href: payload.sheetUrl, target: '_blank', text: t('chrome.sheet', 'Open Sheet') }));
     const folderLink = $('#folder-link');
     if (folderLink) folderLink.href = payload.exportsFolderUrl;
-    // Both entry points to the network view — the footer link and the preview's own — take the same URL.
+    // Both entry points to the network view take the same URL — but only a deployed web app HAS one. Opened
+    // as a dialog inside the Sheet (the normal case now), there is no URL to link to, and a link that goes
+    // nowhere is worse than a sentence saying where to click instead.
     ['#network-link', '#netprev-link'].forEach(sel => {
       const a = $(sel);
-      if (a && payload.webAppUrl) a.href = payload.webAppUrl + '?view=network';
+      if (!a) return;
+      if (payload.webAppUrl) {
+        a.href = payload.webAppUrl + '?view=network';
+        a.removeAttribute('aria-disabled');
+      } else {
+        a.removeAttribute('href');
+        a.setAttribute('aria-disabled', 'true');
+        a.textContent = t('net.menu', 'Open it from the Sheet: Instagram Insights → Open network view');
+      }
     });
   }
 
