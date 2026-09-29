@@ -120,13 +120,15 @@ stays manual: when Meta emails you, put the `.zip` into the **Instagram Exports*
 | **Monthly** | One row per month with every metric. Use it as the data source for Looker Studio. |
 | **Risks** | The risk register: 11 risks scored likelihood × impact, with evidence, trend and mitigation (see below). |
 | **Signals** | Rule-based risk flags (✅ OK / ℹ️ Info / ⚠️ Watch / 🔴 Alert), what each means, and something to try. |
-| **Profile** | 0–100 indicators mapped to the Big Five and Self-Determination Theory, plus the emotional tone of captions. Each row explains its formula. |
-| **Themes** | Share of items seen and liked per theme. One post can count toward several themes. |
+| **Profile** | 0–100 indicators in four groups: personality (Big Five) and needs (Self-Determination Theory) read from **what you did**; the **feed diet**, read from what you were shown; and **influence**, the one against the other. Plus emotional tone three ways — of what you were shown, of your own words, of the words sent to you. Each row explains its formula, names its layer and says how many events it rests on; with too few, the score is left blank. See [METHODOLOGY.md](METHODOLOGY.md). |
+| **Themes** | Share of items seen per theme, beside what you chose: likes, saves, searches, comments, their weighted **action share**, and **lift** (chosen ÷ shown). One post can count toward several themes. |
 | **Rhythm** | Activity by hour and weekday, in your timezone. |
 | **Daily** | Per day: items seen, actions, sessions and estimated minutes, with the viewing window flagged. |
 | **Hourly** | Activity for each hour × weekday, used by the heatmap. |
 | **Top** | Most-seen accounts, liked accounts, hashtags, advertisers in the ads you saw, and the accounts you exchanged notes or reposts with. |
 | **Quiet interests** | Accounts you kept seeing without any visible action from you (see below). |
+| **Performance** | Your account as others meet it: followers, reach, impressions, profile visits, interactions and audience, one row per 90-day window Instagram reports — plus the window before each, worked out from the card's own "% vs". See below. |
+| **Conversations** | One row per person you exchanged direct messages with: sent, received, who started, how many turns were answered each way and how fast. Counts and timings only — message text is never stored. |
 | **Belonging** | Four dimensions of belonging — Seen, Heard, Invested in, Connected — scored where the export supports it and marked unmeasurable where it does not (see below). |
 | **Network** | One row per account you follow, follow you or keep meeting, with its relation, status, theme cluster and attention. Region and Note are yours to fill in and are kept on every rebuild. See below. |
 | **Actions** | What you chose to do: likes, follows, searches, blocks, reports. |
@@ -143,28 +145,53 @@ A **quiet interest** is an account whose posts or videos you saw at least 5 time
 - **Why it matters.** Likes are what you are willing to show. Repeated viewing is what actually holds your attention. Instagram doesn't export watch time, so repeated views are the best signal available for attention you give but don't express. These accounts often point closer to current worries, curiosities or guilty pleasures than your likes do.
 - **Columns.**
   - **Times seen**, split into posts and videos.
-  - **You follow**: *Yes* means passive loyalty to an account you once chose. *No* means the feed keeps pushing it at you.
+  - **You follow**: *Yes* means passive loyalty to an account you once chose. *No* means the feed keeps pushing it at you. *Unfollowed* means you chose to stop following it, and the feed kept showing it anyway.
   - **Vs last month**: *Continuing* means it was quiet last month too, which is a stronger signal. *New* means it just appeared.
   - **Latest caption**, to jog your memory.
 - **Caveat.** "Seen" means Instagram logged it on your screen. It doesn't mean you watched it through, so an account the algorithm insists on can appear even if you scroll past it.
 
 ## Belonging, explained
 
-Four things belonging is made of, one row each per month and week. The export can speak to two of them and is
-silent on the other two — and the silent rows stay in the tab rather than being dropped, because a missing row
-reads as "nothing to report" when the truth is "nothing was ever measured".
+Four things belonging is made of, one row each per month and week. The export measures two of them, reaches a
+third only by proxy, and is silent on the fourth — and the silent row stays in the tab rather than being dropped,
+because a missing row reads as "nothing to report" when the truth is "nothing was ever measured".
 
 | Dimension | Status | Built from |
 |---|---|---|
 | **Connected** | Measured | `note_and_repost_interactions.html` — notes and reposts you and the other account both showed up for. Scored as breadth of distinct reciprocal contacts against `BELONGING_TIES_FULL` (default 15), capped at 100. The named partners also appear in the **Top** tab as the *Notes & reposts* list. |
 | **Seen** | Proxy only | `profiles_reached.html` and `content_interactions.html`. The score is accounts that engaged ÷ accounts reached — a response rate. It measures being *looked at*, not being *recognised*, which is a different thing and is labelled as such. |
-| **Heard** | Not measurable yet | Nothing but a story-reply count. `your_instagram_activity/comments/` ships empty and the messages folder carries no DM content or metadata, so there is no conversation in the export to read. |
+| **Heard** | Measured | `messages/inbox/` — the share of your message turns the other person answered within 24h, and how fast, per person (see the **Conversations** tab). It measures being *answered*; replies to your public comments are still not in the export. Weeks without messages say so. |
 | **Invested in** | Not measurable yet | Nothing at all. No file in an Instagram export describes anyone acting for your benefit. |
 
 Notes and reposts carry **no timestamps**, and the three "past Instagram insights" cards are Instagram's own
 rolling ~90-day aggregates over a window that is not your month. All four are therefore treated as snapshots —
-newest delivery wins — never split across days. That is why the Belonging tab's numbers do not move with the
-daily view window the way the rest of the dashboard does.
+newest delivery wins — never split across days. That is why the Connected and Seen numbers do not move with the
+daily view window the way the rest of the dashboard does. Heard is dated message by message, so it does.
+
+## Account performance, explained
+
+The **Performance** tab and the dashboard's *Your account* section read Instagram's own numbers about your profile.
+Each export carries them for the **90 days ending the day before it**, so weekly exports give windows 7 days apart
+that share 83 days:
+
+- **Never add two windows.** Impressions, profile visits and interactions are totals over 90 days; accounts
+  reached and engaged are unique accounts, which cannot be added at all. Followers is a headcount on the day —
+  the one ordinary time series.
+- **"vs a week earlier"** is the week that joined the window minus the week that left it, thirteen weeks back —
+  not the latest week on its own.
+- **Worked-out windows.** Each card states its change against the 90 days before. The previous window is worked
+  out as value ÷ (1 + change) and drawn hollow, so the very first export already draws a line rather than a dot.
+- **Your last story** is marked on the charts. When the 90-day window moves past it, story interactions fall to
+  zero unless you post again — read a fall against that date before reading it as your audience leaving.
+
+## Behaviour, exposure and influence
+
+The export mostly logs what reached your screen, which the recommender chose. Personality and needs are
+therefore read **only from what you did** — searches, saves, comments, messages, likes, follows, and when — while
+what you were shown is reported separately as your feed diet, and **influence** compares the two: which themes
+you seek beyond what you are shown, whether new accounts come to you through search or through the feed, and,
+after 12 weeks, whether changes in the feed tend to precede changes in what you do or the other way round.
+Every formula is in [METHODOLOGY.md](METHODOLOGY.md).
 
 ## Network, explained
 
@@ -241,7 +268,7 @@ A page that reads live from the tabs `processNewExports()` already keeps current
 - **After changing `Code.gs`, `Dashboard.gs` or the `webapp/` files,** run `node build/build-webapp.js` to rebuild `webapp/Index.html`, then push the update (see above).
 - **Finding your exports automatically:** because Instagram's own "send to Google Drive" option can't be pointed at a specific folder, every check also looks across "My Drive" for anything named with "meta" in it, confirms it's really an Instagram export before touching it, and moves a real one into the `Instagram Exports` folder. Anything else with "meta" in its name is left exactly where it is.
 
-What it shows: the month's tiles with month-over-month changes, the 11 risks with evidence and a trend arrow per risk, minutes per day, themes, the hour × weekday heatmap, most-seen accounts, quiet interests, the indicators, the signals, and a link to the network view.
+What it shows: the tiles for the week or month with changes against the one before; the four layers (what reached you, how you used it, what you did toward people, what they did back); every measure **over time**, with a range filter (last week by day, 8 weeks, 6 months, all, or a custom range), your usual range shaded, partial weeks hollow and missing weeks left as gaps; your account's 90-day performance; themes shown and chosen; the hour × weekday heatmap; most-seen accounts and quiet interests; emotional tone of what you were shown, of your words and of words to you; personality, needs, feed diet and influence as strips against every other week on record; belonging and conversations; the 11 risks; the signals; and a link to the network view. Every chart has a table view.
 
 ## Sharing it with other people
 
@@ -263,10 +290,11 @@ mistakes to avoid, are in [docs/TEMPLATE.md](docs/TEMPLATE.md).
 - **Each export holds only about the last 7 days of viewing history** (posts, videos, ads), while likes, follows and searches cover the whole month. The script detects this *viewing window*; rates, rhythm and time estimates use only those days. Themes and quiet interests describe that week.
 - Estimated minutes come from logged timestamps, with a session ending after 15 minutes of silence. Treat them as a floor, not a measurement.
 - Themes, emotions and indicators come from **keyword rules**. They are proxies for patterns, not a psychological assessment.
+- **Direct messages are read, never stored.** Their text is scored for tone in memory; only counts and timings reach the sheet, and the Prompt tab carries no message content.
 - If Meta changes the export layout, parsing may break. The Log tab shows an error instead of silently writing wrong numbers.
 - If you add an older month after newer ones, run **Reprocess everything** so month-to-month comparisons are recalculated.
 - After pasting a new version of `Code.gs`, run **Reprocess everything** once so past months get the new columns and tabs.
 
 ## Testing locally
 
-`node test/run-local.js <folder with exports>` runs the whole pipeline on local exports, using in-memory stand-ins for Drive and Sheets. It checks the parsed counts against the raw HTML and confirms that re-running doesn't duplicate rows.
+`node test/run-local.js <folder with exports>` runs the whole pipeline on local exports, using in-memory stand-ins for Drive and Sheets. It checks the parsed counts against the raw HTML and confirms that re-running doesn't duplicate rows. The folder may hold exports as Meta's Drive delivery nests them, in English or Italian. Add `PAYLOAD_OUT=payload.json` to also write the exact data the dashboard receives, for previewing `webapp/Index.html` without deploying.

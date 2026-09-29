@@ -46,6 +46,17 @@ const CONFIG = {
   // behaviour change when it is only a difference in how much was collected. Below this, a month is still
   // written and still shown; it just doesn't carry a trend or stand in as the thing to compare against.
   MIN_TREND_COVERAGE: 0.5,
+  // Direct messages (METHODOLOGY.md → Social behaviour). A silence longer than this starts a new conversation.
+  CONVERSATION_GAP_HOURS: 8,
+  // A turn counts as answered when the other side writes back within this long. A turn still inside the
+  // window when the export ends counts neither way: it has not had the chance to be answered yet.
+  REPLY_WINDOW_HOURS: 24,
+  // The fewest events a behaviour score may rest on. Below it the score is left blank rather than computed
+  // from one or two actions and printed with the same confidence as one built from fifty.
+  MIN_EVIDENCE: 3,
+  // How much each chosen action counts toward "what you seek", against what the feed showed you. Searching
+  // and writing cost the most effort and so say the most; a like is a single tap.
+  ACTION_WEIGHTS: { search: 3, comment: 3, save: 2, follow: 2, like: 1, storyLike: 1, likedComment: 1 },
   // Stop starting new exports after this long, to stay under Apps Script's 6-minute limit.
   MAX_RUN_MS: 4.5 * 60 * 1000,
   // Looker Studio report to copy with "Create Looker Studio report": the ID in its URL
@@ -65,11 +76,28 @@ const HEADERS = {
     'Body-discomfort per 100', 'Anxiety & fear per 100', 'Sales-funnel per 100', 'Advertisers with your data',
     'Meta ad categories', 'New Meta labels', 'Quiet interests', 'Quiet share',
     'Est. minutes per active day', 'Sessions per active day', 'Top-5 accounts share', 'Risk index',
-    'View window start', 'Viewing days', 'Month date'],
+    'View window start', 'Viewing days',
+    // The four layers (METHODOLOGY.md). Exposure: what reached you.
+    'Stories seen', 'Recommended share', 'Ad load',
+    // Consumption behaviour: how you used it.
+    'Saved posts', 'Links opened', 'Unfollows', 'Use regularity', 'Self-directed share',
+    // Social behaviour: what you did toward people.
+    'Comments written', 'Story likes', 'DMs sent', 'Conversations', 'Conversations you started', 'Voice share',
+    'Own posts', 'Own stories', 'Own reels',
+    // Inbound: what people did toward you.
+    'DMs received', 'Reply rate to you', 'Their median reply (min)', 'Your reply rate', 'Your median reply (min)',
+    // Influence: how the first layer relates to the next two.
+    'Feed alignment', 'Self-led discoveries', 'Feed-led discoveries',
+    'Month date'],
   Risks: ['Month', 'Code', 'Risk', 'Category', 'Likelihood', 'Impact', 'Score', 'Rating', 'Previous score', 'Trend', 'Evidence', 'Mitigation', 'Month date'],
   Signals: ['Month', 'Area', 'Signal', 'Value', 'Previous', 'Level', 'What it means', 'Try'],
-  Profile: ['Month', 'Framework', 'Dimension', 'Score', 'Previous', 'Change', 'How it is computed', 'Month date'],
-  Themes: ['Month', 'Theme', 'Seen', 'Seen share', 'Liked', 'Month date'],
+  // Layer says which of the four layers (or the influence between them) a row is read from, and Evidence how
+  // many events it rests on. A behaviour score with less than CONFIG.MIN_EVIDENCE behind it has no Score.
+  Profile: ['Month', 'Framework', 'Dimension', 'Score', 'Previous', 'Change', 'How it is computed', 'Layer', 'Evidence', 'Month date'],
+  // Saved / Searched / Commented and the two columns after them compare what you CHOSE with what you were
+  // SHOWN: Action share is the theme's share of your weighted actions (CONFIG.ACTION_WEIGHTS), and Lift is that
+  // share divided by Seen share — above 1 you seek the theme out, below 1 the feed pushes it past you.
+  Themes: ['Month', 'Theme', 'Seen', 'Seen share', 'Liked', 'Saved', 'Searched', 'Commented', 'Action share', 'Lift', 'Month date'],
   Subthemes: ['Month', 'Theme', 'Subtopic', 'Seen', 'Share of theme', 'Liked', 'Month date'],
   // Four dimensions of belonging, one row each, every bucket. Status is the load-bearing column: two of the
   // four dimensions have no substrate in an Instagram export at all, and the tab says so in a row rather
@@ -84,7 +112,21 @@ const HEADERS = {
     'Last active', 'You follow since', 'Follows you since', 'Close friend', 'Blocked since', 'Region', 'Note', 'Profile',
     'In following list', 'In followers list', 'In close friends list'],
   Actions: ['Month', 'Date', 'Time', 'Type', 'Account / term', 'Themes', 'Detail', 'URL', 'Month date', 'Day'],
-  Accounts: ['Month', 'Account', 'Seen', 'Posts', 'Videos', 'Liked', 'Searched', 'You follow', 'Themes', 'Month date'],
+  Accounts: ['Month', 'Account', 'Seen', 'Posts', 'Videos', 'Liked', 'Searched', 'You follow', 'Themes', 'Saved', 'Commented', 'Month date'],
+  // One row per person you exchanged direct messages with, per bucket. Counts and timings only: the text of a
+  // message is read to score its tone and is never written anywhere.
+  Conversations: ['Month', 'Person', 'Sent', 'Received', 'Your voice notes', 'Their voice notes', 'Conversations',
+    'You started', 'Your turns', 'Your turns answered', 'Their turns', 'Their turns you answered',
+    'Their median reply (min)', 'Your median reply (min)', 'Heavy-tone messages (you)', 'Heavy-tone messages (them)', 'Month date'],
+  // Instagram's own creator numbers, one row per 90-day window rather than per bucket: every weekly export
+  // carries the window ending the day before it, so consecutive rows overlap by 83 days. "Reported" rows are
+  // the card as printed; "Worked out" rows are the PREVIOUS window, recovered from the card's own "% vs" line.
+  // See METHODOLOGY.md → Account performance for why these can never be added up.
+  Performance: ['Window end', 'Window start', 'Kind', 'Followers', 'Follows', 'Unfollows', 'Net followers',
+    'Accounts reached', 'Non-follower reach share', 'Impressions', 'Profile visits', 'External link taps',
+    'Content interactions', 'Post interactions', 'Story interactions', 'Reels interactions', 'Story replies',
+    'Accounts engaged', 'Engaged non-follower share', 'Engagement rate', 'Profile visit rate', 'Last story',
+    'From export', 'Top countries', 'Top cities', 'Age groups', 'Men share', 'Women share', 'Window end date'],
   Meta: ['Month', 'Type', 'Value', 'Status'],
   Prompt: ['Month', 'Text'],
   Settings: ['Kind', 'Name', 'Keywords'],
@@ -115,6 +157,7 @@ HEADERS['Weekly profile'] = weeklyHeadersOf_('Profile');
 HEADERS['Weekly quiet'] = weeklyHeadersOf_('Quiet interests');
 HEADERS['Weekly hourly'] = weeklyHeadersOf_('Hourly');
 HEADERS['Weekly belonging'] = weeklyHeadersOf_('Belonging');
+HEADERS['Weekly conversations'] = weeklyHeadersOf_('Conversations');
 // Rhythm and Meta earn a twin for one reason each, both about the PREVIOUS bucket rather than the current one:
 // Rhythm is where bucketFromRows_ reads hours/weekdays back from, and Meta is what "New Meta labels" diffs
 // against — without a weekly Meta every ad label would read as new again every single week.
@@ -126,7 +169,7 @@ HEADERS['Weekly meta'] = weeklyHeadersOf_('Meta');
 const WEEKLY_CHILD_TABS = {
   'Weekly themes': 'Themes', 'Weekly subthemes': 'Subthemes', 'Weekly top': 'Top', 'Weekly risks': 'Risks', 'Weekly signals': 'Signals',
   'Weekly profile': 'Profile', 'Weekly quiet': 'Quiet interests', 'Weekly hourly': 'Hourly',
-  'Weekly belonging': 'Belonging',
+  'Weekly belonging': 'Belonging', 'Weekly conversations': 'Conversations',
   'Weekly rhythm': 'Rhythm', 'Weekly meta': 'Meta',
 };
 
@@ -147,6 +190,8 @@ const TEXT_COLUMNS = {
     'Close friend', 'Blocked since', 'Region', 'Note', 'Profile', 'In following list', 'In followers list', 'In close friends list'],
   Actions: ['Month', 'Date', 'Time', 'Account / term', 'Detail'],
   Accounts: ['Month', 'Account', 'You follow', 'Themes'],
+  Conversations: ['Month', 'Person'],
+  Performance: ['Window end', 'Window start', 'Kind', 'Last story', 'From export', 'Top countries', 'Top cities', 'Age groups'],
   Meta: ['Month', 'Value'],
   Prompt: ['Month', 'Text'],
   Settings: ['Keywords'],
@@ -160,9 +205,16 @@ const NUMBER_FORMATS = {
     'Top theme share': '0.0%', 'News share': '0.0%', 'Money & Work share': '0.0%', 'Quiet share': '0.0%',
     'Emerging change': '+0.0%;-0.0%;0.0%', 'Ignored gap': '0.0%', 'Cared-for gap': '0.0%',
     'Est. minutes per active day': '0.0', 'Sessions per active day': '0.0', 'Top-5 accounts share': '0.0%',
+    'Recommended share': '0.0%', 'Ad load': '0.0%', 'Use regularity': '0.0%', 'Self-directed share': '0.0%',
+    'Voice share': '0.0%', 'Reply rate to you': '0.0%', 'Your reply rate': '0.0%', 'Feed alignment': '0.0%',
+    'Their median reply (min)': '0', 'Your median reply (min)': '0',
   },
-  Themes: { 'Seen share': '0.0%' },
+  Themes: { 'Seen share': '0.0%', 'Action share': '0.0%', Lift: '0.00' },
   Subthemes: { 'Share of theme': '0.0%' },
+  Performance: {
+    'Non-follower reach share': '0.0%', 'Engaged non-follower share': '0.0%', 'Engagement rate': '0.0%',
+    'Profile visit rate': '0.0%', 'Men share': '0.0%', 'Women share': '0.0%', 'Window end date': 'yyyy-mm-dd',
+  },
   Profile: { Score: '0', Previous: '0', Change: '+0;-0;0' },
   Log: { 'Period start': 'yyyy-mm-dd', 'Period end': 'yyyy-mm-dd' },
 };
@@ -623,6 +675,14 @@ function processNewExports() {
         `OK: ${months.length} month(s) queued`, sourceLog(item));
     });
 
+    // Account performance is kept per insights window, not per bucket, so it is written straight from each
+    // delivery here — before the bucket loop below, which can run out of budget and leave months for later.
+    try {
+      upsertPerformance_(parsed.reduce((acc, item) => acc.concat(performanceRows_(item.exp)), []));
+    } catch (e) {
+      writeLog_({ id: 'performance', name: 'Performance' }, '', '', 'Error writing account performance: ' + e.message);
+    }
+
     // One calendar month is processed exactly once per run, no matter how many of this run's dated sources
     // touch it — a delivery whose period crosses a month boundary (or a yearly export touching a dozen)
     // otherwise reprocesses the same month repeatedly, each time redoing work the previous pass already did.
@@ -956,14 +1016,37 @@ const WANTED_EXPORT_FILES = new Set([
   // other people did toward you — as opposed to the consumption telemetry every other page holds.
   'note_and_repost_interactions.html',
   'content_interactions.html', 'profiles_reached.html', 'audience_insights.html',
+  // The behaviour layers (see METHODOLOGY.md). Each of these was left out when the export shipped it empty;
+  // weekly deliveries now carry them, and without them "what you did" collapses back into "what you saw".
+  // stories_viewed is the big one (hundreds of KB a week, ~3 MB in a yearly export) and is still worth it:
+  // stories come from accounts you follow, which makes it the one view log of your own circle rather than
+  // of the recommender.
+  'stories_viewed.html', 'story_likes.html', 'recently_unfollowed_profiles.html', 'link_history.html',
+  'post_comments.html', 'message.html',
+  'posts.html', 'stories.html', 'reels.html',
+  'instagram_profile_information.html', 'personal_information.html',
 ]);
 
-/** Collects export files by base name; followers_1.html, followers_2.html… are grouped as followers.html. */
+/**
+ * Numbered pages that are one list split across files, and the one name each group is keyed under:
+ * followers_1.html…followers_N.html are one followers list, message_1.html…message_N.html are one thread
+ * (each page names its own thread in <title>), post_comments_N.html are one comment history, and
+ * posts_N.html are your own posts.
+ */
+const GROUPED_PAGES = [
+  [/^followers_\d+\.html$/i, 'followers.html'],
+  [/^message_\d+\.html$/i, 'message.html'],
+  [/^post_comments_\d+\.html$/i, 'post_comments.html'],
+  [/^posts_\d+\.html$/i, 'posts.html'],
+];
+
+/** Collects export files by base name, grouping the numbered pages in GROUPED_PAGES under one name. */
 function addExportFile_(files, path, read) {
   const base = String(path).split('/').pop();
   if (/\.json$/i.test(base)) files.__json = true;
   if (!/\.html$/i.test(base)) return;
-  const key = /^followers_\d+\.html$/i.test(base) ? 'followers.html' : base;
+  const group = GROUPED_PAGES.find(g => g[0].test(base));
+  const key = group ? group[1] : base;
   // Checked before read() is called, so an unwanted page is never fetched at all — this is the whole saving.
   if (!WANTED_EXPORT_FILES.has(key.toLowerCase())) return;
   (files[key] = files[key] || []).push(read());
@@ -1024,7 +1107,10 @@ function parseExport_(files) {
     periodStart: header.periodStart,
     periodEnd: header.periodEnd,
     month: '', // set below, once the period is known — it may still have to be inferred
-    likedPosts: each('liked_posts.html', parseMedia_).concat(each('saved_posts.html', parseMedia_)),
+    // Saves are kept apart from likes. A like is a signal the author sees; a save is a note to your future
+    // self. Counting them as one thing (as this used to) blurred approval into intent.
+    likedPosts: each('liked_posts.html', parseMedia_),
+    savedPosts: each('saved_posts.html', parseMedia_),
     likedComments: each('liked_comments.html', parsePeople_),
     postsViewed: each('posts_viewed.html', parseMedia_),
     videosWatched: each('videos_watched.html', parseMedia_),
@@ -1049,7 +1135,22 @@ function parseExport_(files) {
     reachCard: (files['profiles_reached.html'] || []).map(parseInsightCard_)[0] || null,
     interactionCard: (files['content_interactions.html'] || []).map(parseInsightCard_)[0] || null,
     audienceCard: (files['audience_insights.html'] || []).map(parseInsightCard_)[0] || null,
+    // ── Behaviour layers ─────────────────────────────────────────────────────────────────────────────────
+    storiesViewed: each('stories_viewed.html', parseMedia_),
+    storyLikes: each('story_likes.html', parsePeople_),
+    unfollowed: each('recently_unfollowed_profiles.html', parsePeople_),
+    linksOpened: each('link_history.html', parseLinks_),
+    comments: each('post_comments.html', parseComments_),
+    ownPosts: each('posts.html', parseOwnContent_),
+    ownStories: each('stories.html', parseOwnContent_),
+    ownReels: each('reels.html', parseOwnContent_),
+    profileInfo: (files['instagram_profile_information.html'] || []).map(html => parseProfileInfo_(html, ts))[0] || null,
   };
+  // Messages last: telling your messages from theirs needs your display name, which only the personal
+  // information page carries. The DM sender is written as that name, not as the username.
+  exp.displayName = (files['personal_information.html'] || [])
+    .map(html => parseInsightCard_(html).Name || parseInsightCard_(html).Nome || '')[0] || '';
+  exp.messages = parseMessages_(files['message.html'] || [], ts, exp.displayName);
 
   // Some exports arrive with no date range at all: Meta ships more than one start_here.html template, and one
   // of them is a plain index of the download with no "Generated by … on" header and no <time> tags (confirmed
@@ -1153,7 +1254,8 @@ function timezoneForOffset_(minutes) {
 
 /** "Aug 30, 2026 12:25 am" printed in `tz` → Date. */
 function parseEntryTime_(s, tz) {
-  const m = String(s || '').match(/([A-Z][a-z]{2}) (\d{1,2}), (\d{4}) (\d{1,2}):(\d{2})[\s\u202f]*([ap]m)/i);
+  // Seconds are optional: link history prints them ("3:01:38pm"), every other page does not.
+  const m = String(s || '').match(/([A-Z][a-z]{2}) (\d{1,2}), (\d{4}) (\d{1,2}):(\d{2})(?::\d{2})?[\s\u202f]*([ap]m)/i);
   if (!m) return null;
   const month = MONTHS[m[1].toLowerCase()];
   // A month name this doesn't recognise means no timestamp, not a timestamp of zero. Passing undefined
@@ -1264,6 +1366,133 @@ function parseNotes_(html) {
 }
 
 /**
+ * A labelled value in either of the two table shapes Meta uses: `<td>Label</td><td>value</td>` (entry lists,
+ * profile information) or `<td colspan="2">Label<div><div>value</div>` (comments, cards). Labels are tried in
+ * order, so the English one goes first and localised aliases follow it.
+ */
+function labelled_(html, labels) {
+  for (let i = 0; i < labels.length; i++) {
+    const label = labels[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const m = html.match(new RegExp('>' + label + '</td>\\s*<td[^>]*>([\\s\\S]*?)</td>'))
+      || html.match(new RegExp('>' + label + '<div>\\s*<div>([\\s\\S]*?)</div>'));
+    if (m) return decodeHtml_(m[1]).trim();
+  }
+  return '';
+}
+
+/**
+ * Your own comments. Only yours: the export carries what you wrote and on whose post, never the thread it
+ * sat in, so a reply to your comment is invisible here. Italian labels are unverified guesses, which is safe —
+ * an alias that never appears simply never matches.
+ */
+function parseComments_(html, ts) {
+  return splitEntries_(html).map(({ chunk, stamp }) => ({
+    text: labelled_(chunk, ['Comment', 'Commento']),
+    owner: labelled_(chunk, ['Media Owner', 'Proprietario del contenuto multimediale', 'Proprietario dei contenuti multimediali']),
+    time: ts(stamp),
+  })).filter(c => c.text || c.owner);
+}
+
+/**
+ * Links opened from Instagram in its in-app browser. These carry their own time format — seconds and no space
+ * before the meridiem, "Sep 20, 2026 3:01:38pm" — which is why they cannot go through splitEntries_.
+ *
+ * Account housekeeping is marked rather than dropped: signing in to Google to link the Drive export, or
+ * Accounts Centre itself, is most of this page in the first weeks, and counting that as curiosity about the
+ * world would credit the setup of this very tool to you as reading.
+ */
+const LINK_LABELS = {
+  url: ['Website link you visited', 'Link al sito web che hai visitato'],
+  title: ['Title of website page you visited', 'Titolo della pagina del sito web che hai visitato'],
+  start: ['Website session start time', 'Ora di inizio della sessione sul sito web'],
+  end: ['Website session end time', 'Ora di fine della sessione sul sito web'],
+};
+const HOUSEKEEPING_HOST = /^accounts\.google\.com$|(^|\.)(instagram|facebook|meta|fb|messenger|threads)\.(com|net)$/i;
+
+function parseLinks_(html, ts) {
+  const main = mainOf_(html);
+  const re = new RegExp('>(?:' + LINK_LABELS.url.map(l => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')</td>', 'g');
+  const cuts = [];
+  let m;
+  while ((m = re.exec(main))) cuts.push(m.index);
+  return cuts.map((start, i) => {
+    const chunk = main.slice(start, i + 1 < cuts.length ? cuts[i + 1] : main.length);
+    const url = labelled_(chunk, LINK_LABELS.url);
+    const host = (url.match(/^https?:\/\/([^\/?#]+)/i) || [])[1] || '';
+    const begin = ts(labelled_(chunk, LINK_LABELS.start));
+    const end = ts(labelled_(chunk, LINK_LABELS.end));
+    return {
+      url: url, host: host, title: labelled_(chunk, LINK_LABELS.title), time: begin,
+      seconds: begin && end && end >= begin ? Math.round((end - begin) / 1000) : 0,
+      housekeeping: HOUSEKEEPING_HOST.test(host),
+    };
+  }).filter(l => l.url);
+}
+
+/**
+ * Your own posts, stories and reels, counted by their timestamps. Unverified against a real delivery — the
+ * weekly exports this was built from carried none — so it counts distinct minutes rather than trusting any
+ * inner structure: a page that prints two times per post still counts that post once.
+ */
+function parseOwnContent_(html, ts) {
+  const seen = new Set();
+  return splitEntries_(html).map(({ stamp }) => ({ time: ts(stamp) }))
+    .filter(e => e.time && !seen.has(e.time.getTime()) && seen.add(e.time.getTime()));
+}
+
+/**
+ * The profile-information page: when you last posted a story, when you last logged in. The Italian labels are
+ * verified; note that Meta translates "story" as "reel" on this page.
+ */
+function parseProfileInfo_(html, ts) {
+  const at = labels => ts(labelled_(html, labels));
+  return {
+    lastStory: at(['Last Story Time', 'Data e ora del reel più recente']),
+    firstStory: at(['First Story Time', 'Date e ora del primo reel']),
+    lastLogin: at(['Last Login', 'Ultimo accesso']),
+  };
+}
+
+/**
+ * Direct messages, one entry per message: who sent it, when, what kind it is, and its text. Everything here is
+ * read; only counts, timings and keyword tones are ever written to the sheet — never the text itself.
+ *
+ * `me` is your display name from personal_information.html, which is how the sender of your own messages is
+ * printed. When that page is missing, the one sender present in every thread is you; with a single thread, it
+ * is whoever is not the thread's title (which names the other person in a one-to-one chat).
+ */
+const DM_SYSTEM_TEXT = /sent an attachment|inviato un allegato|liked a message|reacted .+ to your message|ha messo "mi piace"|ha reagito/i;
+
+function parseMessages_(pages, ts, me) {
+  const raw = [];
+  pages.forEach(html => {
+    const thread = decodeHtml_((html.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '').trim() || 'Conversation';
+    mainOf_(html).split(/(?=<div class="pam[^"]*">\s*<h2)/).slice(1).forEach(block => {
+      const sender = decodeHtml_((block.match(/<h2[^>]*>([\s\S]*?)<\/h2>/) || [])[1] || '').trim();
+      const stamp = lastMatch_(block, new RegExp(ENTRY_TIME_RE.source, 'gi'));
+      if (!sender || !stamp) return;
+      const body = (block.match(/<div class="_3-95 _a6-p">([\s\S]*)<div class="_3-94/) || [])[1] || '';
+      const text = decodeHtml_((body.match(/^\s*<div>\s*<div>[^<]*<\/div>\s*<div>([^<]*)<\/div>/) || [])[1] || '').trim();
+      const kind = /<audio/i.test(body) ? 'voice' : /<video/i.test(body) ? 'video'
+        : /<img/i.test(body) ? 'photo' : /href="https?:\/\//i.test(body) ? 'share' : 'text';
+      raw.push({ thread: thread, sender: sender, time: ts(stamp[1]), kind: kind,
+        text: DM_SYSTEM_TEXT.test(text) ? '' : text });
+    });
+  });
+  let self = norm_(me);
+  if (!self && raw.length) {
+    const threadsBySender = {};
+    raw.forEach(m => { (threadsBySender[norm_(m.sender)] = threadsBySender[norm_(m.sender)] || new Set()).add(m.thread); });
+    const threads = unique_(raw.map(m => m.thread));
+    const inAll = Object.keys(threadsBySender).filter(s => threadsBySender[s].size === threads.length);
+    self = threads.length > 1 && inAll.length === 1 ? inAll[0]
+      : (raw.find(m => norm_(m.sender) !== norm_(m.thread)) || {}).sender || '';
+    self = norm_(self);
+  }
+  return raw.map(m => Object.assign(m, { fromMe: norm_(m.sender) === self }));
+}
+
+/**
  * The "past Instagram insights" pages (reach, content interactions, audience), which are label/value cards
  * rather than entry lists: one <td> holding the label, with the value in a <div> beside it. Returned as a
  * plain label→value map, values left as the raw localised strings — insightNum_ does the reading.
@@ -1288,15 +1517,49 @@ function parseInsightCard_(html) {
  */
 function insightNum_(card, labels) {
   for (let i = 0; i < labels.length; i++) {
-    const raw = card[labels[i]];
-    if (raw === undefined || raw === '') continue;
-    // Strip thousands separators, then normalise the decimal comma. Order matters: doing it the other way
-    // turns "1.130" into "1130" only by luck and "1,5" into "15".
-    const cleaned = String(raw).replace(/[^\d,.\-]/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.');
-    const n = parseFloat(cleaned);
-    if (!isNaN(n)) return n;
+    const n = localNum_(cardValue_(card, labels[i]));
+    if (n !== null) return n;
   }
   return null;
+}
+
+/**
+ * A card value by label, ignoring case. English and Italian exports do not just translate the labels, they
+ * capitalise them differently: an Italian card says "Account raggiunti", an English one "Accounts Reached",
+ * not "Accounts reached". Matching exactly made the English card read as absent, and Belonging then reported
+ * "Instagram shipped no reach card" for a card sitting right there.
+ */
+function cardValue_(card, label) {
+  if (!card) return undefined;
+  if (card[label] !== undefined) return card[label];
+  const want = String(label).toLowerCase();
+  const key = Object.keys(card).find(k => k.toLowerCase() === want);
+  return key === undefined ? undefined : card[key];
+}
+
+/**
+ * The first number in a localised string, as a number. Both languages use both separators, for opposite
+ * things: English writes "1,014" and "85.5%", Italian "1.130" and "85,8%". A separator followed by groups of
+ * exactly three digits is a thousands separator in either language; one followed by one or two digits is a
+ * decimal point. Taking the FIRST number matters for the delta cards, which bury it in a sentence that goes
+ * on to mention dates ("You reached -9.1% more accounts … compared to Mar 31 - Jun 28").
+ */
+function localNum_(raw) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const m = String(raw).replace(/−/g, '-').match(/[-+]?\d[\d.,]*/);
+  if (!m) return null;
+  let s = m[0].replace(/[.,]+$/, '');
+  const dots = s.indexOf('.') >= 0, commas = s.indexOf(',') >= 0;
+  if (dots && commas) {
+    const decimal = s.lastIndexOf('.') > s.lastIndexOf(',') ? '.' : ',';
+    s = s.split(decimal === '.' ? ',' : '.').join('').replace(decimal, '.');
+  } else if (dots || commas) {
+    const parts = s.split(dots ? '.' : ',');
+    const grouped = parts.slice(1).every(p => p.length === 3) && !/^[-+]?0$/.test(parts[0]);
+    s = grouped ? parts.join('') : parts[0] + '.' + parts.slice(1).join('');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
 }
 
 /**
@@ -1447,18 +1710,26 @@ function analyzeExport_(exp, rules, prev) {
     item.themes = rules.themes.filter(t => matches_(t.rule, item)).map(t => t.name);
     return item;
   };
+  // Pages a delivery may simply not have (and exps built before a field existed) read as empty lists.
+  ['savedPosts', 'storiesViewed', 'storyLikes', 'unfollowed', 'linksOpened', 'comments', 'messages',
+    'ownPosts', 'ownStories', 'ownReels'].forEach(f => { exp[f] = exp[f] || []; });
   exp.postsViewed.forEach(i => { i.kind = 'Post'; });
   exp.videosWatched.forEach(i => { i.kind = 'Video'; });
   const seen = exp.postsViewed.concat(exp.videosWatched).map(prepare);
   exp.likedPosts.forEach(prepare);
+  exp.savedPosts.forEach(prepare);
+  exp.storiesViewed.forEach(prepare);
   exp.adsViewed.forEach(prepare);
   exp.notInterested.forEach(prepare);
   const newFollows = exp.following.filter(f => f.time && inPeriod(f));
   const followers = exp.followers.filter(inPeriod);
   const blocked = exp.blocked.filter(inPeriod);
-  [newFollows, followers, blocked, exp.profileSearches].forEach(list =>
+  const unfollows = exp.unfollowed.filter(inPeriod);
+  [newFollows, followers, blocked, exp.profileSearches, exp.storyLikes, unfollows, exp.likedComments].forEach(list =>
     list.forEach(p => prepare(Object.assign(p, { owner: p.account, ownerName: p.name, caption: '', hashtags: [] }))));
   exp.wordSearches.forEach(s => prepare(Object.assign(s, { owner: '', ownerName: '', caption: s.term, hashtags: [] })));
+  // A comment is read as being about what it was left on (its owner) and about what it says.
+  exp.comments.forEach(c => prepare(Object.assign(c, { ownerName: '', caption: c.text, hashtags: [] })));
   const N = seen.length;
 
   // Half of everything Instagram logs carries no caption at all — 883 of 1709 items in the export this was
@@ -1479,7 +1750,10 @@ function analyzeExport_(exp, rules, prev) {
     bucket.tagged++;
     i.themes.forEach(t => { bucket.counts[t] = (bucket.counts[t] || 0) + 1; });
   });
-  seen.concat(exp.likedPosts).forEach(i => {
+  // Everything you chose to act on gets the same inheritance: a comment on, a save of or a search for an
+  // account that posts about AI is an act about AI even when its own words never say so.
+  seen.concat(exp.likedPosts, exp.savedPosts, exp.comments, exp.storyLikes, exp.likedComments,
+    exp.profileSearches, newFollows).forEach(i => {
     if (i.themes.length || !i.ownerKey) return;
     const bucket = tagsByOwner[i.ownerKey];
     if (!bucket || bucket.tagged < 3) return;
@@ -1490,14 +1764,40 @@ function analyzeExport_(exp, rules, prev) {
     inheritedTags += usual.length;
   });
 
+  // Chosen actions, weighted by effort (CONFIG.ACTION_WEIGHTS). This is the "what you seek" side of every
+  // comparison with the feed below; searches count whether they name an account or a phrase.
+  const W = CONFIG.ACTION_WEIGHTS;
+  const chosen = [].concat(
+    exp.wordSearches.map(i => ({ item: i, w: W.search, kind: 'search' })),
+    exp.profileSearches.map(i => ({ item: i, w: W.search, kind: 'search' })),
+    exp.comments.map(i => ({ item: i, w: W.comment, kind: 'comment' })),
+    exp.savedPosts.map(i => ({ item: i, w: W.save, kind: 'save' })),
+    newFollows.map(i => ({ item: i, w: W.follow, kind: 'follow' })),
+    exp.likedPosts.map(i => ({ item: i, w: W.like, kind: 'like' })),
+    exp.storyLikes.map(i => ({ item: i, w: W.storyLike, kind: 'storyLike' })),
+    exp.likedComments.map(i => ({ item: i, w: W.likedComment, kind: 'likedComment' })));
+  const chosenWeight = chosen.reduce((n, c) => n + c.w, 0);
+  const themedChosen = chosen.filter(c => c.item.themes.length);
+  const weightFor = name => chosen.filter(c => c.item.themes.indexOf(name) >= 0).reduce((n, c) => n + c.w, 0);
+  const countFor = (list, name) => list.filter(i => i.themes.indexOf(name) >= 0).length;
+  const searches = exp.wordSearches.concat(exp.profileSearches);
+
   // Themes
-  const themeRows = rules.themes.map(t => {
-    const s = seen.filter(i => i.themes.indexOf(t.name) >= 0).length;
-    const l = exp.likedPosts.filter(i => i.themes.indexOf(t.name) >= 0).length;
-    return [month, t.name, s, ratio(s, N), l];
-  });
+  const themeRow = (name, s, l, saved, searched, commented, weight) => {
+    const actionShare = ratio(weight, chosenWeight);
+    const seenShare = ratio(s, N);
+    // Lift is left blank where the feed showed none of a theme: "sought but never shown" is not a large
+    // number, it is a different fact, and the Action share column already says it.
+    return [month, name, s, seenShare, l, saved, searched, commented, round_(actionShare, 4),
+      seenShare > 0 && chosenWeight ? round_(actionShare / seenShare, 2) : ''];
+  };
+  const themeRows = rules.themes.map(t => themeRow(t.name,
+    seen.filter(i => i.themes.indexOf(t.name) >= 0).length, countFor(exp.likedPosts, t.name),
+    countFor(exp.savedPosts, t.name), countFor(searches, t.name), countFor(exp.comments, t.name), weightFor(t.name)));
   const untagged = seen.filter(i => !i.themes.length).length;
-  themeRows.push([month, 'Other', untagged, ratio(untagged, N), exp.likedPosts.filter(i => !i.themes.length).length]);
+  const none = list => list.filter(i => !i.themes.length).length;
+  themeRows.push(themeRow('Other', untagged, none(exp.likedPosts), none(exp.savedPosts), none(searches), none(exp.comments),
+    chosen.filter(c => !c.item.themes.length).reduce((n, c) => n + c.w, 0)));
 
   // Subtopics: the same keyword machinery one level down. A subtopic's share is of its PARENT's items, not
   // of the whole feed — "LLMs is 40% of your AI & Tech" is the sentence worth reading, and it stays true
@@ -1546,7 +1846,11 @@ function analyzeExport_(exp, rules, prev) {
     .filter(e => e.gap < 0)[0];
 
   // Rhythm (local time)
-  const actionEvents = [].concat(exp.likedPosts, exp.likedComments, exp.profileSearches, exp.wordSearches, newFollows)
+  // Things you did to an item or an account. Saves and comments are here because they are acts on something
+  // the feed showed you; messages and story likes are not (stories are not counted as items seen), and live in
+  // the Social layer instead.
+  const actionEvents = [].concat(exp.likedPosts, exp.savedPosts, exp.comments, exp.likedComments,
+    exp.profileSearches, exp.wordSearches, newFollows)
     .filter(e => e.time);
   const events = seen.filter(e => e.time).concat(actionEvents);
   events.forEach(e => { e.local = localParts_(e.time); });
@@ -1645,10 +1949,25 @@ function analyzeExport_(exp, rules, prev) {
   // Quiet interests: accounts you kept seeing without any visible action (no like, search or follow)
   const actedOn = new Set([]
     .concat(exp.likedPosts.map(i => i.owner), exp.likedComments.map(c => c.account))
+    .concat(exp.savedPosts.map(i => i.owner), exp.comments.map(c => c.owner), exp.storyLikes.map(s => s.account))
     .concat(exp.profileSearches.map(s => s.account), newFollows.map(f => f.account))
     .concat(exp.wordSearches.map(s => s.term.replace(/\s+/g, '')))
     .map(norm_));
   const following = new Set(exp.following.map(f => norm_(f.account)));
+  // "Not followed" used to mean only one thing — the feed pushing an account at you. An account you unfollowed
+  // is the opposite case: you chose to stop, and the feed kept serving it anyway. The export says which, and
+  // when: one unfollowed only after this bucket ended was still followed during it.
+  const unfollowedAt = {};
+  (exp.unfollowedAll || exp.unfollowed).forEach(u => {
+    const k = norm_(u.account);
+    if (u.time && (!unfollowedAt[k] || u.time > unfollowedAt[k])) unfollowedAt[k] = u.time;
+  });
+  const followState = account => {
+    const k = norm_(account);
+    if (following.has(k)) return 'Yes';
+    if (unfollowedAt[k]) return unfollowedAt[k] >= exp.periodEnd ? 'Yes' : 'Unfollowed';
+    return 'No';
+  };
   const quietAll = topEntries_(byOwner, Object.keys(byOwner).length)
     .filter(e => e[0] !== '(unknown)' && e[1] >= CONFIG.QUIET_MIN_VIEWS && !actedOn.has(norm_(e[0])));
   const quietShare = ratio(quietAll.reduce((n, e) => n + e[1], 0), N);
@@ -1656,21 +1975,24 @@ function analyzeExport_(exp, rules, prev) {
     const items = seen.filter(i => i.owner === e[0]).sort((a, b) => (b.time || 0) - (a.time || 0));
     const latest = items.find(i => i.caption);
     return [month, k + 1, e[0], e[1], items.filter(i => i.kind === 'Post').length, items.filter(i => i.kind === 'Video').length,
-      following.has(norm_(e[0])) ? 'Yes' : 'No', themesOf(items),
+      followState(e[0]), themesOf(items),
       !prev ? '' : (prev.quiet.has(e[0]) ? 'Continuing' : 'New'), latest ? clip_(latest.caption, 200) : ''];
   });
 
-  // Accounts: every account you saw, liked or searched this month, for the Network tab
+  // Accounts: every account you saw, liked, saved, commented on or searched this month, for the Network tab
   const searchedBy = countBy_(exp.profileSearches, s => s.account);
-  const accountRows = unique_(Object.keys(byOwner).concat(Object.keys(likedByOwner), Object.keys(searchedBy)))
+  const savedBy = countBy_(exp.savedPosts, i => i.owner);
+  const commentedBy = countBy_(exp.comments, c => c.owner);
+  const accountRows = unique_(Object.keys(byOwner).concat(Object.keys(likedByOwner), Object.keys(searchedBy),
+    Object.keys(savedBy), Object.keys(commentedBy)))
     .filter(a => a && a !== '(unknown)')
     .map(a => {
       const items = seen.filter(i => i.owner === a);
       return [month, a, byOwner[a] || 0, items.filter(i => i.kind === 'Post').length, items.filter(i => i.kind === 'Video').length,
-        likedByOwner[a] || 0, searchedBy[a] || 0, following.has(norm_(a)) ? 'Yes' : 'No',
-        themesOf(items.concat(exp.likedPosts.filter(i => i.owner === a)))];
+        likedByOwner[a] || 0, searchedBy[a] || 0, followState(a),
+        themesOf(items.concat(exp.likedPosts.filter(i => i.owner === a))), savedBy[a] || 0, commentedBy[a] || 0];
     })
-    .sort((x, y) => (y[2] + y[5] + y[6]) - (x[2] + x[5] + x[6]) || x[1].localeCompare(y[1]));
+    .sort((x, y) => (y[2] + y[5] + y[6] + y[9] + y[10]) - (x[2] + x[5] + x[6] + x[9] + x[10]) || x[1].localeCompare(y[1]));
 
   // Word lists
   const per100 = n => Math.round(100 * ratio(n, N));
@@ -1701,6 +2023,98 @@ function analyzeExport_(exp, rules, prev) {
   const newLabels = metaRows.filter(r => r[1] === 'Ad category' && r[3] === 'New').map(r => r[2]);
   const advertiserCount = unique_(exp.advertisers.map(a => a.name)).length;
 
+  // ── The four layers (METHODOLOGY.md) ─────────────────────────────────────────────────────────────────
+  // Exposure is what reached you; consumption behaviour, how you used it; social behaviour, what you did
+  // toward people; inbound, what they did toward you. Everything the Profile tab calls personality or needs
+  // is built from the two behaviour layers alone. Exposure is reported as a feed diet — it is mostly the
+  // recommender's output, not a trait — and the relation between exposure and behaviour as influence.
+  const enough = n => n >= CONFIG.MIN_EVIDENCE;
+  const heavyRules = emotions.filter(e => /anxiety|sadness|anger|fear/i.test(e.name)).map(e => e.rule);
+  const isHeavy = item => heavyRules.some(r => matches_(r, item));
+  const textItem = text => ({ hay: norm_(text), ownerKey: '', tagKeys: (String(text).match(/#[\p{L}\p{N}_]+/gu) || []).map(t => norm_(t.slice(1))) });
+
+  // Exposure. Accounts unfollowed during or after this bucket were followed while (most of) their items reached you.
+  const followedThen = new Set(Array.from(following)
+    .concat(Object.keys(unfollowedAt).filter(k => unfollowedAt[k] >= exp.periodStart)));
+  const owned = seen.filter(i => i.ownerKey);
+  const fromFollowed = owned.filter(i => followedThen.has(i.ownerKey)).length;
+  const storiesN = exp.storiesViewed.length;
+  const adLoad = ratio(exp.adsViewed.length, N + exp.adsViewed.length);
+
+  // Consumption behaviour. Regularity is 1 − the coefficient of variation of minutes across the viewing
+  // window's days, quiet days included: a week of 40 minutes a day is regular, 0 then 280 is not.
+  const realLinks = exp.linksOpened.filter(l => !l.housekeeping);
+  const lastSeenDate = seenDates[seenDates.length - 1] || windowStart;
+  const windowDays = dayList.filter(d => d.date >= windowStart && d.date <= lastSeenDate);
+  const dayMinutes = windowDays.map(d => d.minutes);
+  const meanMin = dayMinutes.length ? dayMinutes.reduce((a, b) => a + b, 0) / dayMinutes.length : 0;
+  const sdMin = Math.sqrt(dayMinutes.reduce((a, b) => a + (b - meanMin) * (b - meanMin), 0) / (dayMinutes.length || 1));
+  const regularity = enough(windowDays.length) && meanMin > 0 ? round_(1 - Math.min(1, sdMin / meanMin), 3) : '';
+  const selfDirected = owned.length + storiesN ? round_((fromFollowed + storiesN) / (owned.length + storiesN), 4) : '';
+
+  // Social behaviour and inbound, from direct messages. Text is scored for tone and then dropped.
+  const msgs = exp.messages.filter(m => m.time);
+  const sent = msgs.filter(m => m.fromMe);
+  const received = msgs.filter(m => !m.fromMe);
+  const convo = conversationStats_(msgs, exp.periodEnd);
+  const total = key => convo.reduce((n, c) => n + c[key], 0);
+  const mineAsked = total('mineAsked');
+  const theirsAsked = total('theirsAsked');
+  const replyRateToYou = mineAsked ? round_(total('mineAnswered') / mineAsked, 4) : '';
+  const yourReplyRate = theirsAsked ? round_(total('theirsAnswered') / theirsAsked, 4) : '';
+  const voiceShare = sent.length ? round_(sent.filter(m => m.kind === 'voice').length / sent.length, 4) : '';
+  const yourTexts = exp.comments.map(c => c.text).concat(sent.map(m => m.text)).filter(Boolean).map(textItem);
+  const theirTexts = received.map(m => m.text).filter(Boolean).map(textItem);
+  const questions = exp.comments.concat(sent).filter(x => /\?/.test(x.text || '')).length;
+  const activeAnyDays = new Set(events.map(e => e.local.date)
+    .concat(exp.storiesViewed.concat(exp.storyLikes, sent).filter(e => e.time).map(e => fmtDate_(e.time)))).size;
+  const conversationRows = convo.map(c => [month, c.thread, c.sent, c.received, c.voiceMine, c.voiceTheirs,
+    c.conversations, c.youStarted, c.mineAsked, c.mineAnswered, c.theirsAsked, c.theirsAnswered,
+    median_(c.theirWaits), median_(c.myWaits),
+    c.textsMine.map(textItem).filter(isHeavy).length, c.textsTheirs.map(textItem).filter(isHeavy).length]);
+
+  // Influence. Alignment is 1 − the total-variation distance between two distributions over the named themes:
+  // your weighted actions, and the items you were shown. 100 means you chose in exactly the proportions you
+  // were shown; lower means you went after things the feed was not giving you.
+  const namedWeights = named.map(r => weightFor(r[1]));
+  const wTotal = namedWeights.reduce((a, b) => a + b, 0);
+  const sTotal = named.reduce((n, r) => n + r[2], 0);
+  const alignment = wTotal && sTotal && enough(themedChosen.length)
+    ? round_(1 - 0.5 * named.reduce((n, r, k) => n + Math.abs(namedWeights[k] / wTotal - r[2] / sTotal), 0), 4) : '';
+  // Discovery: an account you did something to in this bucket without already following it. Self-led when you
+  // searched for it before your first act on it; feed-led when the feed showed it to you first and you had not
+  // searched it. Anything else — met in a story, a message, off Instagram — is neither and is not counted.
+  const newlyFollowed = new Set(newFollows.map(f => norm_(f.account)));
+  const firstAct = {};
+  chosen.filter(c => c.kind !== 'search' && c.item.time && c.item.ownerKey).forEach(c => {
+    const k = c.item.ownerKey;
+    if (!firstAct[k] || c.item.time < firstAct[k]) firstAct[k] = c.item.time;
+  });
+  let selfLed = 0;
+  let feedLed = 0;
+  Object.keys(firstAct).forEach(k => {
+    if (followedThen.has(k) && !newlyFollowed.has(k)) return;
+    const t = firstAct[k];
+    const searchedFirst = exp.profileSearches.some(s => s.ownerKey === k && s.time && s.time <= t)
+      || exp.wordSearches.some(s => s.time && s.time <= t && norm_(s.term).replace(/\s+/g, '') === k);
+    if (searchedFirst) selfLed++;
+    else if (seen.some(i => i.ownerKey === k && i.time && i.time <= t)) feedLed++;
+  });
+
+  const layerColumns = {
+    'Stories seen': storiesN, 'Recommended share': owned.length ? round_(1 - fromFollowed / owned.length, 4) : '',
+    'Ad load': round_(adLoad, 4),
+    'Saved posts': exp.savedPosts.length, 'Links opened': realLinks.length, 'Unfollows': unfollows.length,
+    'Use regularity': regularity, 'Self-directed share': selfDirected,
+    'Comments written': exp.comments.length, 'Story likes': exp.storyLikes.length, 'DMs sent': sent.length,
+    'Conversations': total('conversations'), 'Conversations you started': total('youStarted'), 'Voice share': voiceShare,
+    'Own posts': exp.ownPosts.length, 'Own stories': exp.ownStories.length, 'Own reels': exp.ownReels.length,
+    'DMs received': received.length, 'Reply rate to you': replyRateToYou,
+    'Their median reply (min)': median_(convo.flatMap(c => c.theirWaits)),
+    'Your reply rate': yourReplyRate, 'Your median reply (min)': median_(convo.flatMap(c => c.myWaits)),
+    'Feed alignment': alignment, 'Self-led discoveries': selfLed, 'Feed-led discoveries': feedLed,
+  };
+
   const monthly = {
     'Month': month, 'Period start': fmtDate_(exp.periodStart), 'Period end': fmtDate_(exp.periodEnd), 'Days': days,
     'Coverage': round_(coverage, 3),
@@ -1726,6 +2140,7 @@ function analyzeExport_(exp, rules, prev) {
     'Top-5 accounts share': ratio(topEntries_(byOwner, 5).reduce((n, e) => n + e[1], 0), N),
     'View window start': windowStart, 'Viewing days': viewingDays, 'Month date': dateCell_(month + '-01'),
   };
+  Object.assign(monthly, layerColumns);
   const pm = prev ? prev.m : null;
   const risks = assessRisks_(month, monthly, pm, prev ? prev.risks : null, coverage);
   monthly['Risk index'] = risks.index;
@@ -1748,7 +2163,7 @@ function analyzeExport_(exp, rules, prev) {
       + `Instagram keeps about a week of view history; this covers ${viewingDays} days from ${windowStart}.`,
     'If it jumped, see which theme grew in Themes.', 'num1');
   signal('Attention', 'Active vs passive', activeRatio, pv('Active ratio'), activeRatio < 0.02 ? 'Watch' : 'OK',
-    'Likes, follows and searches in the viewing window per item seen. Below 2% means mostly passive scrolling.',
+    'Likes, saves, comments, follows and searches in the viewing window per item seen. Below 2% means mostly passive scrolling.',
     'Unfollow accounts you never engage with.', 'pct');
   signal('Attention', 'Quiet interests', quietAll.length, pv('Quiet interests'), 'Info',
     quietAll.length
@@ -1790,27 +2205,81 @@ function analyzeExport_(exp, rules, prev) {
   signal('Social', 'Blocked or reported', blockedOrReported, null, blockedOrReported ? 'Info' : 'OK',
     'Accounts you blocked plus posts you reported or marked as not interested.', 'Details in Actions.', 'int');
 
-  // Profile: transparent 0–100 proxies
+  // Profile: transparent 0–100 indicators, each tagged with the layer it is read from and how many events it
+  // rests on. Personality and needs are read from BEHAVIOUR only — what you searched, saved, wrote, answered,
+  // and when. They used to be read from theme shares of what the feed showed you, which describes the
+  // recommender at least as much as it describes you; those numbers are still here, relabelled as the feed
+  // diet they always were. A behaviour score short of CONFIG.MIN_EVIDENCE events is left blank.
   const capped = (value, full) => Math.max(0, Math.min(100, Math.round(100 * Math.min(1, value / full))));
-  const personality = 'Personality · Big Five proxy';
-  const sdt = 'Desire · Self-Determination Theory';
-  const beyond = 'Desire · beyond SDT';
+  const orBlank = (ok, score) => (ok ? score : '');
+  const personality = 'Personality · Big Five (behaviour)';
+  const sdt = 'Needs · Self-Determination Theory (behaviour)';
+  const diet = 'Feed diet · what you were shown';
+  const influence = 'Influence · the feed and you';
+  const themeWeights = namedWeights.filter(w => w > 0);
+  const breadth = themeWeights.length < 2 ? 0
+    : normalizedEntropy_(themeWeights) * Math.log(themeWeights.length) / Math.log(Math.min(named.length, themedChosen.length));
+  const rest = 1 - Math.min(1, lateShare * 4);
+  const outbound = exp.likedPosts.length + exp.likedComments.length + exp.storyLikes.length + exp.comments.length
+    + sent.length + newFollows.length;
+  const chosenItems = chosen.map(c => c.item);
+  const strain = [Math.min(1, lateShare * 4)]
+    .concat(enough(chosenItems.length) ? [ratio(chosenItems.filter(isHeavy).length, chosenItems.length)] : [])
+    .concat(enough(yourTexts.length) ? [ratio(yourTexts.filter(isHeavy).length, yourTexts.length)] : []);
+  const learning = exp.savedPosts.length + realLinks.length + questions + exp.wordSearches.length;
+  // Dated two-way contact only. Note and repost partners are left to Belonging → Connected: they carry no
+  // timestamp, so every bucket of a delivery gets the same list, and here they pinned the score at 100.
+  const twoWay = convo.filter(c => c.sent && c.received).length;
+  const discoveries = selfLed + feedLed;
+
+  // [framework, dimension, score, how, layer, evidence]
   const profileDefs = [
-    [personality, 'Openness · curiosity breadth', Math.round(100 * (0.6 * focus + 0.4 * Math.min(1, ratio(Object.keys(byOwner).length, N) * 1.5))), 'Theme spread (60%) + variety of accounts seen (40%)'],
-    [personality, 'Conscientiousness · rest-window discipline', Math.round(100 * (1 - Math.min(1, lateShare * 4))), '100 minus 4× the share of activity between 00:00 and 05:59'],
-    [personality, 'Extraversion · online expressiveness', capped(activeRatio, 0.10), 'Likes + follows + searches in the viewing window per item seen (10% = 100)'],
-    [personality, 'Agreeableness · prosocial content', capped(themeShare(T.local) + themeShare(T.env), 0.60), 'Local & Community + Environment share of items (60% = 100)'],
-    [personality, 'Emotional sensitivity · inner-life focus', capped(themeShare(T.psych), 0.40), 'Psychology & Relationships share of items (40% = 100)'],
-    [sdt, 'Autonomy · building your own thing', capped(themeShare(T.tech), 0.40), 'AI & Tech share of items (40% = 100)'],
-    [sdt, 'Competence & security · money and work', capped(themeShare(T.money), 0.40), 'Money & Work share of items (40% = 100)'],
-    [sdt, 'Relatedness · belonging', capped(themeShare(T.local) + themeShare(T.music), 0.60), 'Local & Community + Music & Nightlife share (60% = 100)'],
-    [beyond, 'Meaning · society and planet', capped(themeShare(T.politics) + themeShare(T.env), 0.60), 'Politics & Society + Environment share (60% = 100)'],
-    [beyond, 'Vitality · body and health', capped(themeShare(T.health), 0.30), 'Health & Body share of items (30% = 100)'],
-    [beyond, 'Expression · arts and creativity', capped(themeShare(T.arts), 0.30), 'Arts, Film & Design share of items (30% = 100)'],
-  ].concat(emotions.map(e => ['Emotional tone', e.name, e.per100, `Items per 100 seen using these words (in liked posts: ${e.liked})`]));
-  const profileRows = profileDefs.map(([framework, dimension, score, how]) => {
-    const before = prev && prev.profile[dimension] !== undefined && prev.profile[dimension] !== '' ? prev.profile[dimension] : '';
-    return [month, framework, dimension, score, before, before === '' ? '' : score - before, how];
+    [personality, 'Openness · breadth of what you seek', orBlank(enough(themedChosen.length), Math.min(100, Math.round(100 * breadth))),
+      'How evenly your searches, comments, saves, follows and likes spread across themes (weighted by effort; 100 = as even as that many actions allow)', 'Behaviour', themedChosen.length],
+    [personality, 'Conscientiousness · regular, bounded use', orBlank(windowEvents.length > 0, Math.round(100 * (regularity === '' ? rest : (rest + regularity) / 2))),
+      'Average of: 100 minus 4× the late-night share, and how steady your daily minutes are (100 = the same every day)', 'Behaviour', windowDays.length],
+    [personality, 'Extraversion · outbound social acts', orBlank(enough(activeAnyDays), capped(outbound / (activeAnyDays || 1), 20)),
+      'Likes, comments, story likes, messages you sent and follows, per active day (20 a day = 100)', 'Behaviour', activeAnyDays],
+    [personality, 'Agreeableness · responsiveness to others', orBlank(enough(theirsAsked), Math.round(100 * (+yourReplyRate || 0))),
+      `Share of the other person's message turns you answered within ${CONFIG.REPLY_WINDOW_HOURS}h`, 'Behaviour', theirsAsked],
+    [personality, 'Emotional sensitivity · strain in behaviour', orBlank(windowEvents.length > 0, Math.round(100 * strain.reduce((a, b) => a + b, 0) / strain.length)),
+      'Average of: 4× the late-night share, the heavy-tone share of what you chose (likes, saves, comments, searches), and of your own words — each part only when it has enough behind it. Not a diagnosis.', 'Behaviour', chosenItems.length + yourTexts.length],
+    [sdt, 'Autonomy · self-directed consumption', orBlank(owned.length + storiesN > 0, Math.round(100 * (+selfDirected || 0))),
+      'Items from accounts you follow, plus stories, as a share of everything you viewed (the rest is recommended)', 'Behaviour', owned.length + storiesN],
+    [sdt, 'Competence · learning acts', orBlank(enough(activeAnyDays), capped(learning / (activeAnyDays || 1), 3)),
+      'Saves, links opened, questions you asked and word searches, per active day (3 a day = 100)', 'Behaviour', activeAnyDays],
+    [sdt, 'Relatedness · two-way contact', orBlank(enough(activeAnyDays), capped(twoWay, 5)),
+      'People you exchanged direct messages with in both directions (5 = 100)', 'Behaviour', activeAnyDays],
+    [diet, 'Curiosity range of the feed', Math.round(100 * (0.6 * focus + 0.4 * Math.min(1, ratio(Object.keys(byOwner).length, N) * 1.5))),
+      'Theme spread (60%) + variety of accounts in what you were shown (40%)', 'Exposure', N],
+    [diet, 'Recommended share', owned.length ? Math.round(100 * (1 - fromFollowed / owned.length)) : '',
+      'Items from accounts you do not follow, as a share of items shown', 'Exposure', owned.length],
+    [diet, 'Ad load', Math.round(100 * adLoad), 'Ads as a share of everything shown (items + ads)', 'Exposure', N + exp.adsViewed.length],
+    [diet, 'Prosocial content', capped(themeShare(T.local) + themeShare(T.env), 0.60), 'Local & Community + Environment share of items (60% = 100)', 'Exposure', N],
+    [diet, 'Inner-life content', capped(themeShare(T.psych), 0.40), 'Psychology & Relationships share of items (40% = 100)', 'Exposure', N],
+    [diet, 'Tech & building content', capped(themeShare(T.tech), 0.40), 'AI & Tech share of items (40% = 100)', 'Exposure', N],
+    [diet, 'Money & work content', capped(themeShare(T.money), 0.40), 'Money & Work share of items (40% = 100)', 'Exposure', N],
+    [diet, 'Community & music content', capped(themeShare(T.local) + themeShare(T.music), 0.60), 'Local & Community + Music & Nightlife share (60% = 100)', 'Exposure', N],
+    [diet, 'Society & planet content', capped(themeShare(T.politics) + themeShare(T.env), 0.60), 'Politics & Society + Environment share (60% = 100)', 'Exposure', N],
+    [diet, 'Body & health content', capped(themeShare(T.health), 0.30), 'Health & Body share of items (30% = 100)', 'Exposure', N],
+    [diet, 'Arts & creativity content', capped(themeShare(T.arts), 0.30), 'Arts, Film & Design share of items (30% = 100)', 'Exposure', N],
+    [influence, 'Feed alignment · choices mirror the feed', orBlank(alignment !== '', Math.round(100 * (+alignment || 0))),
+      '100 minus the distance between your weighted actions by theme and the items shown by theme (100 = you chose exactly in proportion to what you were shown)', 'Influence', themedChosen.length],
+    [influence, 'Self-led discovery', orBlank(enough(discoveries), Math.round(100 * ratio(selfLed, discoveries))),
+      'Of the new accounts you acted on, the share you searched for before acting, against those the feed showed you first', 'Influence', discoveries],
+  ]
+    .concat(emotions.map(e => ['Emotional tone · shown', e.name, e.per100,
+      `Items per 100 seen using these words (in liked posts: ${e.liked})`, 'Exposure', N]))
+    .concat(emotions.map(e => ['Emotional tone · your words', e.name,
+      orBlank(enough(yourTexts.length), Math.round(100 * ratio(yourTexts.filter(t => matches_(e.rule, t)).length, yourTexts.length))),
+      'Per 100 of your comments and written messages using these words', 'Social', yourTexts.length]))
+    .concat(emotions.map(e => ['Emotional tone · words to you', e.name,
+      orBlank(enough(theirTexts.length), Math.round(100 * ratio(theirTexts.filter(t => matches_(e.rule, t)).length, theirTexts.length))),
+      'Per 100 written messages you received using these words', 'Inbound', theirTexts.length]));
+  const profileRows = profileDefs.map(([framework, dimension, score, how, layer, evidence]) => {
+    const key = framework + '|' + dimension;
+    const before = prev && prev.profile[key] !== undefined && prev.profile[key] !== '' ? prev.profile[key] : '';
+    return [month, framework, dimension, score, before, before === '' || score === '' ? '' : score - before, how, layer, evidence];
   });
 
   // Actions: what you chose to do
@@ -1827,14 +2296,22 @@ function analyzeExport_(exp, rules, prev) {
   exp.wordSearches.forEach(s => act(s, 'Searched words', s.term, '', ''));
   blocked.forEach(b => act(b, 'Blocked', b.account, b.name, ''));
   exp.notInterested.forEach(i => act(i, 'Not interested / reported', i.owner, (i.source ? '[' + i.source + '] ' : '') + i.caption, i.url));
+  exp.savedPosts.forEach(i => act(i, 'Saved post', i.owner, i.caption, i.url));
+  exp.comments.forEach(c => act(c, 'Commented', c.owner, c.text, ''));
+  exp.storyLikes.forEach(s => act(s, 'Liked story', s.account, '', s.url));
+  unfollows.forEach(u => act(u, 'Unfollowed', u.account, u.name, ''));
+  realLinks.forEach(l => act(l, 'Opened link', l.host, l.title, l.url));
+  [['ownPosts', 'post'], ['ownStories', 'story'], ['ownReels', 'reel']].forEach(([f, what]) =>
+    exp[f].forEach(e => act(e, 'Posted', what, '', '')));
   actions.sort((a, b) => (b[1] + b[2]).localeCompare(a[1] + a[2]));
 
   // ── Belonging ────────────────────────────────────────────────────────────────────────────────────────
-  // Four dimensions, and only one of them has real substrate in an Instagram export. That asymmetry is the
-  // point of the tab: Seen and Connected get computed, Heard and Invested in get a row that says what is
-  // missing and what would have to arrive for them to become measurable. Inventing a proxy for the other two
-  // out of follower counts would be the easy move and the dishonest one — a follower count is not somebody
-  // investing in you, and saying so in a score would put a number on something never measured.
+  // Four dimensions, and they do not all have substrate in an Instagram export. That asymmetry is the point of
+  // the tab: Connected and Heard are computed (Heard since weekly deliveries began carrying direct messages),
+  // Seen is a labelled proxy, and Invested in gets a row that says what is missing and what would have to
+  // arrive for it to become measurable. Inventing a proxy for it out of follower counts would be the easy move
+  // and the dishonest one — a follower count is not somebody investing in you, and saying so in a score would
+  // put a number on something never measured.
   const mutualTies = notePartners.filter(e => following.has(norm_(e[0])));
   const reach = exp.reachCard || {};
   const inter = exp.interactionCard || {};
@@ -1877,13 +2354,25 @@ function analyzeExport_(exp, rules, prev) {
         + 'identity safety, being named correctly, or whether you had to leave parts of yourself at the door.',
       'Per-account inbound engagement rather than one quarterly total, and any signal at all about how you '
         + 'are addressed. Instagram exports neither.'],
-    [month, 'Heard', 'Not measurable yet', '',
-      storyReplies === null ? 'Nothing inbound to read' : storyReplies + ' story replies, and that is the whole record',
-      storyReplies === null ? '—' : storyReplies + ' story replies (' + (reach['Date range'] || reach['Intervallo di date'] || 'insights window') + ')',
-      'Whether what you said changed anything — being echoed, credited, answered. The export carries no '
-        + 'comments page and no message content, so there is no conversation in it to read.',
-      'Comment threads with their replies, and DM metadata (who, when, who spoke first, who answered). '
-        + 'Meta holds both and ships neither in the personal export.'],
+    // Heard became measurable when weekly deliveries started carrying direct messages: a turn of yours either
+    // got an answer within CONFIG.REPLY_WINDOW_HOURS or it did not. That is being answered, which is the part
+    // of being heard an export can see; being echoed or credited is still out of reach.
+    mineAsked
+      ? [month, 'Heard', 'Measured', Math.round(100 * replyRateToYou),
+        total('mineAnswered') + ' of ' + mineAsked + ' times you wrote, you got an answer within ' + CONFIG.REPLY_WINDOW_HOURS + 'h',
+        convo.filter(c => c.mineAsked).map(c => c.thread + ' ' + c.mineAnswered + '/' + c.mineAsked
+          + (c.theirWaits.length ? ' · ~' + median_(c.theirWaits) + ' min' : '')).join(' · ')
+          + (storyReplies !== null ? ' · ' + storyReplies + ' story replies (' + (cardValue_(reach, 'Date range') || cardValue_(reach, 'Intervallo di date') || 'insights window') + ')' : ''),
+        'Whether what you say gets answered: of your message turns, the share the other person replied to within '
+          + CONFIG.REPLY_WINDOW_HOURS + 'h, and how long they took. A turn still inside that window when the export '
+          + 'ended counts neither way.',
+        'More weeks of messages make it steadier. Replies to your comments would add the public half — the export '
+          + 'carries your comments but never the threads they sat in.']
+      : [month, 'Heard', 'No data this bucket', '',
+        'No message turns of yours to be answered in this bucket',
+        storyReplies === null ? '—' : storyReplies + ' story replies (' + (cardValue_(reach, 'Date range') || cardValue_(reach, 'Intervallo di date') || 'insights window') + ')',
+        'Whether what you say gets answered, read from direct messages: who wrote, when, and who replied.',
+        'A week with direct messages in it. Weekly exports carry them; this bucket simply had none.'],
     [month, 'Invested in', 'Not measurable yet', '',
       'No substrate of any kind',
       '—',
@@ -1914,6 +2403,7 @@ function analyzeExport_(exp, rules, prev) {
       Subthemes: subRows,
       'Quiet interests': quietRows,
       Belonging: belongingRows,
+      Conversations: conversationRows,
       Actions: actions,
       Accounts: accountRows,
       Meta: metaRows,
@@ -1930,8 +2420,11 @@ function buildPrompt_(exp, result, prev, hours) {
     `Instagram data for ${result.month} (${result.periodLabel}, times in ${CONFIG.LOCAL_TIMEZONE}).`,
     '',
     'Using the Big Five and Self-Determination Theory, infer my personality, emotions, desires and risks from this month. '
-      + 'Weight my own actions (likes, searches, follows) above what the feed showed me, say how confident you are in each point, '
-      + 'and compare with the previous month where given. The numbers below are rule-based summaries, not assessments.',
+      + 'Keep two things apart: what the feed SHOWED me (exposure — mostly the recommender\'s choice) and what I DID '
+      + '(searches, saves, comments, messages, likes, follows, and when). Base personality and needs on what I did; treat '
+      + 'exposure as my environment and say where it seems to be steering me. Say how confident you are in each point, '
+      + 'using the evidence counts given, and compare with the previous month where given. The numbers below are '
+      + 'rule-based summaries, not assessments.',
     '', '== Numbers',
   ];
   HEADERS.Monthly.slice(3).filter(h => h !== 'Month date').forEach(h => lines.push(`${h}: ${fmtAuto_('Monthly', h, m[h])}`));
@@ -1941,8 +2434,12 @@ function buildPrompt_(exp, result, prev, hours) {
   r.Risks.forEach(k => lines.push(`${k[1]} ${k[2]} (${k[3]}): ${k[4]}×${k[5]} = ${k[6]} ${k[7]}${k[9] ? ', ' + k[9] : ''}. ${k[10]}`));
   lines.push('', '== Signals');
   r.Signals.forEach(s => lines.push(`${s[5]} ${s[1]} · ${s[2]}: ${s[3]}${s[4] !== '' ? ' (previous ' + s[4] + ')' : ''}. ${s[6]}`));
-  lines.push('', '== Indicators (0–100 proxies; emotional tone = items per 100)');
-  r.Profile.forEach(p => lines.push(`${p[2]}: ${p[3]}${p[4] !== '' ? ' (previous ' + p[4] + ')' : ''}`));
+  lines.push('', '== Indicators (0–100; emotional tone = per 100; n = events behind the score, blank = too few)');
+  r.Profile.forEach(p => lines.push(`[${p[1]}] ${p[2]}: ${p[3] === '' ? '—' : p[3]}${p[4] !== '' ? ' (previous ' + p[4] + ')' : ''} · n=${p[8]}`));
+  lines.push('', '== Direct messages (counts and timings only — no message text is stored or included)');
+  (r.Conversations || []).forEach(c => lines.push(`${c[1]}: sent ${c[2]}, received ${c[3]}, ${c[6]} conversation(s), you started ${c[7]}; `
+    + `your turns answered ${c[9]}/${c[8]}, theirs you answered ${c[11]}/${c[10]}`
+    + `${c[12] !== '' ? ', their median reply ' + c[12] + ' min' : ''}${c[13] !== '' ? ', yours ' + c[13] + ' min' : ''}`));
   lines.push('', '== Activity by hour', hours.map((n, h) => pad2_(h) + 'h:' + n).join('  '));
   lines.push('', '== Top accounts seen');
   r.Top.filter(t => t[1] === 'Accounts seen').slice(0, 15).forEach(t => lines.push(`${t[3]}: ${t[4]}${t[5] ? ' (' + t[5] + ' liked)' : ''}${t[6] ? ' [' + t[6] + ']' : ''}`));
@@ -2011,7 +2508,9 @@ function bucketFromRows_(month, rows, isWeekBucket) {
   HEADERS[isWeekBucket ? 'Weekly' : 'Monthly'].forEach((h, k) => { view.m[h] = mRow[k]; });
   if (isWeekBucket) view.m.Month = view.m.Week;
   const mine = name => (rows[name] || []).filter(r => String(r[0]) === month);
-  mine('Profile').forEach(r => { view.profile[r[2]] = r[3]; });
+  // Keyed by framework AND dimension: the three emotional-tone frameworks (shown, your words, words to you) use
+  // the same seven names, and keying by dimension alone let the last one overwrite the other two.
+  mine('Profile').forEach(r => { view.profile[r[1] + '|' + r[2]] = r[3]; });
   mine('Themes').forEach(r => { view.themes[r[1]] = { seen: r[2], share: r[3], liked: r[4] }; });
   mine('Rhythm').forEach(r => {
     if (r[1] === 'Hour') view.hours[+r[2]] = +r[4];
@@ -2021,6 +2520,68 @@ function bucketFromRows_(month, rows, isWeekBucket) {
   mine('Risks').forEach(r => { view.risks[String(r[1])] = r[6]; });
   mine('Meta').filter(r => r[3] !== 'Removed').forEach(r => { (view.meta[r[1]] = view.meta[r[1]] || new Set()).add(String(r[2])); });
   return view;
+}
+
+// ── Conversations ────────────────────────────────────────────────────────────
+
+/**
+ * Turn-taking in each direct-message thread. A TURN is a run of consecutive messages from one side (twelve
+ * voice notes in a row are one turn, not twelve); a CONVERSATION is a run of turns with no silence longer than
+ * CONFIG.CONVERSATION_GAP_HOURS. A turn is ANSWERED when the other side's next turn starts within
+ * CONFIG.REPLY_WINDOW_HOURS; a turn that ends closer than that to `periodEnd` has not had its chance yet and is
+ * counted neither way — otherwise every week would end with its last message looking ignored.
+ *
+ * `mine*` are your turns (did they answer you: the inbound half), `theirs*` are theirs (did you answer them).
+ * Waits are in minutes. Texts ride along for tone scoring and go no further than the caller.
+ */
+function conversationStats_(messages, periodEnd) {
+  const gap = CONFIG.CONVERSATION_GAP_HOURS * 3600000;
+  const win = CONFIG.REPLY_WINDOW_HOURS * 3600000;
+  const byThread = {};
+  messages.filter(m => m.time).forEach(m => { (byThread[m.thread] = byThread[m.thread] || []).push(m); });
+  return Object.keys(byThread).sort().map(thread => {
+    const list = byThread[thread].slice().sort((a, b) => a.time - b.time);
+    const turns = [];
+    list.forEach(m => {
+      const last = turns[turns.length - 1];
+      if (last && last.fromMe === m.fromMe && m.time - last.end <= gap) last.end = m.time;
+      else turns.push({ fromMe: m.fromMe, start: m.time, end: m.time });
+    });
+    const out = {
+      thread: thread, sent: 0, received: 0, voiceMine: 0, voiceTheirs: 0, conversations: 0, youStarted: 0,
+      mineAsked: 0, mineAnswered: 0, theirsAsked: 0, theirsAnswered: 0, theirWaits: [], myWaits: [],
+      textsMine: [], textsTheirs: [],
+    };
+    list.forEach(m => {
+      if (m.fromMe) { out.sent++; if (m.kind === 'voice') out.voiceMine++; if (m.text) out.textsMine.push(m.text); }
+      else { out.received++; if (m.kind === 'voice') out.voiceTheirs++; if (m.text) out.textsTheirs.push(m.text); }
+    });
+    turns.forEach((t, i) => {
+      if (i === 0 || t.start - turns[i - 1].end > gap) {
+        out.conversations++;
+        if (t.fromMe) out.youStarted++;
+      }
+      const next = turns[i + 1];
+      const answered = next && next.fromMe !== t.fromMe && next.start - t.end <= win;
+      if (!answered && periodEnd - t.end < win) return; // still inside its reply window when the export ended
+      if (t.fromMe) {
+        out.mineAsked++;
+        if (answered) { out.mineAnswered++; out.theirWaits.push((next.start - t.end) / 60000); }
+      } else {
+        out.theirsAsked++;
+        if (answered) { out.theirsAnswered++; out.myWaits.push((next.start - t.end) / 60000); }
+      }
+    });
+    return out;
+  });
+}
+
+/** Median of a list of numbers, rounded to a whole number, or '' for an empty list. */
+function median_(values) {
+  if (!values || !values.length) return '';
+  const v = values.slice().sort((a, b) => a - b);
+  const mid = Math.floor(v.length / 2);
+  return Math.round(v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2);
 }
 
 // ── Small helpers ────────────────────────────────────────────────────────────
@@ -2090,6 +2651,161 @@ function changeText_(cur, prev) {
 function monthName_(ym) {
   const [y, mo] = String(ym).split('-');
   return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+mo - 1] + ' ' + y;
+}
+
+// ── Account performance ──────────────────────────────────────────────────────
+//
+// The three "past Instagram insights" cards describe your account as other people meet it: reach, impressions,
+// profile visits, interactions, followers. Each covers a rolling 90-day window ending the day before the
+// export, and states its own change against the 90 days before that. Neither is a week or a month, so none of
+// this goes through the bucket machinery: it is stored per window, in the Performance tab.
+//
+// What that means for reading it (METHODOLOGY.md → Account performance):
+//  · Sums over the window (impressions, visits, interactions, link taps): consecutive weekly rows share 83 of
+//    their 90 days, so two rows must never be added. Their difference is the newest week minus the week that
+//    just dropped out of the window, not the newest week.
+//  · Unique accounts (reached, engaged): not additive at all — one person who saw you twice counts once.
+//  · Followers: a headcount on the day, the one figure that is an ordinary time series.
+
+const PERF_FIELDS = [
+  { col: 'Followers', card: 'audienceCard', labels: ['Followers', 'Follower'], delta: ['Followers Delta', 'Differenza di follower'] },
+  { col: 'Follows', card: 'audienceCard', labels: ['Follows', 'Follow'] },
+  { col: 'Unfollows', card: 'audienceCard', labels: ['Unfollows', 'Persone che non seguono più la Pagina'] },
+  { col: 'Net followers', card: 'audienceCard', labels: ['Overall followers', 'Follower complessivi'] },
+  { col: 'Accounts reached', card: 'reachCard', labels: ['Accounts reached', 'Account raggiunti'], delta: ['Accounts Reached Delta', 'Differenza di account raggiunti'] },
+  { col: 'Non-follower reach share', card: 'reachCard', labels: ['Non-Followers', 'Non follower'], pct: true },
+  { col: 'Impressions', card: 'reachCard', labels: ['Impressions', 'Impression'], delta: ['Impressions Delta', 'Differenza di impression'] },
+  { col: 'Profile visits', card: 'reachCard', labels: ['Profile visits', 'Visite al profilo'], delta: ['Profile Visits Delta', 'Differenza di visite al profilo'] },
+  { col: 'External link taps', card: 'reachCard', labels: ['External link taps', 'Tocchi sul link esterno'], delta: ['External link taps delta', 'Differenza di tocchi sul link esterno'] },
+  { col: 'Content interactions', card: 'interactionCard', labels: ['Content Interactions', 'Interazioni con i contenuti'], delta: ['Content Interactions Delta', 'Differenza delle interazioni con i contenuti'] },
+  { col: 'Post interactions', card: 'interactionCard', labels: ['Post Interactions', 'Interazioni con i post'], delta: ['Post Interactions Delta', 'Differenza delle interazioni con i post'] },
+  { col: 'Story interactions', card: 'interactionCard', labels: ['Story Interactions', 'Interazioni con le storie'], delta: ['Story Interactions Delta', 'Differenza di interazioni con le storie'] },
+  { col: 'Reels interactions', card: 'interactionCard', labels: ['Reels Interactions', 'Interazioni con i reel'], delta: ['Reels Interactions Delta', 'Differenza di interazioni con i reel'] },
+  { col: 'Story replies', card: 'interactionCard', labels: ['Story Replies', 'Risposte alla storia'] },
+  { col: 'Accounts engaged', card: 'interactionCard', labels: ['Accounts engaged', 'Account che hanno interagito'], delta: ['Accounts Engaged Delta', 'Differenza di account che hanno interagito'] },
+];
+
+/**
+ * "Jun 29 - Sep 26" (English) or "22 giu - 19 set" (Italian), found anywhere in `text`, as yyyy-MM-dd bounds.
+ * No year is printed, so the end takes the year of `ref` (the export, or the window a delta is measured from)
+ * unless its month is later than ref's — a window ending in December read in January is last year's.
+ */
+function parseCardRange_(text, ref) {
+  const s = String(text || '');
+  let m = s.match(/(\d{1,2})\s+([a-zà-ù]{3})[a-zà-ù]*\.?\s*[-–]\s*(\d{1,2})\s+([a-zà-ù]{3})/i);
+  let sm, sd, em, ed;
+  if (m) {
+    sd = +m[1]; sm = MONTHS[m[2].toLowerCase()]; ed = +m[3]; em = MONTHS[m[4].toLowerCase()];
+  } else {
+    m = s.match(/([a-z]{3})[a-z]*\.?\s+(\d{1,2})\s*[-–]\s*([a-z]{3})[a-z]*\.?\s+(\d{1,2})/i);
+    if (!m) return null;
+    sm = MONTHS[m[1].toLowerCase()]; sd = +m[2]; em = MONTHS[m[3].toLowerCase()]; ed = +m[4];
+  }
+  if (sm === undefined || em === undefined || !ref) return null;
+  const refY = +Utilities.formatDate(ref, CONFIG.LOCAL_TIMEZONE, 'yyyy');
+  const refM = +Utilities.formatDate(ref, CONFIG.LOCAL_TIMEZONE, 'MM') - 1;
+  const endY = em > refM ? refY - 1 : refY;
+  const startY = sm > em ? endY - 1 : endY;
+  const ymd = (y, mo, d) => y + '-' + pad2_(mo + 1) + '-' + pad2_(d);
+  return { start: ymd(startY, sm, sd), end: ymd(endY, em, ed) };
+}
+
+/**
+ * Up to two Performance rows from one delivery: the window its cards report, and the window before it,
+ * worked out from each card's own "% vs previous period" line (previous = value ÷ (1 + change)). The worked-out
+ * row is what lets the very first export draw a line rather than a dot. It is rounded, because the printed
+ * change is, and a delta of −100% yields nothing — it says the value fell to zero, not what it fell from.
+ */
+function performanceRows_(exp) {
+  const cards = { reachCard: exp.reachCard, interactionCard: exp.interactionCard, audienceCard: exp.audienceCard };
+  const present = Object.keys(cards).filter(k => cards[k]);
+  if (!present.length) return [];
+  const rangeText = present.map(k => cardValue_(cards[k], 'Date Range') || cardValue_(cards[k], 'Intervallo di date')).find(Boolean);
+  const range = parseCardRange_(rangeText, exp.periodEnd);
+  if (!range) return [];
+
+  const now = {};
+  const before = {};
+  let prevRange = null;
+  PERF_FIELDS.forEach(f => {
+    const card = cards[f.card];
+    const v = card ? insightNum_(card, f.labels) : null;
+    if (v === null) return;
+    now[f.col] = f.pct ? v / 100 : v;
+    if (!f.delta) return;
+    const deltaText = f.delta.map(l => cardValue_(card, l)).find(x => x !== undefined);
+    if (!prevRange && deltaText) prevRange = parseCardRange_(deltaText, dateCell_(range.start));
+    const d = localNum_(deltaText);
+    if (d !== null && d > -100) before[f.col] = Math.round(v / (1 + d / 100));
+  });
+
+  const reach = cards.reachCard;
+  // Non-follower reach has its own delta, stated on the COUNT of non-followers reached rather than the share.
+  const nfDelta = reach ? localNum_(cardValue_(reach, 'Non-Followers Delta') || cardValue_(reach, 'Differenza di non follower')) : null;
+  if (now['Non-follower reach share'] !== undefined && now['Accounts reached'] && before['Accounts reached'] && nfDelta !== null && nfDelta > -100) {
+    const nfBefore = (now['Accounts reached'] * now['Non-follower reach share']) / (1 + nfDelta / 100);
+    before['Non-follower reach share'] = round_(nfBefore / before['Accounts reached'], 4);
+  }
+  const engagedByType = cards.interactionCard
+    ? cardValue_(cards.interactionCard, 'Engaged Account By Follow Type')
+      || cardValue_(cards.interactionCard, 'Account che hanno interagito per follow/non follow') : '';
+  const nfEngaged = String(engagedByType || '').match(/non[- ]?follower[s]?\s*:\s*([-\d.,]+)/i);
+  if (nfEngaged) now['Engaged non-follower share'] = localNum_(nfEngaged[1]) / 100;
+
+  const aud = cards.audienceCard;
+  if (aud) {
+    const text = labels => labels.map(l => cardValue_(aud, l)).find(x => x !== undefined) || '';
+    now['Top countries'] = text(['Follower Percentage by Country', 'Percentuale di follower per Paese']);
+    now['Top cities'] = text(['Follower Percentage by City', 'Percentuale di follower per città']);
+    now['Age groups'] = text(['Follower Percentage by Age for All Genders', "Percentuale di follower in base all'età di tutti i generi"]);
+    const men = insightNum_(aud, ['Total Follower Percentage for Men', 'Percentuale totale di follower uomini']);
+    const women = insightNum_(aud, ['Total Follower Percentage for Women', 'Percentuale totale di follower donne']);
+    if (men !== null) now['Men share'] = men / 100;
+    if (women !== null) now['Women share'] = women / 100;
+  }
+  [now, before].forEach(v => {
+    if (v['Accounts reached']) {
+      if (v['Accounts engaged'] !== undefined) v['Engagement rate'] = round_(v['Accounts engaged'] / v['Accounts reached'], 4);
+      if (v['Profile visits'] !== undefined) v['Profile visit rate'] = round_(v['Profile visits'] / v['Accounts reached'], 4);
+    }
+  });
+  const lastStory = exp.profileInfo && exp.profileInfo.lastStory;
+  if (lastStory) now['Last story'] = fmtDate_(lastStory);
+
+  const rowOf = (vals, kind, r) => HEADERS.Performance.map(col => {
+    if (col === 'Window end') return r.end;
+    if (col === 'Window start') return r.start;
+    if (col === 'Kind') return kind;
+    if (col === 'From export') return fmtDate_(exp.periodEnd);
+    if (col === 'Window end date') return dateCell_(r.end);
+    return vals[col] === undefined || vals[col] === null ? '' : vals[col];
+  });
+  const rows = [rowOf(now, 'Reported', range)];
+  if (prevRange && Object.keys(before).length) rows.push(rowOf(before, 'Worked out', prevRange));
+  return rows;
+}
+
+/**
+ * Writes Performance rows keyed by window end. A reported window always replaces a worked-out one for the same
+ * dates — thirteen weeks after a window is worked out, the export whose own window it is arrives — and between
+ * two rows of the same kind the one from the newer export wins.
+ */
+function upsertPerformance_(rows) {
+  if (!rows.length) return;
+  const h = HEADERS.Performance;
+  const kind = h.indexOf('Kind');
+  const from = h.indexOf('From export');
+  const rank = r => (r[kind] === 'Reported' ? 2 : 1);
+  const existing = readRows_('Performance');
+  const byEnd = new Map(existing.filter(r => r[0]).map(r => [String(r[0]), r]));
+  rows.forEach(row => {
+    const have = byEnd.get(String(row[0]));
+    if (!have || rank(row) > rank(have) || (rank(row) === rank(have) && String(row[from]) >= String(have[from]))) {
+      byEnd.set(String(row[0]), row);
+    }
+  });
+  const data = Array.from(byEnd.values()).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  writeBody_(ensureSheet_('Performance'), 'Performance', data, existing.length, h.length);
 }
 
 // ── Network ──────────────────────────────────────────────────────────────────
@@ -2269,7 +2985,9 @@ function sourcesForMonth_(month, freshDated) {
 // contributors day by day (see mergeForMonth_). Not included: entries with no `.time` at all are kept
 // wherever they appear, since there's no day to own them or reassign them to.
 const DAY_LOG_FIELDS = ['postsViewed', 'videosWatched', 'likedPosts', 'likedComments', 'adsViewed',
-  'notInterested', 'profileSearches', 'wordSearches'];
+  'notInterested', 'profileSearches', 'wordSearches',
+  'savedPosts', 'storiesViewed', 'storyLikes', 'unfollowed', 'linksOpened', 'comments', 'messages',
+  'ownPosts', 'ownStories', 'ownReels'];
 // The feed-viewing history specifically — the subset Instagram only keeps about a week of, and the subset
 // nearly every headline number is derived from. Coverage is measured in these days alone (see mergeForMonth_).
 const VIEW_FIELDS = ['postsViewed', 'videosWatched'];
@@ -2285,15 +3003,15 @@ const VIEW_FIELDS = ['postsViewed', 'videosWatched'];
 // row reads "no data" while the parsers are working perfectly. That is exactly what happened first.
 const SNAPSHOT_FIELDS = ['following', 'followers', 'blocked', 'closeFriends', 'metaCategories',
   'locationsOfInterest', 'advertisers', 'basedIn', 'owner', 'exportTimezone',
-  'notes', 'reachCard', 'interactionCard', 'audienceCard'];
+  'notes', 'reachCard', 'interactionCard', 'audienceCard', 'profileInfo', 'displayName'];
 
 /**
  * Builds one synthetic export, shaped exactly like parseExport_'s output, representing everything known
  * about `month` across every contributor that touches it. Per the confirmed "newest delivery wins" rule:
  * contributors are ordered by their own periodEnd (the one covering later days is the newer delivery), and
- * for each calendar day in the month, only the latest contributor covering that day keeps its items for that
- * day — so two non-overlapping weeks simply combine, and an overlapping day only counts once, from the
- * fresher delivery. `coverage` (distinct covered days ÷ real days in the month) rides along on the result so
+ * where two of them hold the same stretch of time, only the newer one's items for it are kept — so two
+ * back-to-back weeks simply combine (both halves of the day they meet on included), and an overlap only
+ * counts once, from the fresher delivery. `coverage` (distinct covered days ÷ real days in the month) rides along on the result so
  * the caller can flag a month built from an incomplete set of deliveries instead of showing it as if it were
  * whole.
  */
@@ -2323,26 +3041,44 @@ function mergeForMonth_(month, contributors) {
 
   const merged = {};
   DAY_LOG_FIELDS.forEach(field => {
-    // Ownership is decided PER FIELD, by which contributor actually HAS an item that day — never by whose
-    // declared period merely spans it. Deciding it by declared period alone was the bug this replaced: a
-    // newer delivery's period can nominally cover a day it has zero real items for, and doing that let it
-    // silently wipe out an older delivery's real items for that same day instead of just losing a tiebreak
-    // it was never actually part of. Iterating oldest to newest and letting a later write plainly overwrite
-    // an earlier one is what makes "newest delivery wins" fall out for a day two contributors both have data
-    // for, with no separate tie-break logic needed.
-    const dayOwner = {};
-    ordered.forEach((c, idx) => (c.exp[field] || []).forEach(item => {
-      const d = dateOf(item);
-      if (inMonth(d)) { dayOwner[d] = idx; knownDays.add(d); }
-    }));
+    // Ownership is decided PER FIELD and by TIME: each delivery owns the span from its first to its last item
+    // of that field, and an older delivery's item survives wherever no newer delivery's span reaches. Two
+    // earlier rules each lost real data:
+    //  · By declared period — a newer delivery's period can nominally cover a day it has no items for, and it
+    //    wiped out an older delivery's real items there.
+    //  · By calendar day — weekly deliveries end mid-day (a Sunday at noon, local time), so the boundary day
+    //    is split between two of them: the older holds its morning, the newer its afternoon. Giving the whole
+    //    day to the newer one dropped the morning every single week — 5 posts, 37 videos, 9 ads and 60 stories
+    //    on the first real pair of deliveries this ran on.
+    // A genuine overlap (a redelivery, or a monthly export beside weekly ones) still counts once: the newer
+    // delivery holds those same events, so its span covers them.
+    const spans = ordered.map(c => {
+      let lo = Infinity;
+      let hi = -Infinity;
+      (c.exp[field] || []).forEach(item => {
+        if (!item.time) return;
+        const t = item.time.getTime();
+        if (t < lo) lo = t;
+        if (t > hi) hi = t;
+      });
+      return lo === Infinity ? null : [lo, hi];
+    });
     merged[field] = [];
     ordered.forEach((c, idx) => (c.exp[field] || []).forEach(item => {
       const d = dateOf(item);
-      if (d === null || (inMonth(d) && dayOwner[d] === idx)) merged[field].push(item);
+      if (d === null) { merged[field].push(item); return; }
+      if (!inMonth(d)) return;
+      const t = item.time.getTime();
+      if (spans.some((s, j) => j > idx && s && t >= s[0] && t <= s[1])) return; // a newer delivery has this moment
+      merged[field].push(item);
+      knownDays.add(d);
     }));
   });
   const newest = ordered[ordered.length - 1].exp;
   SNAPSHOT_FIELDS.forEach(field => { merged[field] = newest[field]; });
+  // The following list is the newest delivery's, which is wrong for any account unfollowed after this bucket:
+  // it was still followed then. Every contributor's unfollows, with their dates, are what put those back.
+  merged.unfollowedAll = ordered.reduce((acc, c) => acc.concat(c.exp.unfollowed || []), []);
 
   merged.allTime = false;
   merged.month = month;
@@ -2427,17 +3163,22 @@ function updateNetwork_(exps) {
   const accountRows = readRows_('Accounts');
   const recent = new Set(unique_(accountRows.map(r => String(r[0]))).sort().slice(-CONFIG.NETWORK_RECENT_MONTHS));
   const activity = new Map();
-  accountRows.forEach(([month, account, seen, , , liked, searched, , themes]) => {
+  // Saves and comments count as acts toward an account the same way likes and searches do: before saves were
+  // split out of likes they were already counted here, and a comment is the most deliberate act of the lot.
+  accountRows.forEach(([month, account, seen, , , liked, searched, , themes, saved, commented]) => {
     const key = String(account).toLowerCase();
-    const a = activity.get(key) || { account: account, seen: 0, liked: 0, searched: 0, months: new Set(), recentSeen: 0, recentActs: 0, themes: {} };
-    const total = (+seen || 0) + (+liked || 0) + (+searched || 0);
+    const a = activity.get(key) || { account: account, seen: 0, liked: 0, searched: 0, saved: 0, commented: 0, months: new Set(), recentSeen: 0, recentActs: 0, themes: {} };
+    const acts = (+liked || 0) + (+searched || 0) + (+saved || 0) + (+commented || 0);
+    const total = (+seen || 0) + acts;
     a.seen += +seen || 0;
     a.liked += +liked || 0;
     a.searched += +searched || 0;
+    a.saved += +saved || 0;
+    a.commented += +commented || 0;
     if (total) a.months.add(String(month));
     if (recent.has(String(month))) {
       a.recentSeen += +seen || 0;
-      a.recentActs += (+liked || 0) + (+searched || 0);
+      a.recentActs += acts;
     }
     String(themes).split(', ').filter(Boolean).forEach(t => { a.themes[t] = (a.themes[t] || 0) + total; });
     activity.set(key, a);
@@ -2449,7 +3190,7 @@ function updateNetwork_(exps) {
     const snapshot = props.getProperty(list.prop);
     return !!listed && (!snapshot || listed >= snapshot);
   };
-  const none = { seen: 0, liked: 0, searched: 0, months: new Set(), recentSeen: 0, recentActs: 0, themes: {} };
+  const none = { seen: 0, liked: 0, searched: 0, saved: 0, commented: 0, months: new Set(), recentSeen: 0, recentActs: 0, themes: {} };
   const out = [];
   rows.forEach((row, key) => {
     const a = activity.get(key) || none;
@@ -2482,7 +3223,7 @@ function updateNetwork_(exps) {
     set('Seen', a.seen);
     set('Liked', a.liked);
     set('Searched', a.searched);
-    set('Attention', a.seen + 5 * a.liked + 3 * a.searched);
+    set('Attention', a.seen + 5 * (a.liked + a.saved + a.commented) + 3 * a.searched);
     set('Active months', a.months.size);
     set('Last active', a.months.size ? Array.from(a.months).sort().pop() : '');
     set('Close friend', close ? 'Yes' : '');
@@ -2977,10 +3718,14 @@ function buildDashboard() {
     rows.Top.filter(t => String(t[0]) === curM && t[1] === 'Accounts seen').slice(0, 10).map(t => [String(t[3]), t[4]]), '0');
   const quietRange = table(['Account', 'Times seen'],
     rows['Quiet interests'].filter(q => String(q[0]) === curM).slice(0, 10).map(q => [String(q[2]), q[3]]), '0');
-  const emotionDims = rows.Profile.filter(p => String(p[0]) === curM && p[1] === 'Emotional tone').map(p => p[2]);
-  const profileRange = table(header('Indicator'),
-    Object.keys(cur.profile).filter(k => emotionDims.indexOf(k) < 0).map(k => withPrev(k, cur.profile[k], prevOf(prev ? prev.profile : {}, k))), '0');
-  const emotionRange = table(header('Emotion'), emotionDims.map(k => withPrev(k, cur.profile[k], prevOf(prev ? prev.profile : {}, k))), '0');
+  // The indicator chart shows the behaviour-based personality and needs scores; the emotion chart, the tone of
+  // what you were shown. Feed-diet and influence rows live in the Profile tab and on the web dashboard.
+  const curProfile = rows.Profile.filter(p => String(p[0]) === curM);
+  const profileKey = p => p[1] + '|' + p[2];
+  const profileRange = table(header('Indicator'), curProfile.filter(p => /\(behaviour\)/.test(p[1]))
+    .map(p => withPrev(String(p[2]).split('·')[0].trim(), p[3], prevOf(prev ? prev.profile : {}, profileKey(p)))), '0');
+  const emotionRange = table(header('Emotion'), curProfile.filter(p => p[1] === 'Emotional tone · shown')
+    .map(p => withPrev(p[2], p[3], prevOf(prev ? prev.profile : {}, profileKey(p)))), '0');
   const mixRange = table(['Month', 'Posts viewed', 'Videos watched', 'Ads viewed'],
     months.map(mo => { const v = monthly(mo); return [monthName_(mo), v['Posts viewed'], v['Videos watched'], v['Ads viewed']]; }), '0');
   const actionsRange = table(['Month', 'Liked posts', 'Liked comments', 'New follows', 'Profile searches', 'Word searches'],
@@ -3009,8 +3754,8 @@ function buildDashboard() {
     [COLUMN, weekdayRange, 'Activity by weekday', {}],
     [BAR, topRange, 'Most-seen accounts', {}],
     [BAR, quietRange, 'Quiet interests · times seen with no like, search or follow', {}],
-    [BAR, profileRange, 'Behavioural indicators · 0–100 proxies', { max: 100 }],
-    [BAR, emotionRange, 'Emotional tone of captions · items per 100', {}],
+    [BAR, profileRange, 'Personality and needs, from behaviour · 0–100', { max: 100 }],
+    [BAR, emotionRange, 'Emotional tone of what you were shown · items per 100', {}],
     [COLUMN, mixRange, 'Content mix by month', { stacked: true, colors: COLORS.series.slice(0, 3) }],
     [COLUMN, actionsRange, 'Your actions by month', { stacked: true, colors: COLORS.series.slice(0, 5) }],
     trend ? [LINE, trendRange, 'Late-night share and active ratio by month', { format: '#.#%', colors: COLORS.series.slice(0, 2) }] : null,

@@ -63,6 +63,10 @@ function getDashboardPayload() {
     weeklyQuiet: sheetRows_('Weekly quiet'),
     weeklyHourly: sheetRows_('Weekly hourly'),
     weeklyBelonging: sheetRows_('Weekly belonging'),
+    weeklyConversations: sheetRows_('Weekly conversations'),
+    conversations: sheetRows_('Conversations'),
+    // Per 90-day insights window rather than per bucket: the dashboard draws it on its own time axis.
+    performance: sheetRows_('Performance'),
     risks: sheetRows_('Risks'),
     daily: sheetRows_('Daily'),
     hourly: sheetRows_('Hourly'),

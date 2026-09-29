@@ -361,3 +361,136 @@ footer { margin-top: 42px; padding-top: 16px; border-top: 1px solid var(--line);
 
 /* An anchor with no href (no web-app deployment, so no network-view URL) is a sentence, not a link. */
 a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: default; }
+
+/* ── Range filter ────────────────────────────────────────────────────────────────────────────────────
+   Presets first, the custom range last and only when asked for: nobody should fight two date inputs to see
+   "the last eight weeks". It sits in the one filter row, beside the period picker, because it scopes every
+   chart over time below it. */
+.range { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--panel); overflow: hidden; }
+.range button, .seg button { border: 0; border-radius: 0; padding: 6px 11px; font-size: 13px; background: transparent; color: var(--ink-2); }
+.range button + button { border-left: 1px solid var(--line); }
+.range button[aria-pressed="true"], .seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--seen) 14%, var(--panel)); color: var(--ink); font-weight: 600; }
+.range-custom { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-left: 1px solid var(--line); }
+.range-custom input { font: inherit; font-size: 13px; border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; background: var(--panel); color: var(--ink); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button + button { border-left: 1px solid var(--line); }
+.sub-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+.sub-row .sub { margin: 0; }
+
+/* ── Four layers ─────────────────────────────────────────────────────────────────────────────────────
+   Four cards of equal weight. A layer is told apart by its heading and its place in the order, never by a
+   colour of its own — four more hues would only compete with the charts. */
+.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.lc { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.lc-h { display: grid; gap: 1px; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+.lc-h b { font-family: var(--cond); font-size: 17px; }
+.lc-h span { font-size: 12px; color: var(--muted); }
+.lc-item { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: baseline; padding: 4px 0; }
+.lc-v { font-size: 17px; font-weight: 600; grid-row: span 2; min-width: 3.2ch; }
+.lc-k { font-size: 12.5px; color: var(--ink-2); }
+.lc-d { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+
+/* ── Over time ───────────────────────────────────────────────────────────────────────────────────────── */
+.trend-key { margin: -4px 0 14px; line-height: 1.6; }
+.tl { margin-bottom: 16px; }
+.tl-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 8px; }
+.tl-h b { font-family: var(--cond); font-size: 16px; }
+.tl-h span { font-size: 12px; color: var(--muted); }
+.grid-sm { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+.spark { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 8px; min-width: 0; }
+.spark-h { font-size: 13px; font-weight: 600; margin: 0; }
+.spark-s { display: block; font-size: 11.5px; color: var(--muted); }
+.spark-f { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin-top: 2px; min-height: 1.4em; }
+.ch-line-sm { max-width: 100%; margin-top: 4px; outline: none; }
+.ch-line-sm:focus-visible { outline: 2px solid var(--seen); outline-offset: 2px; border-radius: 6px; }
+.ch-base { stroke: var(--baseline, var(--line)); stroke-width: 1; }
+.ch-band { fill: color-mix(in srgb, var(--seen) 11%, transparent); stroke: none; }
+.ch-series { stroke: var(--seen); stroke-width: 2; stroke-linecap: round; }
+.ch-series.is-dashed { stroke-dasharray: 3 4; opacity: .8; }
+.ch-pt-sm { fill: var(--seen); stroke: var(--panel); stroke-width: 2; }
+.ch-pt-sm.is-hollow { fill: var(--panel); stroke: var(--seen); stroke-width: 1.8; }
+.ch-pt-sm.is-selected { fill: var(--accent); stroke: var(--panel); }
+.ch-pt-sm.is-hot { stroke: var(--ink); stroke-width: 1.5; }
+.ch-flag { fill: none; stroke: var(--ink-2); stroke-width: 1.2; }
+.ch-cross { stroke: var(--ink-2); stroke-width: 1; opacity: .55; pointer-events: none; }
+.ch-hit { fill: transparent; cursor: pointer; }
+.ch-mark { fill: var(--muted); }
+.ch-mark-alt { fill: var(--ink-2); }
+.ch-end { font-family: var(--mono); font-size: 10.5px; font-weight: 600; fill: var(--ink); }
+
+/* Themes by period: the hour heatmap's grammar, one hue, with gaps left as gaps. */
+.theat { display: grid; gap: 2px; align-items: center; }
+.theat .h { font-family: var(--mono); font-size: 9.5px; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; }
+.theat .wd { font-size: 12px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
+.theat .cell { height: 16px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.theat .cell.is-gap { background: repeating-linear-gradient(45deg, transparent 0 3px, color-mix(in srgb, var(--ink) 7%, transparent) 3px 4px); }
+
+/* Table views: every chart's values, reachable without hovering anything. */
+.tableview { margin-top: 12px; }
+.tableview summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+.tableview > div { overflow-x: auto; margin-top: 8px; }
+.tv { border-collapse: collapse; font-size: 12px; min-width: 100%; }
+.tv th, .tv td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tv th:first-child, .tv td:first-child { text-align: left; }
+.tv th { font-weight: 600; color: var(--ink-2); }
+
+/* ── Your account ────────────────────────────────────────────────────────────────────────────────────── */
+.perf-note { font-size: 13px; color: var(--ink-2); background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; max-width: 80ch; }
+#perf-audience { margin-top: 12px; }
+#perf-audience .is-then { opacity: .8; }
+.aud-row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; font-size: 12.5px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.aud-row:last-child { border-bottom: 0; }
+.aud-row b { font-weight: 600; color: var(--ink-2); }
+
+/* ── Profile strips ──────────────────────────────────────────────────────────────────────────────────
+   One strip per indicator, 0–100, with every other bucket on record behind the current one. The question a
+   strip answers is "is this unusual for me", which a radar of one bucket could never answer. */
+.cols.cols-strips { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+.strip-g { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 2px; }
+.strip-g:first-child { margin-top: 0; }
+.strip { display: grid; grid-template-columns: minmax(110px, 150px) 1fr 32px 92px; gap: 10px; align-items: center; padding: 6px 0; font-size: 13px; }
+.strip-n { color: var(--ink-2); }
+.strip-track { position: relative; height: 14px; }
+.strip-track::before { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 9%, transparent); }
+.strip-dot { position: absolute; top: 3px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--muted); opacity: .45; }
+.strip-dot.is-now { top: 1px; width: 12px; height: 12px; margin-left: -6px; background: var(--accent); opacity: 1; box-shadow: 0 0 0 2px var(--panel); }
+.strip-v { font-family: var(--mono); font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.strip-e { font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.strip.is-blank .strip-n { color: var(--muted); }
+.strip-key { margin: 10px 0 0; line-height: 1.55; }
+.perf-key { margin: 0 0 12px; line-height: 1.55; }
+#influence { margin-top: 12px; }
+
+/* Shown against chosen, per theme: a dumbbell. Grey is the feed's share, orange yours; the bar between them is
+   the gap, drawn in orange when you went after a theme more than you were shown it. */
+.db-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 8px; font-size: 12px; color: var(--ink-2); }
+.db-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.db-k { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.db { display: grid; grid-template-columns: minmax(110px, 190px) 1fr 104px; gap: 10px; align-items: center; padding: 5px 0; font-size: 13px; }
+.db-n { color: var(--ink-2); }
+.db-track { position: relative; height: 14px; }
+.db-track::before { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: color-mix(in srgb, var(--ink) 7%, transparent); border-radius: 2px; }
+.db-bar { position: absolute; top: 5px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--muted) 45%, transparent); }
+.db-bar.is-up { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.db-dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; box-shadow: 0 0 0 2px var(--panel); }
+.db-seen { background: var(--muted); }
+.db-chosen { background: var(--accent); }
+.db-v { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+
+.tv.conv td, .tv.conv th { white-space: normal; }
+/* A table never widens the page: on a phone it scrolls inside its own panel instead. */
+#conversations, #perf-table, #trend-table { overflow-x: auto; }
+#conversations-panel { margin-top: 10px; }
+
+@media (max-width: 620px) {
+  .range { width: 100%; }
+  .range button { flex: 1 1 auto; }
+  .cols.cols-strips { grid-template-columns: 1fr; }
+  .strip { grid-template-columns: 96px 1fr 30px; }
+  .strip-e { grid-column: 2 / -1; margin-top: -6px; }
+  .db { grid-template-columns: 96px 1fr; }
+  .db-v { grid-column: 2; text-align: left; margin-top: -4px; }
+  .aud-row { grid-template-columns: 84px 1fr; }
+}

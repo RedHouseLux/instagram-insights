@@ -287,6 +287,148 @@ var CH = (function () {
     return svg;
   }
 
+  // ── Small-multiple line ──────────────────────────────────────────────────────────────────────────────
+  // One series per chart, so the title names it and there is no legend box. Everything that qualifies a point
+  // is drawn on the point rather than explained beside it:
+  //  · a gap where there is no data (a missing week is not a zero, and joining across it would invent a trend)
+  //  · a hollow dot where the point rests on too little (a partial week, or a value worked out rather than
+  //    reported), and a dashed segment into or out of a worked-out one
+  //  · a wash behind the line for "your usual range" — what the previous weeks covered — and a ring on any
+  //    point that falls outside it
+  //  · ticks along the top for events (you posted, a burst of follows) and an accent dot for the bucket the
+  //    rest of the page is showing.
+  // Only the last value is labelled; the crosshair and the table view carry the rest. The chart is focusable
+  // and the arrow keys walk the crosshair, so what a pointer can read a keyboard can too.
+  //
+  // points: [{ x, v (number|null), hollow, dashed, band: [lo, hi]|null, flag, selected }]
+  // opts:   { xMin, xMax, zero (default true), fmt, xLabels: [{ x, text }], markers: [{ x, kind }],
+  //           onHover(i, evt|null, anchor), onLeave(), onPick(i), label }
+  function line(points, opts) {
+    opts = opts || {};
+    var W = 320, H = 138, L = 40, R = 44, T = 16, B = 24;
+    var svg = root(W, H, 'ch-line-sm');
+    svg.setAttribute('tabindex', '0');
+    if (opts.label) svg.setAttribute('aria-label', opts.label);
+    var fmt = opts.fmt || function (v) { return String(v); };
+    var vals = [];
+    points.forEach(function (p) {
+      if (p.v !== null && p.v !== undefined && !isNaN(p.v)) vals.push(+p.v);
+      if (p.band) { vals.push(p.band[0]); vals.push(p.band[1]); }
+    });
+    var zero = opts.zero !== false;
+    var lo = vals.length ? Math.min.apply(null, vals) : 0;
+    var hi = vals.length ? Math.max.apply(null, vals) : 1;
+    if (zero) lo = Math.min(0, lo);
+    if (hi === lo) { hi = lo + (lo === 0 ? 1 : Math.abs(lo) * 0.1); }
+    if (!zero) { var padV = (hi - lo) * 0.15; lo -= padV; hi += padV; }
+    var xMin = opts.xMin !== undefined ? opts.xMin : 0;
+    var xMax = opts.xMax !== undefined ? opts.xMax : Math.max(1, points.length - 1);
+    var X = function (x) { return xMax === xMin ? L + (W - L - R) / 2 : L + (x - xMin) / (xMax - xMin) * (W - L - R); };
+    var Y = function (v) { return T + (1 - (v - lo) / (hi - lo)) * (H - T - B); };
+
+    // Recessive frame: three hairlines and the two extreme values on the axis.
+    [lo, (lo + hi) / 2, hi].forEach(function (v, k) {
+      svg.appendChild(n('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), class: k === 0 && zero ? 'ch-base' : 'ch-ring' }));
+    });
+    svg.appendChild(n('text', { x: L - 6, y: Y(hi) + 3, class: 'ch-tick', 'text-anchor': 'end', text: fmt(hi) }));
+    svg.appendChild(n('text', { x: L - 6, y: Y(lo) + 3, class: 'ch-tick', 'text-anchor': 'end', text: fmt(lo) }));
+    (opts.xLabels || []).forEach(function (l, k, all) {
+      svg.appendChild(n('text', {
+        x: X(l.x), y: H - 6, class: 'ch-tick',
+        'text-anchor': all.length > 1 && k === 0 ? 'start' : all.length > 1 && k === all.length - 1 ? 'end' : 'middle',
+        text: l.text,
+      }));
+    });
+
+    // Usual range: one polygon per unbroken run of banded points.
+    var run = [];
+    var flushBand = function () {
+      if (run.length > 1) {
+        var top = run.map(function (p) { return X(p.x) + ',' + Y(p.band[1]); });
+        var bottom = run.slice().reverse().map(function (p) { return X(p.x) + ',' + Y(p.band[0]); });
+        svg.appendChild(n('polygon', { points: top.concat(bottom).join(' '), class: 'ch-band' }));
+      }
+      run = [];
+    };
+    points.forEach(function (p) { if (p.band) run.push(p); else flushBand(); });
+    flushBand();
+
+    (opts.markers || []).forEach(function (m) {
+      var x = X(m.x);
+      svg.appendChild(m.kind === 'post'
+        ? n('path', { d: 'M' + (x - 4) + ',' + (T - 11) + 'L' + (x + 4) + ',' + (T - 11) + 'L' + x + ',' + (T - 4) + 'Z', class: 'ch-mark' })
+        : n('path', { d: 'M' + x + ',' + (T - 12) + 'L' + (x + 4) + ',' + (T - 8) + 'L' + x + ',' + (T - 4) + 'L' + (x - 4) + ',' + (T - 8) + 'Z', class: 'ch-mark ch-mark-alt' }));
+    });
+
+    // The line, broken at every gap; a segment touching a worked-out point is dashed.
+    for (var i = 1; i < points.length; i++) {
+      var a = points[i - 1], b = points[i];
+      if (a.v === null || b.v === null || a.v === undefined || b.v === undefined) continue;
+      svg.appendChild(n('line', {
+        x1: X(a.x), y1: Y(a.v), x2: X(b.x), y2: Y(b.v), class: 'ch-series' + (a.dashed || b.dashed ? ' is-dashed' : ''),
+      }));
+    }
+    var cross = n('line', { x1: 0, x2: 0, y1: T - 2, y2: H - B, class: 'ch-cross' });
+    cross.style.display = 'none';
+    svg.appendChild(cross);
+    var dots = points.map(function (p) {
+      if (p.v === null || p.v === undefined) return null;
+      if (p.flag) svg.appendChild(n('circle', { cx: X(p.x), cy: Y(p.v), r: 7.5, class: 'ch-flag' }));
+      var dot = n('circle', {
+        cx: X(p.x), cy: Y(p.v), r: p.selected ? 5 : 4,
+        class: 'ch-pt-sm' + (p.hollow ? ' is-hollow' : '') + (p.selected ? ' is-selected' : ''),
+      });
+      svg.appendChild(dot);
+      return dot;
+    });
+    var last = null;
+    for (var j = points.length - 1; j >= 0; j--) if (points[j].v !== null && points[j].v !== undefined) { last = j; break; }
+    if (last !== null) {
+      svg.appendChild(n('text', { x: X(points[last].x) + 8, y: Y(points[last].v) + 4, class: 'ch-end', text: fmt(points[last].v) }));
+    }
+
+    // Hit areas: a full-height column per point, as wide as the gap to its neighbours, so the pointer only has
+    // to be near a date, never on a 4px dot.
+    var active = null;
+    var show = function (k, evt) {
+      active = k;
+      cross.style.display = '';
+      cross.setAttribute('x1', X(points[k].x));
+      cross.setAttribute('x2', X(points[k].x));
+      dots.forEach(function (d, m) { if (d) d.classList.toggle('is-hot', m === k); });
+      if (opts.onHover) opts.onHover(k, evt || null, svg);
+    };
+    var hide = function () {
+      active = null;
+      cross.style.display = 'none';
+      dots.forEach(function (d) { if (d) d.classList.remove('is-hot'); });
+      if (opts.onLeave) opts.onLeave();
+    };
+    points.forEach(function (p, k) {
+      var left = k === 0 ? L - 6 : (X(points[k - 1].x) + X(p.x)) / 2;
+      var right = k === points.length - 1 ? W - R + 6 : (X(p.x) + X(points[k + 1].x)) / 2;
+      var hit = n('rect', { x: left, y: 0, width: Math.max(1, right - left), height: H, class: 'ch-hit' });
+      hit.addEventListener('mousemove', function (e) { show(k, e); });
+      hit.addEventListener('click', function () { if (opts.onPick) opts.onPick(k); });
+      svg.appendChild(hit);
+    });
+    svg.addEventListener('mouseleave', hide);
+    svg.addEventListener('blur', hide);
+    svg.addEventListener('keydown', function (e) {
+      if (!points.length) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        var k = active === null ? (e.key === 'ArrowRight' ? 0 : points.length - 1)
+          : Math.max(0, Math.min(points.length - 1, active + (e.key === 'ArrowRight' ? 1 : -1)));
+        show(k, null);
+      } else if ((e.key === 'Enter' || e.key === ' ') && active !== null && opts.onPick) {
+        e.preventDefault();
+        opts.onPick(active);
+      } else if (e.key === 'Escape') hide();
+    });
+    return svg;
+  }
+
   // ── Line icons ───────────────────────────────────────────────────────────────────────────────────────
   // Monochrome, stroked, 24×24, drawn on one grid so they sit together as a set. They take their colour from
   // the element around them, which is what keeps them legible in both themes without a second set of assets.
@@ -306,6 +448,9 @@ var CH = (function () {
     alert: 'M12 3 2 20h20zM12 9v5M12 17v.5',
     search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3',
     quiet: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM8.5 14c1.8-1.4 5.2-1.4 7 0M9 9.5v.5M15 9.5v.5',
+    layers: 'M12 3 2 8l10 5 10-5zM2 12.5l10 5 10-5M2 17l10 5 10-5',
+    trend: 'M3 20h18M4 16l5-5 4 3 7-8M16 6h4v4',
+    account: 'M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5.5 19c.8-3 3.4-4.5 6.5-4.5s5.7 1.5 6.5 4.5M3 3h18v18H3z',
   };
 
   function icon(name, size) {
@@ -321,5 +466,5 @@ var CH = (function () {
     return svg;
   }
 
-  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, icon: icon, icons: ICONS };
+  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, line: line, icon: icon, icons: ICONS };
 }());

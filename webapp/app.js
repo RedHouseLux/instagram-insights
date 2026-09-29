@@ -12,13 +12,15 @@
     'Weekly risks': 'weeklyRisks', 'Weekly signals': 'weeklySignals', 'Weekly profile': 'weeklyProfile',
     'Weekly quiet': 'weeklyQuiet', 'Weekly hourly': 'weeklyHourly',
     Belonging: 'belonging', 'Weekly belonging': 'weeklyBelonging',
+    Conversations: 'conversations', 'Weekly conversations': 'weeklyConversations',
+    Performance: 'performance',
   };
   // Monthly tab name → its weekly twin. bucketTable() below picks between them off the current mode, so each
   // draw* function names the monthly tab once and stays bucket-agnostic.
   const WEEKLY_TWIN = {
     Themes: 'Weekly themes', Subthemes: 'Weekly subthemes', Top: 'Weekly top', Risks: 'Weekly risks', Signals: 'Weekly signals',
     Profile: 'Weekly profile', 'Quiet interests': 'Weekly quiet', Hourly: 'Weekly hourly',
-    Belonging: 'Weekly belonging',
+    Belonging: 'Weekly belonging', Conversations: 'Weekly conversations',
   };
   // ── Language ─────────────────────────────────────────────────────────────────────────────────────────
   // The Sheet's tab and column names stay English on purpose: they are the keys this file reads data by
@@ -38,7 +40,6 @@
       'sec.time': 'Quando ti ha preso tempo',
       'sec.people': 'Chi lo ha riempito',
       'sec.feeling': 'Come ci si sentiva',
-      'sec.profile': 'Chi pensa che tu sia',
       'sec.belonging': 'Se senti di appartenere',
       'sec.risks': "Dov'è l'attrito",
       'sec.signals': 'Cosa tenere d’occhio',
@@ -51,10 +52,7 @@
       'net.link': 'Apri la vista di rete completa →',
       'footer.net': 'Apri la vista di rete →',
       'emo.h': 'Tono emotivo delle didascalie che ti sono state mostrate · elementi ogni 100 visti',
-      'radar.big5': 'Personalità · approssimazione Big Five',
-      'radar.desire': 'Cosa alimenta · approssimazioni dei desideri',
       'bel.needs': 'Cosa renderebbe tutto questo misurabile',
-      'bel.lede': 'Quattro elementi di cui è fatta l’appartenenza. Un export Instagram può dire qualcosa su due di essi ed è muto sugli altri due — quelle righe lo dichiarano invece di sparire, perché una riga assente si legge come "niente da segnalare", che è l’opposto della verità.',
       // Hero and tiles
       'hero.week': 'La settimana in sintesi',
       'hero.month': 'Il mese in sintesi',
@@ -102,7 +100,7 @@
       'tile.risk': 'Indice di rischio', 'tile.risk.sub': 'su 100',
       'tile.min': 'Minuti al giorno', 'tile.min.sub': 'stima minima',
       'tile.items': 'Elementi al giorno', 'tile.items.sub': 'post e video',
-      'tile.active': 'Rapporto di attività', 'tile.active.sub': 'like, follow e ricerche per elemento',
+      'tile.active': 'Rapporto di attività',
       'tile.quiet': 'Interessi silenziosi', 'tile.quiet.sub': 'visti spesso, mai toccati',
       'tile.sessions': 'Sessioni al giorno', 'tile.sessions.sub': 'volte che l’hai ripreso in mano',
       'delta.same.week': 'come la settimana scorsa', 'delta.same.month': 'come il mese scorso',
@@ -118,6 +116,90 @@
       'profile.how': 'Come viene calcolato ciascuno',
       'signal.try': 'Prova:',
       'was': 'era',
+      // Range and new sections
+      'range.title': 'Quanta storia mostrano i grafici nel tempo',
+      'range.w1': 'Ultima settimana', 'range.w8': '8 settimane', 'range.m6': '6 mesi', 'range.all': 'Tutto', 'range.custom': 'Personalizzato',
+      'sec.layers': 'Quattro livelli: mostrato, usato, fatto, ricevuto',
+      'layers.lede': 'Ciò che il feed ti ha mostrato è soprattutto una scelta dell’algoritmo; ciò che ne hai fatto è tuo. Il cruscotto tiene separate le due cose, e aggiunge ciò che hai fatto verso le persone e ciò che loro hanno fatto in risposta.',
+      'sec.trends': 'Nel tempo',
+      'sec.account': 'Il tuo profilo, come lo incontrano gli altri',
+      'sec.profile': 'Ciò che fai, e ciò che ti viene mostrato',
+      'bel.lede': 'Quattro elementi di cui è fatta l’appartenenza. Un export Instagram ne misura due, ne raggiunge un terzo solo in modo indiretto ed è muto sul quarto — quella riga lo dichiara invece di sparire, perché una riga assente si legge come "niente da segnalare", che è l’opposto della verità.',
+      'tile.active.sub': 'like, salvataggi, commenti, follow e ricerche per elemento',
+      'table.view': 'Vista tabella',
+      'word.week': 'settimana', 'word.month': 'mese',
+      // Layers
+      'layer.exposure': 'Esposizione', 'layer.exposure.sub': 'Ciò che ti ha raggiunto',
+      'layer.consumption': 'Comportamento di consumo', 'layer.consumption.sub': 'Come l’hai usato',
+      'layer.social': 'Comportamento sociale', 'layer.social.sub': 'Ciò che hai fatto verso le persone',
+      'layer.inbound': 'In entrata', 'layer.inbound.sub': 'Ciò che le persone hanno fatto verso di te',
+      'lc.items': 'Post e video mostrati', 'lc.stories': 'Storie viste', 'lc.rec': 'Da account che non segui',
+      'lc.ads': 'Inserzioni, quota del mostrato', 'lc.min': 'Minuti al giorno', 'lc.sessions': 'Sessioni al giorno',
+      'lc.saved': 'Salvati per dopo', 'lc.links': 'Link aperti', 'lc.self': 'Visione scelta da te',
+      'lc.likes': 'Like', 'lc.comments': 'Commenti scritti', 'lc.sent': 'Messaggi inviati',
+      'lc.started': 'Conversazioni avviate da te', 'lc.posted': 'Post, storie e reel',
+      'lc.received': 'Messaggi ricevuti', 'lc.replyrate': 'Tuoi turni con risposta', 'lc.theirwait': 'Loro risposta mediana, minuti',
+      'lc.followers': 'Follower',
+      // Over time
+      'tr.items': 'Elementi mostrati al giorno', 'tr.rec': 'Quota consigliata', 'tr.ads': 'Carico di inserzioni',
+      'tr.min': 'Minuti al giorno', 'tr.late': 'Quota notturna', 'tr.self': 'Visione scelta da te',
+      'tr.acts': 'Atti sociali', 'tr.comments': 'Commenti scritti', 'tr.sent': 'Messaggi inviati',
+      'tr.received': 'Messaggi ricevuti', 'tr.replyrate': 'Tuoi turni con risposta', 'tr.theirwait': 'Loro risposta mediana, minuti',
+      'tr.weekof': 'settimana del', 'tr.nodata': 'nessun dato', 'tr.gap': 'Nessun export copre questo periodo.',
+      'tr.notviewed': 'Fuori dalla cronologia di visualizzazione conservata da Instagram.',
+      'tr.partial': 'Parziale: meno di metà del periodo ha una cronologia di visualizzazione.',
+      'tr.usual': 'Il tuo intervallo abituale: {lo} – {hi}', 'tr.outside': 'Fuori dal tuo intervallo abituale.',
+      'tr.click': 'Clicca per mostrare questo periodo qui sotto.',
+      'tr.byday': 'per giorno', 'tr.byweek': 'per settimana', 'tr.bymonth': 'per mese',
+      'tr.key.gap': 'vuoto = nessun export', 'tr.key.day': 'i giorni fuori dalla cronologia di visualizzazione restano vuoti',
+      'tr.key.hollow': 'vuoto al centro = settimana parziale', 'tr.key.band': 'fascia = il tuo intervallo abituale',
+      'tr.key.ring': 'anello = fuori da esso', 'tr.key.post': 'hai pubblicato', 'tr.key.follow': '3+ follow o unfollow',
+      'tr.weeklyonly': 'Contati per settimana, non per giorno — allarga l’intervallo per vederli.',
+      'tr.period': 'Periodo',
+      'heat.h': 'Temi nel tempo', 'heat.seen': 'Mostrati', 'heat.chosen': 'Scelti',
+      'heat.day': 'I temi si contano per settimana — allarga l’intervallo per vederli nel tempo.',
+      'heat.note.seen': 'Quota degli elementi mostrati che portano ciascun tema. Più scuro = più feed.',
+      'heat.note.chosen': 'Quota delle tue azioni pesate (ricerche e commenti 3, salvataggi e follow 2, like 1) che portano ciascun tema. Una settimana con poche azioni oscilla molto.',
+      // Your account
+      'perf.lede': 'I numeri di Instagram sul tuo profilo. Ogni punto è un totale dei 90 giorni che finiscono quel giorno, quindi due punti a una settimana di distanza condividono 83 giorni: si muovono lentamente e non vanno mai sommati. I punti vuoti sono ricavati dal "% rispetto ai 90 giorni precedenti" di Instagram stesso.',
+      'perf.key': 'Pieno: come riportato · vuoto e tratteggiato: ricavato · ▼ la tua ultima storia · arancione: la finestra che termina nel periodo mostrato qui sotto. "rispetto a una settimana prima" è la settimana entrata nella finestra meno quella uscita, 13 settimane fa — non questa settimana da sola.',
+      'perf.story': 'La tua ultima storia in questi export: {d}. Le interazioni con le storie in queste finestre vengono da lei e da quelle precedenti; da circa il {r} i 90 giorni non la includono più e, senza una nuova, scendono a zero. Leggi un calo di copertura e interazioni alla luce di questo prima di leggerlo come un pubblico che si allontana.',
+      'perf.nogap': 'Nessun export copre queste settimane.',
+      'perf.tip.rep': 'Come riportato nell’export del {d}.',
+      'perf.tip.work': 'Ricavato dall’export del {d}: il suo valore ÷ (1 + il suo "% rispetto al periodo precedente"), arrotondato.',
+      'perf.same': 'come una settimana prima', 'perf.vs': 'rispetto a una settimana prima',
+      'perf.countries': 'Paesi', 'perf.cities': 'Città', 'perf.ages': 'Età', 'perf.gender': 'Uomini · donne',
+      'perf.then': 'Follower allora', 'perf.now': 'Follower ora', 'perf.window': '90 giorni al',
+      'perf.reported': 'riportato', 'perf.worked': 'ricavato',
+      'perf.level': 'numero nel giorno', 'perf.unique': 'account unici in 90 giorni', 'perf.sum': 'totale su 90 giorni',
+      'perf.eng': 'account che hanno interagito ÷ raggiunti', 'perf.visit': 'visite al profilo ÷ raggiunti',
+      'perf.nonf': 'della copertura, da non follower',
+      // Feeling
+      'tone.shown': 'Mostrato a te', 'tone.yours': 'Le tue parole', 'tone.theirs': 'Parole per te',
+      'emo.h.yours': 'Tono dei tuoi commenti e messaggi scritti · ogni 100',
+      'emo.h.theirs': 'Tono dei messaggi scritti che hai ricevuto · ogni 100',
+      'emo.blank': 'Troppo poco testo scritto per leggerne il tono in questa {p}: {n} messaggi o commenti, ne servono {m}. I vocali non contengono testo.',
+      // Profile strips and influence
+      'strips.do': 'Ciò che fai · personalità e bisogni, dal comportamento',
+      'strips.shown': 'Ciò che ti è stato mostrato · la dieta del feed',
+      'strips.big5': 'Personalità · Big Five', 'strips.needs': 'Bisogni · Teoria dell’autodeterminazione',
+      'strips.thin': 'n={n} · troppo pochi',
+      'strips.key': 'Ogni striscia va da 0 a 100. Punti grigi: ogni altra {p} registrata. Arancione: questa {p}. n: su quanti eventi poggia il punteggio; con meno di {m} resta vuoto invece di essere indovinato. Passa sopra una riga per la sua formula.',
+      'infl.h': 'Il feed e te · quota di ciò che ti è stato mostrato contro quota di ciò che hai scelto',
+      'db.seen': 'quota di ciò che ti è stato mostrato', 'db.chosen': 'quota di ciò che hai scelto',
+      'db.of.seen': 'di ciò che ti è stato mostrato', 'db.of.chosen': 'di ciò che hai scelto',
+      'infl.n': 'Lato "scelto" costruito da {n} azioni con un tema in questa {p} — ricerche e commenti contano 3, salvataggi e follow 2, like 1.',
+      'infl.dir': 'Direzione, su {w} settimane: quando il feed ti ha mostrato più di un tema, le tue azioni su quel tema la settimana dopo si sono mosse con r = {f}; quando hai agito di più su un tema, il feed te ne ha mostrato di più la settimana dopo con r = {y}. È una correlazione, non una prova di causa.',
+      'infl.wait': 'In quale verso va l’influenza — il feed che guida te, o tu che guidi il feed — richiede {need} settimane consecutive utilizzabili; finora {have}.',
+      'lw.behaviour': 'dal comportamento', 'lw.exposure': 'da ciò che ti è stato mostrato', 'lw.social': 'dalle tue parole',
+      'lw.inbound': 'da ciò che ti hanno scritto', 'lw.influence': 'il feed contro le tue scelte',
+      // Quiet interests and conversations
+      'quiet.follow': 'li segui', 'quiet.unfollowed': 'hai smesso di seguirli — ti vengono ancora mostrati', 'quiet.notfollowed': 'non seguiti',
+      'conv.h': 'Conversazioni · chi ha scritto, chi ha risposto, in quanto tempo',
+      'conv.note': 'Solo conteggi e tempi. Il testo dei messaggi viene letto per valutarne il tono e non viene mai salvato.',
+      'conv.person': 'Persona', 'conv.msgs': 'Inviati · ricevuti', 'conv.convs': 'Conversazioni (avviate da te)',
+      'conv.yours': 'Tuoi turni con risposta', 'conv.theirs': 'Loro turni a cui hai risposto', 'conv.wait': 'Risposta mediana: loro · tu',
+      'conv.voice': 'vocali',
     },
   };
 
@@ -203,6 +285,29 @@
   const bucketRows = () => table(isWeek() ? 'Weekly' : 'Monthly');
   let toastTimer = null;
   let checkTimer = null;
+
+  // ── Time range ───────────────────────────────────────────────────────────────────────────────────────
+  // The range scopes the "over time" and "your account" sections; the period picker scopes the snapshot
+  // sections. Granularity follows the range rather than the Weekly/Monthly switch: a week is drawn by day,
+  // eight weeks or six months by week, and anything longer than about fourteen months by month.
+  const DAY_MS = 86400000;
+  const dayMs = s => Date.parse(s + 'T12:00:00Z');
+  const isoDay = t => new Date(t).toISOString().slice(0, 10);
+  const addDays = (s, k) => isoDay(dayMs(s) + k * DAY_MS);
+  const mondayOf = s => addDays(s, 1 - (new Date(dayMs(s)).getUTCDay() || 7));
+  let range = 'w8';
+  let customFrom = '';
+  let customTo = '';
+  let heatMode = 'seen';
+  let toneMode = 'shown';
+  try {
+    const saved = JSON.parse(localStorage.getItem('ii-range') || 'null');
+    if (saved && /^(w1|w8|m6|all|custom)$/.test(saved.range)) {
+      range = saved.range;
+      customFrom = saved.from || '';
+      customTo = saved.to || '';
+    }
+  } catch (e) { /* blocked storage: the default range stands */ }
 
   // Shown one at a time, rotating, while a check is in flight — so "Refresh now" reads as doing
   // something, not as having silently frozen. Long enough to reward actually reading them.
@@ -493,8 +598,12 @@
     }
 
     drawSectionIcons();
+    syncControls();
     drawHero(row, coverage, span);
     drawTiles(row, before);
+    drawLayers(row, before);
+    drawTrends();
+    drawPerformance();
     drawThemeDonut();
     drawThemes();
     drawThemeHighlights(row, before);
@@ -503,9 +612,11 @@
     drawProfileOfWeek();
     drawNetworkPreview();
     drawBelonging();
+    drawConversations();
     drawDaily();
     drawEmotions();
-    drawRadars();
+    drawStrips();
+    drawInfluence();
     drawRiskMatrix();
     drawRisks();
     drawHours();
@@ -734,15 +845,32 @@
     { name: 'Love & connection', icon: 'love', side: 'light' },
     { name: 'Joy & fun', icon: 'joy', side: 'light' },
   ];
+  // Three readings of the same seven word lists: the captions you were shown (exposure), your own comments and
+  // written messages (social behaviour), and the written messages you received (inbound). Voice notes carry no
+  // text, so the last two are often blank — and say so rather than drawing zeros.
+  const TONES = {
+    shown: { framework: /^Emotional tone( · shown)?$/, h: ['emo.h', 'Emotional tone of the captions you were shown · items per 100 seen'] },
+    yours: { framework: /^Emotional tone · your words$/, h: ['emo.h.yours', 'Tone of your own comments and written messages · per 100'] },
+    theirs: { framework: /^Emotional tone · words to you$/, h: ['emo.h.theirs', 'Tone of the written messages you received · per 100'] },
+  };
   function drawEmotions() {
     const box = $('#emotions');
     if (!box) return;
     box.innerHTML = '';
-    const rows = bucketTable('Profile').filter(p => /Emotional tone/i.test(p.Framework));
+    document.querySelectorAll('#emo-mode button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tone === toneMode)));
+    const tone = TONES[toneMode] || TONES.shown;
+    $('#emo-h').textContent = tr(tone.h);
+    const rows = bucketTable('Profile').filter(p => tone.framework.test(p.Framework));
     if (!rows.length) return;
+    if (rows.every(r => numOrNull(r.Score) === null)) {
+      const n = numOrNull(rows[0].Evidence) || 0;
+      box.appendChild(el('p', { class: 'm', text: t('emo.blank', 'Too little written text to read a tone this {p}: {n} messages or comments, and it takes {m}. Voice notes carry no text.',
+        { p: isWeek() ? t('word.week', 'week') : t('word.month', 'month'), n: n, m: MIN_EVIDENCE }) }));
+      return;
+    }
     const valueOf = name => {
       const found = rows.find(r => r.Dimension === name);
-      return found ? +found.Score : 0;
+      return found ? numOrNull(found.Score) || 0 : 0;
     };
     const max = Math.max(1, Math.max.apply(null, rows.map(r => +r.Score)));
     const head = el('div', { class: 'emo-head' }, [
@@ -757,32 +885,13 @@
       const rightBar = el('div', { class: 'emo-r' }, e.side === 'light' ? [el('i', { style: `width:${width}` })] : []);
       const iconSlot = el('span', { class: 'emo-i' });
       iconSlot.appendChild(CH.icon(e.icon, 18));
-      box.appendChild(el('div', { class: 'emo', title: `${e.name}: ${v} items per 100 seen` }, [
+      box.appendChild(el('div', { class: 'emo', title: `${e.name}: ${v} per 100` }, [
         iconSlot,
         el('span', { class: 'emo-n', text: e.name }),
         leftBar,
         rightBar,
         el('span', { class: 'emo-v', text: String(v) }),
       ]));
-    });
-  }
-
-  function drawRadars() {
-    const groups = [
-      { box: '#radar-big5', match: /Big Five/i },
-      // The two desire frameworks share one 0–100 scale and describe one thing, so they read as one shape
-      // rather than two three-spoke fragments that would each be too sparse to have a form at all.
-      { box: '#radar-desire', match: /Desire/i },
-    ];
-    const rows = bucketTable('Profile');
-    groups.forEach(g => {
-      const box = $(g.box);
-      if (!box) return;
-      box.innerHTML = '';
-      const axes = rows.filter(p => g.match.test(p.Framework))
-        .map(p => ({ label: String(p.Dimension).split('·')[0].trim(), value: +p.Score }));
-      if (axes.length < 3) return; // fewer than three spokes is a shape with no area to read
-      box.appendChild(CH.radar(axes, { max: 100 }));
     });
   }
 
@@ -829,7 +938,7 @@
       { k: 'Risk index', label: t('tile.risk', 'Risk index'), value: fmt.int(row['Risk index']), sub: t('tile.risk.sub', 'out of 100'), worse: 'up', monthOnly: true },
       { k: 'Est. minutes per active day', label: t('tile.min', 'Minutes a day'), value: fmt.one(row['Est. minutes per active day']), sub: t('tile.min.sub', 'estimated floor'), worse: 'up' },
       { k: 'Seen per day', label: t('tile.items', 'Items a day'), value: fmt.one(row['Seen per day']), sub: t('tile.items.sub', 'posts and videos'), worse: 'up' },
-      { k: 'Active ratio', label: t('tile.active', 'Active ratio'), value: fmt.pct(row['Active ratio']), sub: t('tile.active.sub', 'likes, follows, searches per item'), worse: 'down', kind: 'pct' },
+      { k: 'Active ratio', label: t('tile.active', 'Active ratio'), value: fmt.pct(row['Active ratio']), sub: t('tile.active.sub', 'likes, saves, comments, follows, searches per item'), worse: 'down', kind: 'pct' },
       { k: 'Quiet interests', label: t('tile.quiet', 'Quiet interests'), value: fmt.int(row['Quiet interests']), sub: t('tile.quiet.sub', 'seen often, never touched'), worse: 'up' },
       { k: 'Sessions per active day', label: t('tile.sessions', 'Sessions a day'), value: fmt.one(row['Sessions per active day']), sub: t('tile.sessions.sub', 'times you picked it up'), worse: 'up' },
     ];
@@ -1075,7 +1184,9 @@
       quietBox.appendChild(el('div', { class: 'item' }, [
         el('b', { text: q.Account }),
         el('span', { class: 'n', text: `${q['Times seen']} seen` }),
-        el('span', { class: 'm', text: [q['You follow'] === 'Yes' ? 'you follow them' : 'not followed', q['Vs previous'], q.Themes].filter(Boolean).join(' · ') }),
+        el('span', { class: 'm', text: [q['You follow'] === 'Yes' ? t('quiet.follow', 'you follow them')
+          : q['You follow'] === 'Unfollowed' ? t('quiet.unfollowed', 'you unfollowed them — still shown to you')
+            : t('quiet.notfollowed', 'not followed'), q['Vs previous'], q.Themes].filter(Boolean).join(' · ') }),
       ]));
     });
   }
@@ -1258,6 +1369,11 @@
     ])));
   }
 
+  const LAYER_WORD = {
+    Behaviour: ['lw.behaviour', 'from behaviour'], Exposure: ['lw.exposure', 'from what you were shown'],
+    Social: ['lw.social', 'from your own words'], Inbound: ['lw.inbound', 'from what people sent you'],
+    Influence: ['lw.influence', 'the feed against your choices'],
+  };
   function drawProfile() {
     const rows = bucketTable('Profile').filter(p => !/Emotional tone/i.test(p.Framework));
     const box = $('#profile');
@@ -1265,13 +1381,14 @@
     if (!rows.length) return;
     box.appendChild(el('h3', { class: 'sub', text: t('profile.how', 'How each of these is computed') }));
     rows.forEach(p => {
-      const change = p.Previous === '' || p.Previous === null || isNaN(p.Previous)
-        ? '' : ` · was ${fmt.int(p.Previous)}`;
+      const change = numOrNull(p.Previous) === null ? '' : ` · ${t('was', 'was')} ${fmt.int(p.Previous)}`;
+      const layer = LAYER_WORD[p.Layer] ? tr(LAYER_WORD[p.Layer]) : '';
+      const ev = numOrNull(p.Evidence) === null ? '' : ` · n=${fmt.int(p.Evidence)}`;
       box.appendChild(el('div', { class: 'method' }, [
-        el('span', { class: 'method-v', text: fmt.int(p.Score) }),
+        el('span', { class: 'method-v', text: numOrNull(p.Score) === null ? '—' : fmt.int(p.Score) }),
         el('div', {}, [
           el('b', { text: String(p.Dimension).split('·')[0].trim() }),
-          el('span', { class: 'method-h', text: p['How it is computed'] + change }),
+          el('span', { class: 'method-h', text: p['How it is computed'] + change + (layer ? ' · ' + layer : '') + ev }),
         ]),
       ]));
     });
@@ -1305,6 +1422,666 @@
       : '';
   }
 
+  // ── The four layers ────────────────────────────────────────────────────────────────────────────────────
+  // Named once here and reused by the layer cards, the trend grid and the profile strips, so a layer means
+  // the same thing wherever it appears (METHODOLOGY.md → The four layers).
+  const LAYERS = {
+    exposure: { name: ['layer.exposure', 'Exposure'], sub: ['layer.exposure.sub', 'What reached you'] },
+    consumption: { name: ['layer.consumption', 'Consumption behaviour'], sub: ['layer.consumption.sub', 'How you used it'] },
+    social: { name: ['layer.social', 'Social behaviour'], sub: ['layer.social.sub', 'What you did toward people'] },
+    inbound: { name: ['layer.inbound', 'Inbound'], sub: ['layer.inbound.sub', 'What people did toward you'] },
+  };
+  const tr = pair => t(pair[0], pair[1]);
+  const numOrNull = v => (v === '' || v === null || v === undefined || isNaN(v) ? null : +v);
+  const fmtBy = kind => (kind === 'pct' ? fmt.pct : kind === 'one' ? fmt.one : fmt.int);
+  const sumCols = (row, cols) => cols.reduce((n, c) => n + (numOrNull(row[c]) || 0), 0);
+
+  /** The newest reported account window that had ended by `endDay`, and the one before it. */
+  function perfAsOf(endDay) {
+    const rows = table('Performance').filter(r => r.Kind === 'Reported' && (!endDay || r['Window end'] <= endDay))
+      .sort((a, b) => (a['Window end'] < b['Window end'] ? -1 : 1));
+    return { now: rows[rows.length - 1] || null, before: rows[rows.length - 2] || null };
+  }
+
+  const LAYER_CARDS = [
+    { id: 'exposure', items: [
+      { k: 'Items seen', f: 'int', label: ['lc.items', 'Posts and videos shown'] },
+      { k: 'Stories seen', f: 'int', label: ['lc.stories', 'Stories viewed'] },
+      { k: 'Recommended share', f: 'pct', label: ['lc.rec', 'From accounts you don’t follow'] },
+      { k: 'Ad load', f: 'pct', label: ['lc.ads', 'Ads, share of all shown'] },
+    ] },
+    { id: 'consumption', items: [
+      { k: 'Est. minutes per active day', f: 'one', label: ['lc.min', 'Minutes a day'] },
+      { k: 'Sessions per active day', f: 'one', label: ['lc.sessions', 'Sessions a day'] },
+      { k: 'Saved posts', f: 'int', label: ['lc.saved', 'Saved for later'] },
+      { k: 'Links opened', f: 'int', label: ['lc.links', 'Links opened'] },
+      { k: 'Self-directed share', f: 'pct', label: ['lc.self', 'Self-directed viewing'] },
+    ] },
+    { id: 'social', items: [
+      { k: 'Liked posts', f: 'int', label: ['lc.likes', 'Likes'] },
+      { k: 'Comments written', f: 'int', label: ['lc.comments', 'Comments written'] },
+      { k: 'DMs sent', f: 'int', label: ['lc.sent', 'Messages sent'] },
+      { k: 'Conversations you started', f: 'int', label: ['lc.started', 'Conversations you started'] },
+      { k: '__posted', f: 'int', label: ['lc.posted', 'Posts, stories and reels'], calc: r => sumCols(r, ['Own posts', 'Own stories', 'Own reels']) },
+    ] },
+    { id: 'inbound', items: [
+      { k: 'DMs received', f: 'int', label: ['lc.received', 'Messages received'] },
+      { k: 'Reply rate to you', f: 'pct', label: ['lc.replyrate', 'Your turns answered'] },
+      { k: 'Their median reply (min)', f: 'int', label: ['lc.theirwait', 'Their median reply, minutes'] },
+      { k: '__followers', f: 'int', label: ['lc.followers', 'Followers'], perf: 'Followers' },
+    ] },
+  ];
+
+  function drawLayers(row, before) {
+    const box = $('#layers');
+    if (!box) return;
+    box.innerHTML = '';
+    const bucketEnd = isWeek() ? addDays(row['Week start'], 6) : row['Period end'];
+    const beforeEnd = before ? (isWeek() ? addDays(before['Week start'], 6) : before['Period end']) : null;
+    LAYER_CARDS.forEach(card => {
+      const list = el('div', { class: 'lc-list' });
+      card.items.forEach(item => {
+        let now;
+        let then;
+        if (item.perf) {
+          const p = perfAsOf(bucketEnd).now;
+          const q = beforeEnd ? perfAsOf(beforeEnd).now : null;
+          now = p ? numOrNull(p[item.perf]) : null;
+          then = q && p && q['Window end'] !== p['Window end'] ? numOrNull(q[item.perf]) : null;
+        } else {
+          now = item.calc ? item.calc(row) : numOrNull(row[item.k]);
+          then = before ? (item.calc ? item.calc(before) : numOrNull(before[item.k])) : null;
+        }
+        const d = now !== null && then !== null ? delta(now, then, item.f === 'pct' ? 'pct' : '') : null;
+        list.appendChild(el('div', { class: 'lc-item' }, [
+          el('span', { class: 'lc-v', text: now === null ? '—' : fmtBy(item.f)(now) }),
+          el('span', { class: 'lc-k', text: tr(item.label) }),
+          d ? el('span', { class: 'lc-d', text: d.text }) : el('span', {}),
+        ]));
+      });
+      box.appendChild(el('div', { class: 'lc lc-' + card.id }, [
+        el('div', { class: 'lc-h' }, [
+          el('b', { text: tr(LAYERS[card.id].name) }),
+          el('span', { text: tr(LAYERS[card.id].sub) }),
+        ]),
+        list,
+      ]));
+    });
+  }
+
+  // ── Over time ─────────────────────────────────────────────────────────────────────────────────────────
+  // Each metric belongs to one layer; `view` marks the ones built from viewing history, which are the only
+  // ones a partial week makes shaky (a week with two days of view history still has all seven days of messages).
+  const TREND_LAYERS = [
+    { id: 'exposure', metrics: [
+      { key: 'Seen per day', label: ['tr.items', 'Items shown a day'], f: 'one', view: true, day: d => +d['Items seen'] },
+      { key: 'Recommended share', label: ['tr.rec', 'Recommended share'], f: 'pct', view: true },
+      { key: 'Ad load', label: ['tr.ads', 'Ad load'], f: 'pct', view: true },
+    ] },
+    { id: 'consumption', metrics: [
+      { key: 'Est. minutes per active day', label: ['tr.min', 'Minutes a day'], f: 'one', view: true, day: d => +d['Est. minutes'] },
+      { key: 'Late-night share', label: ['tr.late', 'Late-night share'], f: 'pct', view: true,
+        day: d => (+d['Items seen'] ? +d['Late-night items'] / +d['Items seen'] : null) },
+      { key: 'Self-directed share', label: ['tr.self', 'Self-directed viewing'], f: 'pct', view: true },
+    ] },
+    { id: 'social', metrics: [
+      { key: '__acts', label: ['tr.acts', 'Social acts'], f: 'int',
+        calc: r => sumCols(r, ['Liked posts', 'Liked comments', 'Comments written', 'Story likes', 'DMs sent', 'New follows']) },
+      { key: 'Comments written', label: ['tr.comments', 'Comments written'], f: 'int' },
+      { key: 'DMs sent', label: ['tr.sent', 'Messages sent'], f: 'int' },
+    ] },
+    { id: 'inbound', metrics: [
+      { key: 'DMs received', label: ['tr.received', 'Messages received'], f: 'int' },
+      { key: 'Reply rate to you', label: ['tr.replyrate', 'Your turns answered'], f: 'pct' },
+      { key: 'Their median reply (min)', label: ['tr.theirwait', 'Their median reply, minutes'], f: 'int' },
+    ] },
+  ];
+
+  /** The periods the current range covers, oldest first, each with the row that fills it (or null: a gap). */
+  function trendPeriods() {
+    const byWeek = {};
+    table('Weekly').filter(w => w['Week start']).forEach(w => { byWeek[w['Week start']] = w; });
+    const byMonth = {};
+    table('Monthly').forEach(m => { byMonth[m.Month] = m; });
+    const daily = {};
+    table('Daily').forEach(d => { if (!daily[d.Date] || d['In view window'] === 'Yes') daily[d.Date] = d; });
+    const weekStarts = Object.keys(byWeek).sort();
+    const monthKeys = Object.keys(byMonth).sort();
+    const lastMonthDay = m => isoDay(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 0, 12));
+    const firstDay = weekStarts[0] || (monthKeys[0] ? monthKeys[0] + '-01' : null);
+    const lastDay = weekStarts.length ? addDays(weekStarts[weekStarts.length - 1], 6)
+      : monthKeys.length ? lastMonthDay(monthKeys[monthKeys.length - 1]) : null;
+    if (!firstDay) return null;
+    let from;
+    let to;
+    let unit;
+    if (range === 'custom' && customFrom && customTo) {
+      from = customFrom < customTo ? customFrom : customTo;
+      to = customFrom < customTo ? customTo : customFrom;
+      const span = (dayMs(to) - dayMs(from)) / DAY_MS + 1;
+      unit = span <= 14 ? 'day' : span <= 190 ? 'week' : 'month';
+    } else if (range === 'w1') {
+      unit = 'day';
+      from = mondayOf(lastDay);
+      to = addDays(from, 6);
+    } else {
+      unit = 'week';
+      to = lastDay;
+      from = range === 'w8' ? addDays(mondayOf(lastDay), -49) : range === 'm6' ? addDays(mondayOf(lastDay), -175) : firstDay;
+      // A preset never reaches back past the first export: weeks before any data existed are not gaps in it.
+      if (from < firstDay) from = firstDay;
+      if ((dayMs(to) - dayMs(from)) / DAY_MS > 7 * 60) unit = 'month';
+    }
+    if (unit === 'week' && !weekStarts.length) unit = 'month';
+    const points = [];
+    if (unit === 'day') {
+      for (let d = from; d <= to; d = addDays(d, 1)) points.push({ key: d, start: d, row: daily[d] || null });
+    } else if (unit === 'week') {
+      for (let w = mondayOf(from); w <= to; w = addDays(w, 7)) points.push({ key: w, start: w, row: byWeek[w] || null });
+    } else {
+      let m = from.slice(0, 7);
+      while (m <= to.slice(0, 7)) {
+        points.push({ key: m, start: m + '-01', row: byMonth[m] || null });
+        const next = new Date(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 1));
+        m = next.toISOString().slice(0, 7);
+      }
+    }
+    return { unit: unit, from: from, to: to, points: points };
+  }
+
+  function periodLabel(p, unit) {
+    if (unit === 'month') return fmt.month(p.key);
+    const d = new Date(dayMs(p.start));
+    const text = d.toLocaleString(locale(), { day: 'numeric', month: 'short', timeZone: 'UTC' });
+    return unit === 'week' ? t('tr.weekof', 'week of') + ' ' + text : text;
+  }
+
+  function metricValue(m, p, unit) {
+    const r = p.row;
+    if (!r) return null;
+    if (unit === 'day') {
+      if (!m.day || r['In view window'] !== 'Yes') return null;
+      const v = m.day(r);
+      return v === null || isNaN(v) ? null : v;
+    }
+    return m.calc ? m.calc(r) : numOrNull(r[m.key]);
+  }
+
+  /** What the previous (up to) eight usable periods covered, leaving out the single highest and lowest once
+   * there are six or more of them. Null until there are four — a "usual range" of two weeks is not one. */
+  function usualRange(values, hollow, k) {
+    const prior = [];
+    for (let j = k - 1; j >= 0 && prior.length < 8; j--) if (values[j] !== null && !hollow[j]) prior.push(values[j]);
+    if (prior.length < 4) return null;
+    const sorted = prior.slice().sort((a, b) => a - b);
+    return sorted.length >= 6 ? [sorted[1], sorted[sorted.length - 2]] : [sorted[0], sorted[sorted.length - 1]];
+  }
+
+  function pickPeriod(p, unit) {
+    if (!p.row) return;
+    if (unit === 'month') { mode = 'month'; current = p.row.Month; }
+    else {
+      const week = unit === 'week' ? p.row : table('Weekly').find(w => w['Week start'] === mondayOf(p.key));
+      if (!week) return;
+      mode = 'week';
+      current = week.Week;
+    }
+    try { window.localStorage.setItem('insights-bucket', mode); } catch (e) { /* not worth failing over */ }
+    render();
+    const hero = $('#hero');
+    if (hero) hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function trendCard(m, tp) {
+    const unit = tp.unit;
+    const values = tp.points.map(p => metricValue(m, p, unit));
+    const hollow = tp.points.map(p => unit !== 'day' && m.view && p.row && p.row.Coverage !== ''
+      && +p.row.Coverage < MIN_TREND_COVERAGE);
+    const points = tp.points.map((p, k) => {
+      const band = unit === 'day' ? null : usualRange(values, hollow, k);
+      const v = values[k];
+      return {
+        x: k, v: v, hollow: hollow[k], band: band,
+        flag: !!band && v !== null && !hollow[k] && (v < band[0] || v > band[1]),
+        selected: !!p.row && ((unit === 'week' && isWeek() && p.row.Week === current)
+          || (unit === 'month' && !isWeek() && p.row.Month === current)),
+      };
+    });
+    const markers = [];
+    if (unit !== 'day') {
+      tp.points.forEach((p, k) => {
+        if (!p.row) return;
+        if (sumCols(p.row, ['Own posts', 'Own stories', 'Own reels']) > 0) markers.push({ x: k, kind: 'post' });
+        else if (sumCols(p.row, ['New follows', 'Unfollows']) >= 3) markers.push({ x: k, kind: 'follow' });
+      });
+    }
+    const f = fmtBy(m.f);
+    const labelIdx = tp.points.length > 1 ? [0, tp.points.length - 1] : [0];
+    const svg = CH.line(points, {
+      xMin: 0, xMax: Math.max(1, tp.points.length - 1), fmt: f, markers: markers,
+      xLabels: labelIdx.map(k => ({ x: k, text: periodLabel(tp.points[k], unit === 'week' ? 'day' : unit) })),
+      label: tr(m.label),
+      onLeave: () => tip.hide(),
+      onPick: k => pickPeriod(tp.points[k], unit),
+      onHover: (k, evt, anchor) => tip.show(card => {
+        const p = points[k];
+        card.appendChild(el('div', { class: 'tipcard-h' }, [
+          el('b', { text: p.v === null ? t('tr.nodata', 'no data') : f(p.v) }),
+          el('span', { class: 'tipcard-v', text: periodLabel(tp.points[k], unit) }),
+        ]));
+        const notes = [];
+        if (!tp.points[k].row) notes.push(t('tr.gap', 'No export covers this period.'));
+        else if (p.v === null && unit === 'day') notes.push(t('tr.notviewed', 'Outside the viewing history Instagram kept.'));
+        if (p.hollow) notes.push(t('tr.partial', 'Partial: less than half of this period has viewing history.'));
+        if (p.band) notes.push(t('tr.usual', 'Your usual range: {lo} – {hi}', { lo: f(p.band[0]), hi: f(p.band[1]) }));
+        if (p.flag) notes.push(t('tr.outside', 'Outside your usual range.'));
+        notes.push(t('tr.click', 'Click to show this period below.'));
+        notes.forEach(text => card.appendChild(el('p', { class: 'tipcard-note', text: text })));
+      }, evt, anchor),
+    });
+    return el('div', { class: 'spark' }, [el('h4', { class: 'spark-h', text: tr(m.label) }), svg]);
+  }
+
+  function drawTrends() {
+    const box = $('#trends');
+    if (!box) return;
+    box.innerHTML = '';
+    const tp = trendPeriods();
+    const sec = $('#sec-trends');
+    if (!tp) { sec.hidden = true; return; }
+    sec.hidden = false;
+    const unitName = { day: t('tr.byday', 'by day'), week: t('tr.byweek', 'by week'), month: t('tr.bymonth', 'by month') }[tp.unit];
+    const keyBits = [
+      `${unitName} · ${periodLabel({ key: tp.from, start: tp.from }, 'day')} – ${periodLabel({ key: tp.to, start: tp.to }, 'day')}`,
+      t('tr.key.gap', 'gap = no export'),
+      tp.unit === 'day' ? t('tr.key.day', 'days outside the viewing history are left blank')
+        : t('tr.key.hollow', 'hollow = partial week') + ' · ' + t('tr.key.band', 'shading = your usual range') + ' · '
+          + t('tr.key.ring', 'ring = outside it') + ' · ▼ ' + t('tr.key.post', 'you posted') + ' · ◆ '
+          + t('tr.key.follow', '3+ follows or unfollows'),
+    ];
+    $('#trend-key').textContent = keyBits.join(' · ');
+    const tableCols = [];
+    TREND_LAYERS.forEach(layer => {
+      const metrics = layer.metrics.filter(m => tp.unit !== 'day' || m.day);
+      const head = el('div', { class: 'tl-h' }, [
+        el('b', { text: tr(LAYERS[layer.id].name) }),
+        el('span', { text: tr(LAYERS[layer.id].sub) }),
+      ]);
+      const grid = el('div', { class: 'grid-sm' });
+      metrics.forEach(m => { grid.appendChild(trendCard(m, tp)); tableCols.push(m); });
+      const children = [head, grid];
+      if (!metrics.length) {
+        children.push(el('p', { class: 'mono', text: t('tr.weeklyonly', 'Counted per week, not per day — widen the range to see these.') }));
+      }
+      box.appendChild(el('div', { class: 'tl tl-' + layer.id }, children));
+    });
+    drawThemeHeat(tp);
+    drawTrendTable(tp, tableCols);
+  }
+
+  function drawTrendTable(tp, cols) {
+    const box = $('#trend-table');
+    if (!box) return;
+    box.innerHTML = '';
+    const head = el('tr', {}, [el('th', { text: t('tr.period', 'Period') })].concat(cols.map(m => el('th', { text: tr(m.label) }))));
+    const body = tp.points.map(p => el('tr', {}, [el('td', { text: periodLabel(p, tp.unit) })].concat(cols.map(m => {
+      const v = metricValue(m, p, tp.unit);
+      return el('td', { text: v === null ? '—' : fmtBy(m.f)(v) });
+    }))));
+    box.appendChild(el('table', { class: 'tv' }, [el('thead', {}, [head]), el('tbody', {}, body)]));
+  }
+
+  function drawThemeHeat(tp) {
+    const box = $('#theme-heat');
+    const note = $('#theme-heat-note');
+    if (!box) return;
+    box.innerHTML = '';
+    document.querySelectorAll('#heat-mode button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.heat === heatMode)));
+    if (tp.unit === 'day') {
+      note.textContent = t('heat.day', 'Themes are counted per week — widen the range to see them over time.');
+      return;
+    }
+    const rows = tp.unit === 'week' ? table('Weekly themes') : table('Themes');
+    const keyCol = tp.unit === 'week' ? 'Week' : 'Month';
+    const col = heatMode === 'seen' ? 'Seen share' : 'Action share';
+    const keys = tp.points.map(p => (p.row ? p.row[keyCol] : null));
+    const cell = (theme, key) => {
+      if (!key) return null;
+      const r = rows.find(x => x[keyCol] === key && x.Theme === theme);
+      return r ? numOrNull(r[col]) : null;
+    };
+    const themes = Array.from(new Set(rows.filter(r => keys.indexOf(r[keyCol]) >= 0 && r.Theme !== 'Other').map(r => r.Theme)));
+    const total = th => keys.reduce((n, k) => n + (cell(th, k) || 0), 0);
+    themes.sort((a, b) => total(b) - total(a));
+    const max = Math.max(0.0001, ...themes.flatMap(th => keys.map(k => cell(th, k) || 0)));
+    const grid = el('div', { class: 'theat', style: `grid-template-columns: minmax(110px, 170px) repeat(${tp.points.length}, 1fr)` });
+    grid.appendChild(el('span', {}));
+    tp.points.forEach((p, k) => grid.appendChild(el('span', {
+      class: 'h', text: k === 0 || k === tp.points.length - 1 || tp.points.length <= 8 ? periodLabel(p, 'day') : '',
+    })));
+    themes.forEach(th => {
+      grid.appendChild(el('span', { class: 'wd', text: th }));
+      keys.forEach((k, j) => {
+        const v = cell(th, k);
+        const c = el('div', { class: 'cell' + (k ? '' : ' is-gap') });
+        c.title = `${th} · ${periodLabel(tp.points[j], tp.unit)}: ${v === null ? '—' : fmt.pct(v)}`;
+        if (v) {
+          c.style.background = heatMode === 'seen' ? 'var(--seen)' : 'var(--accent)';
+          c.style.opacity = (0.15 + 0.85 * Math.sqrt(v / max)).toFixed(2);
+        }
+        grid.appendChild(c);
+      });
+    });
+    box.appendChild(grid);
+    note.textContent = heatMode === 'seen'
+      ? t('heat.note.seen', 'Share of the items you were shown that carry each theme. Darker = more of the feed.')
+      : t('heat.note.chosen', 'Share of your weighted actions (searches and comments 3, saves and follows 2, likes 1) that carry each theme. A week with few actions swings hard.');
+  }
+
+  // ── Your account ─────────────────────────────────────────────────────────────────────────────────────
+  const PERF = [
+    { key: 'Followers', zero: false, sub: ['perf.level', 'headcount on the day'] },
+    { key: 'Accounts reached', sub: ['perf.unique', 'unique accounts in 90 days'] },
+    { key: 'Impressions', sub: ['perf.sum', 'total over 90 days'] },
+    { key: 'Profile visits', sub: ['perf.sum', 'total over 90 days'] },
+    { key: 'Content interactions', sub: ['perf.sum', 'total over 90 days'] },
+    { key: 'Accounts engaged', sub: ['perf.unique', 'unique accounts in 90 days'] },
+    { key: 'Engagement rate', f: 'pct', sub: ['perf.eng', 'accounts engaged ÷ reached'] },
+    { key: 'Profile visit rate', f: 'pct', sub: ['perf.visit', 'profile visits ÷ reached'] },
+    { key: 'Non-follower reach share', f: 'pct', sub: ['perf.nonf', 'of reach, from non-followers'] },
+  ];
+  const PERF_NAMES = {
+    it: {
+      Followers: 'Follower', 'Accounts reached': 'Account raggiunti', Impressions: 'Impression',
+      'Profile visits': 'Visite al profilo', 'Content interactions': 'Interazioni con i contenuti',
+      'Accounts engaged': 'Account che hanno interagito', 'Engagement rate': 'Tasso di interazione',
+      'Profile visit rate': 'Tasso di visite al profilo', 'Non-follower reach share': 'Copertura da non follower',
+    },
+  };
+  const perfName = k => ((PERF_NAMES[lang] || {})[k] || k);
+  const shortDate = s => new Date(dayMs(s)).toLocaleString(locale(), { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const longDate = s => new Date(dayMs(s)).toLocaleString(locale(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+  function drawPerformance() {
+    const sec = $('#sec-account');
+    if (!sec) return;
+    const all = table('Performance').filter(r => r['Window end'])
+      .sort((a, b) => (a['Window end'] < b['Window end'] ? -1 : 1));
+    if (!all.length) { sec.hidden = true; return; }
+    sec.hidden = false;
+    const tp = trendPeriods();
+    let rows = all;
+    if (tp && range !== 'all') {
+      const from = addDays(tp.from, -7);
+      const to = addDays(tp.to, 7);
+      rows = all.filter(r => r['Window end'] >= from && r['Window end'] <= to);
+      // Fewer than three points is not a line. Better the whole record than a lone dot.
+      if (rows.length < 3) rows = all;
+    }
+    const xs = rows.map(r => dayMs(r['Window end']));
+    const xMin = Math.min.apply(null, xs);
+    const xMax = Math.max.apply(null, xs);
+    const reported = all.filter(r => r.Kind === 'Reported');
+    const latest = reported[reported.length - 1] || null;
+    const lastStory = latest && latest['Last story'] ? String(latest['Last story']) : '';
+    const bucketRow = bucketRows().find(r => r[bucketKey()] === current);
+    const bucketEnd = bucketRow ? (isWeek() ? addDays(bucketRow['Week start'], 6) : bucketRow['Period end']) : '';
+    const bucketStart = bucketRow ? (isWeek() ? bucketRow['Week start'] : bucketRow['Period start']) : '';
+
+    const notes = $('#perf-notes');
+    notes.innerHTML = '';
+    notes.appendChild(el('p', { class: 'mono perf-key', text: t('perf.key',
+      'Solid: as reported · hollow and dashed: worked out · ▼ your last story · orange: the window ending in the period shown below. '
+      + '"vs a week earlier" is the week that joined the window minus the week that left it, 13 weeks back — not this week on its own.') }));
+    if (lastStory) {
+      const rollOff = addDays(lastStory, 90);
+      notes.appendChild(el('p', { class: 'perf-note', text: t('perf.story',
+        'Your last story in these exports: {d}. Story interactions in these windows come from it and the ones before it; from about {r} the 90 days no longer include it, and without a new one they fall to zero. Read a fall in reach and interactions against that before reading it as your audience drifting away.',
+        { d: longDate(lastStory), r: longDate(rollOff) }) }));
+    }
+    const grid = $('#perf');
+    grid.innerHTML = '';
+    // Windows more than eight days apart are not neighbours: the line breaks there rather than drawing a trend
+    // through months nobody exported (the worked-out windows sit thirteen weeks before the first real one).
+    const ptRows = [];
+    rows.forEach((r, k) => {
+      if (k && dayMs(r['Window end']) - dayMs(rows[k - 1]['Window end']) > 8 * DAY_MS) ptRows.push(null);
+      ptRows.push(r);
+    });
+    PERF.forEach(m => {
+      const f = fmtBy(m.f || 'int');
+      const pts = ptRows.map((r, k) => (r ? {
+        x: dayMs(r['Window end']), v: numOrNull(r[m.key]), hollow: r.Kind !== 'Reported', dashed: r.Kind !== 'Reported',
+        selected: r.Kind === 'Reported' && !!bucketEnd && r['Window end'] >= bucketStart && r['Window end'] <= bucketEnd,
+      } : { x: (dayMs(ptRows[k - 1]['Window end']) + dayMs(ptRows[k + 1]['Window end'])) / 2, v: null }));
+      if (!pts.some(p => p.v !== null)) return;
+      const markers = lastStory && dayMs(lastStory) >= xMin && dayMs(lastStory) <= xMax ? [{ x: dayMs(lastStory), kind: 'post' }] : [];
+      const svg = CH.line(pts, {
+        xMin: xMin, xMax: xMax, zero: m.zero !== false, fmt: f, markers: markers,
+        xLabels: [{ x: xMin, text: shortDate(rows[0]['Window end']) }, { x: xMax, text: shortDate(rows[rows.length - 1]['Window end']) }],
+        label: perfName(m.key),
+        onLeave: () => tip.hide(),
+        onHover: (k, evt, anchor) => tip.show(card => {
+          const r = ptRows[k];
+          if (!r) { card.appendChild(el('p', { class: 'tipcard-note', text: t('perf.nogap', 'No export covers these weeks.') })); return; }
+          card.appendChild(el('div', { class: 'tipcard-h' }, [
+            el('b', { text: pts[k].v === null ? '—' : f(pts[k].v) }),
+            el('span', { class: 'tipcard-v', text: `${shortDate(r['Window start'])} – ${shortDate(r['Window end'])}` }),
+          ]));
+          card.appendChild(el('p', { class: 'tipcard-note', text: r.Kind === 'Reported'
+            ? t('perf.tip.rep', 'As reported in the export of {d}.', { d: shortDate(r['From export']) })
+            : t('perf.tip.work', 'Worked out from the export of {d}: its value ÷ (1 + its "% vs previous"), rounded.', { d: shortDate(r['From export']) }) }));
+        }, evt, anchor),
+      });
+      // Week on week: newest window against the reported one ending seven days before it. That difference is
+      // the week that joined the window minus the week that left it, and it says so.
+      const cur = reported.filter(r => numOrNull(r[m.key]) !== null).pop();
+      const prevRow = cur ? reported.find(r => r['Window end'] === addDays(cur['Window end'], -7)) : null;
+      let foot = '';
+      if (cur && prevRow && numOrNull(prevRow[m.key]) !== null) {
+        const diff = +cur[m.key] - +prevRow[m.key];
+        const size = m.f === 'pct' ? (100 * Math.abs(diff)).toFixed(1) + ' ' + t('pts', 'pts') : fmt.int(Math.abs(diff));
+        foot = diff === 0 ? t('perf.same', 'same as a week earlier')
+          : `${diff > 0 ? '▲' : '▼'} ${size} ${t('perf.vs', 'vs a week earlier')}`;
+      }
+      grid.appendChild(el('div', { class: 'spark' }, [
+        el('h4', { class: 'spark-h', text: perfName(m.key) }),
+        el('span', { class: 'spark-s', text: tr(m.sub) }),
+        svg,
+        el('span', { class: 'spark-f', text: foot }),
+      ]));
+    });
+
+    // Audience: the latest reported composition beside the earliest one on record. It moves slowly enough
+    // that a quarter apart is the comparison worth making, not a week.
+    const aud = $('#perf-audience');
+    aud.innerHTML = '';
+    const first = reported[0];
+    [latest, first !== latest ? first : null].filter(Boolean).forEach((r, k) => {
+      const lines = [
+        [t('perf.countries', 'Countries'), r['Top countries']],
+        [t('perf.cities', 'Cities'), r['Top cities']],
+        [t('perf.ages', 'Ages'), r['Age groups']],
+        [t('perf.gender', 'Men · women'), numOrNull(r['Men share']) === null ? '' : `${fmt.pct(r['Men share'])} · ${fmt.pct(r['Women share'])}`],
+      ].filter(x => x[1]);
+      aud.appendChild(el('div', { class: 'panel' + (k ? ' is-then' : '') }, [
+        el('h3', { class: 'sub', text: (k ? t('perf.then', 'Followers then') : t('perf.now', 'Followers now'))
+          + ` · ${shortDate(r['Window start'])} – ${shortDate(r['Window end'])}` }),
+      ].concat(lines.map(x => el('div', { class: 'aud-row' }, [el('b', { text: x[0] }), el('span', { text: x[1] })])))));
+    });
+
+    const tbox = $('#perf-table');
+    tbox.innerHTML = '';
+    const cols = ['Kind'].concat(PERF.map(m => m.key));
+    tbox.appendChild(el('table', { class: 'tv' }, [
+      el('thead', {}, [el('tr', {}, [el('th', { text: t('perf.window', '90 days to') })].concat(cols.map(c => el('th', { text: c === 'Kind' ? '' : perfName(c) }))))]),
+      el('tbody', {}, all.map(r => el('tr', {}, [el('td', { text: longDate(r['Window end']) })].concat(cols.map(c => {
+        if (c === 'Kind') return el('td', { text: r.Kind === 'Reported' ? t('perf.reported', 'reported') : t('perf.worked', 'worked out') });
+        const m = PERF.find(x => x.key === c);
+        const v = numOrNull(r[c]);
+        return el('td', { text: v === null ? '—' : fmtBy(m.f || 'int')(v) });
+      }))))),
+    ]));
+  }
+
+  // ── Profile strips ───────────────────────────────────────────────────────────────────────────────────
+  const MIN_EVIDENCE = 3; // mirrors CONFIG.MIN_EVIDENCE: below it a behaviour score is left blank
+  function drawStrips() {
+    const all = isWeek() ? table('Weekly profile') : table('Profile');
+    const key = bucketKey();
+    const now = all.filter(p => p[key] === current);
+    const groups = [
+      ['#strips-do', p => /\(behaviour\)/.test(p.Framework)],
+      ['#strips-shown', p => /^Feed diet/.test(p.Framework)],
+      ['#strips-influence', p => /^Influence/.test(p.Framework)],
+    ];
+    groups.forEach(([sel, test]) => {
+      const box = $(sel);
+      if (!box) return;
+      box.innerHTML = '';
+      let lastFramework = '';
+      now.filter(test).forEach(p => {
+        if (sel === '#strips-do' && p.Framework !== lastFramework) {
+          lastFramework = p.Framework;
+          box.appendChild(el('p', { class: 'strip-g', text: /Needs/.test(p.Framework) ? t('strips.needs', 'Needs · Self-Determination Theory')
+            : t('strips.big5', 'Personality · Big Five') }));
+        }
+        const history = all.filter(h => h.Framework === p.Framework && h.Dimension === p.Dimension && h[key] !== current)
+          .map(h => numOrNull(h.Score)).filter(v => v !== null);
+        const score = numOrNull(p.Score);
+        const track = el('div', { class: 'strip-track' });
+        history.forEach(v => track.appendChild(el('i', { class: 'strip-dot', style: `left:${Math.max(0, Math.min(100, v))}%` })));
+        if (score !== null) track.appendChild(el('i', { class: 'strip-dot is-now', style: `left:${Math.max(0, Math.min(100, score))}%` }));
+        const ev = numOrNull(p.Evidence);
+        box.appendChild(el('div', { class: 'strip' + (score === null ? ' is-blank' : ''), title: p['How it is computed'] || '' }, [
+          el('span', { class: 'strip-n', text: String(p.Dimension).split('·')[0].trim() }),
+          track,
+          el('span', { class: 'strip-v', text: score === null ? '—' : String(Math.round(score)) }),
+          el('span', { class: 'strip-e', text: score === null && ev !== null && ev < MIN_EVIDENCE
+            ? t('strips.thin', 'n={n} · too few', { n: ev }) : ev === null ? '' : 'n=' + fmt.int(ev) }),
+        ]));
+      });
+    });
+    const k = $('#strip-key');
+    if (k) {
+      k.textContent = t('strips.key', 'Each strip runs 0–100. Grey dots: every other {p} on record. Orange: this {p}. n: how many events the score rests on; with fewer than {m} it is left blank rather than guessed. Hover a row for its formula.',
+        { p: isWeek() ? t('word.week', 'week') : t('word.month', 'month'), m: MIN_EVIDENCE });
+    }
+  }
+
+  // ── Influence ────────────────────────────────────────────────────────────────────────────────────────
+  function drawInfluence() {
+    const box = $('#dumbbell');
+    if (!box) return;
+    box.innerHTML = '';
+    const rows = bucketTable('Themes').filter(r => r.Theme !== 'Other'
+      && ((numOrNull(r['Seen share']) || 0) >= 0.02 || (numOrNull(r['Action share']) || 0) > 0));
+    rows.sort((a, b) => (numOrNull(b['Action share']) || 0) - (numOrNull(a['Action share']) || 0)
+      || (numOrNull(b['Seen share']) || 0) - (numOrNull(a['Seen share']) || 0));
+    const max = Math.max(0.1, ...rows.map(r => Math.max(numOrNull(r['Seen share']) || 0, numOrNull(r['Action share']) || 0)));
+    const scale = Math.ceil(max * 10) / 10;
+    box.appendChild(el('div', { class: 'db-legend' }, [
+      el('span', {}, [el('i', { class: 'db-k db-seen' }), document.createTextNode(t('db.seen', 'share of what you were shown'))]),
+      el('span', {}, [el('i', { class: 'db-k db-chosen' }), document.createTextNode(t('db.chosen', 'share of what you chose'))]),
+    ]));
+    rows.forEach(r => {
+      const s = numOrNull(r['Seen share']) || 0;
+      const a = numOrNull(r['Action share']) || 0;
+      const lo = Math.min(s, a) / scale * 100;
+      const hi = Math.max(s, a) / scale * 100;
+      box.appendChild(el('div', { class: 'db', title: `${r.Theme}: ${fmt.pct(s)} ${t('db.of.seen', 'of what you were shown')}, ${fmt.pct(a)} ${t('db.of.chosen', 'of what you chose')}` }, [
+        el('span', { class: 'db-n', text: r.Theme }),
+        el('div', { class: 'db-track' }, [
+          el('i', { class: 'db-bar' + (a > s ? ' is-up' : ''), style: `left:${lo}%;width:${Math.max(0.5, hi - lo)}%` }),
+          el('i', { class: 'db-dot db-seen', style: `left:${s / scale * 100}%` }),
+          el('i', { class: 'db-dot db-chosen', style: `left:${a / scale * 100}%` }),
+        ]),
+        el('span', { class: 'db-v', text: `${fmt.pct(s)} → ${fmt.pct(a)}` }),
+      ]));
+    });
+    const note = $('#influence-note');
+    const dir = influenceDirection();
+    const weighted = bucketTable('Profile').find(p => /^Feed alignment/.test(p.Dimension));
+    const ev = weighted ? numOrNull(weighted.Evidence) : null;
+    const bits = [];
+    if (ev !== null) bits.push(t('infl.n', 'Chosen side built from {n} themed actions this {p} — searches and comments count 3, saves and follows 2, likes 1.', { n: ev, p: isWeek() ? t('word.week', 'week') : t('word.month', 'month') }));
+    bits.push(dir.ready
+      ? t('infl.dir', 'Direction, over {w} weeks: when the feed showed more of a theme, your actions on it the next week moved with it at r = {f}; when you acted more on a theme, the feed showed more of it the next week at r = {y}. A correlation, not proof of cause.',
+        { w: dir.weeks, f: dir.feed.toFixed(2), y: dir.you.toFixed(2) })
+      : t('infl.wait', 'Which way the influence runs — the feed leading you, or you leading the feed — needs {need} consecutive usable weeks; {have} so far.',
+        { need: 12, have: dir.weeks }));
+    note.textContent = bits.join(' ');
+  }
+
+  /** Lagged correlation, pooled over themes: does a change in what you were shown precede a change in what you
+   * chose (the feed leading), or the other way round (you leading the feed)? Only consecutive weeks with enough
+   * viewing history are paired. See METHODOLOGY.md → Influence. */
+  function influenceDirection() {
+    const weeks = table('Weekly').filter(w => w['Week start'] && numOrNull(w.Coverage) !== null && +w.Coverage >= MIN_TREND_COVERAGE)
+      .sort((a, b) => (a['Week start'] < b['Week start'] ? -1 : 1));
+    // Longest run of consecutive weeks.
+    let best = [];
+    let run = [];
+    weeks.forEach(w => {
+      if (run.length && addDays(run[run.length - 1]['Week start'], 7) !== w['Week start']) run = [];
+      run.push(w);
+      if (run.length > best.length) best = run.slice();
+    });
+    if (best.length < 12) return { ready: false, weeks: best.length };
+    const th = table('Weekly themes');
+    const val = (w, theme, col) => {
+      const r = th.find(x => x.Week === w.Week && x.Theme === theme);
+      return r ? numOrNull(r[col]) || 0 : 0;
+    };
+    const themes = Array.from(new Set(th.filter(r => r.Theme !== 'Other').map(r => r.Theme)));
+    const feed = [];
+    const you = [];
+    themes.forEach(theme => {
+      const e = best.map(w => val(w, theme, 'Seen share'));
+      const a = best.map(w => val(w, theme, 'Action share'));
+      for (let i = 1; i + 1 < best.length; i++) {
+        feed.push([e[i] - e[i - 1], a[i + 1] - a[i]]);
+        you.push([a[i] - a[i - 1], e[i + 1] - e[i]]);
+      }
+    });
+    const corr = pairs => {
+      const n = pairs.length;
+      const mx = pairs.reduce((s, p) => s + p[0], 0) / n;
+      const my = pairs.reduce((s, p) => s + p[1], 0) / n;
+      let sxy = 0; let sxx = 0; let syy = 0;
+      pairs.forEach(p => { sxy += (p[0] - mx) * (p[1] - my); sxx += (p[0] - mx) ** 2; syy += (p[1] - my) ** 2; });
+      return sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0;
+    };
+    return { ready: true, weeks: best.length, feed: corr(feed), you: corr(you) };
+  }
+
+  // ── Conversations ────────────────────────────────────────────────────────────────────────────────────
+  function drawConversations() {
+    const panel = $('#conversations-panel');
+    const box = $('#conversations');
+    if (!panel || !box) return;
+    box.innerHTML = '';
+    const rows = bucketTable('Conversations');
+    panel.hidden = !rows.length;
+    if (!rows.length) return;
+    const frac = (a, b) => (+b ? `${a}/${b}` : '—');
+    const mins = v => (numOrNull(v) === null ? '—' : `${fmt.int(v)} min`);
+    box.appendChild(el('table', { class: 'tv conv' }, [
+      el('thead', {}, [el('tr', {}, [
+        t('conv.person', 'Person'), t('conv.msgs', 'Sent · received'), t('conv.convs', 'Conversations (you started)'),
+        t('conv.yours', 'Your turns answered'), t('conv.theirs', 'Their turns you answered'), t('conv.wait', 'Median reply: them · you'),
+      ].map(h => el('th', { text: h })))]),
+      el('tbody', {}, rows.map(r => el('tr', {}, [
+        r.Person,
+        `${r.Sent} · ${r.Received}` + (+r['Your voice notes'] + +r['Their voice notes'] ? ` (${t('conv.voice', 'voice')} ${r['Your voice notes']} · ${r['Their voice notes']})` : ''),
+        `${r.Conversations} (${r['You started']})`,
+        frac(r['Your turns answered'], r['Your turns']),
+        frac(r['Their turns you answered'], r['Their turns']),
+        `${mins(r['Their median reply (min)'])} · ${mins(r['Your median reply (min)'])}`,
+      ].map(v => el('td', { text: String(v) }))))),
+    ]));
+  }
+
   // ── Theme toggle ──────────────────────────────────────────────────────────────
   function initTheme() {
     const saved = localStorage.getItem('theme');
@@ -1334,8 +2111,53 @@
     });
   }
 
+  // ── Range and view switches ─────────────────────────────────────────────────
+  function syncControls() {
+    document.querySelectorAll('#range [data-range]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.range === range)));
+    const custom = $('#range-custom');
+    if (custom) custom.hidden = range !== 'custom';
+    const from = $('#range-from');
+    const to = $('#range-to');
+    if (from && to) {
+      const tp = trendPeriods();
+      if (range === 'custom' && (!customFrom || !customTo) && tp) { customFrom = tp.from; customTo = tp.to; }
+      from.value = customFrom || '';
+      to.value = customTo || '';
+    }
+  }
+  function saveRange() {
+    try { localStorage.setItem('ii-range', JSON.stringify({ range: range, from: customFrom, to: customTo })); } catch (e) { /* this visit only */ }
+  }
+  function wireRange() {
+    document.querySelectorAll('#range [data-range]').forEach(b => b.addEventListener('click', () => {
+      range = b.dataset.range;
+      saveRange();
+      if (payload) render();
+    }));
+    ['#range-from', '#range-to'].forEach(sel => {
+      const input = $(sel);
+      if (!input) return;
+      input.addEventListener('change', () => {
+        customFrom = $('#range-from').value;
+        customTo = $('#range-to').value;
+        saveRange();
+        if (payload && customFrom && customTo) render();
+      });
+    });
+    document.querySelectorAll('#heat-mode [data-heat]').forEach(b => b.addEventListener('click', () => {
+      heatMode = b.dataset.heat;
+      const tp = trendPeriods();
+      if (tp) drawThemeHeat(tp);
+    }));
+    document.querySelectorAll('#emo-mode [data-tone]').forEach(b => b.addEventListener('click', () => {
+      toneMode = b.dataset.tone;
+      if (payload) drawEmotions();
+    }));
+  }
+
   // ── Wiring ──────────────────────────────────────────────────────────────────
   function wireControls() {
+    wireRange();
     $('#month').addEventListener('change', e => { current = e.target.value; render(); });
     $('#refresh').addEventListener('click', refreshNow);
     const checkEmpty = $('#check-empty');

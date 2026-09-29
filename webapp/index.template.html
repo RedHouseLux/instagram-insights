@@ -52,8 +52,22 @@
   </div>
 
   <div id="dash" hidden>
+    <!-- One filter row above everything it scopes. The period picks the week or month the snapshot sections
+         read; the range picks how much history the "over time" and "your account" sections draw. -->
     <div class="bar-row">
       <select id="month" aria-label="Period"></select>
+      <div class="range" id="range" role="group" data-i18n-title="range.title" title="How much history the charts over time show">
+        <button type="button" data-range="w1" data-i18n="range.w1">Last week</button>
+        <button type="button" data-range="w8" data-i18n="range.w8">8 weeks</button>
+        <button type="button" data-range="m6" data-i18n="range.m6">6 months</button>
+        <button type="button" data-range="all" data-i18n="range.all">All</button>
+        <button type="button" data-range="custom" data-i18n="range.custom">Custom</button>
+        <span class="range-custom" id="range-custom" hidden>
+          <input type="date" id="range-from" aria-label="From">
+          <span aria-hidden="true">–</span>
+          <input type="date" id="range-to" aria-label="To">
+        </span>
+      </div>
       <span id="period" class="mono"></span>
     </div>
     <p id="note2" hidden></p>
@@ -75,8 +89,47 @@
 
     <div class="tiles" id="tiles"></div>
 
+    <!-- The four layers come first because every section after them belongs to one of them, and the one
+         distinction worth holding on to is between what reached you and what you did. -->
+    <section class="sec" id="sec-layers">
+      <h2 class="sec-h"><span class="sec-n">01</span><span class="sec-i" data-icon="layers"></span><span data-i18n="sec.layers">Four layers: shown, used, done, received</span></h2>
+      <p class="lede" style="margin-bottom:14px" data-i18n="layers.lede">What the feed showed you is mostly the recommender's
+        choice; what you did with it is yours. The dashboard keeps the two apart, and adds what you did toward people and
+        what they did back.</p>
+      <div class="layers" id="layers"></div>
+    </section>
+
+    <section class="sec" id="sec-trends">
+      <h2 class="sec-h"><span class="sec-n">02</span><span class="sec-i" data-icon="trend"></span><span data-i18n="sec.trends">Over time</span></h2>
+      <p class="mono trend-key" id="trend-key"></p>
+      <div id="trends"></div>
+      <div class="panel" id="theme-heat-panel">
+        <div class="sub-row">
+          <h3 class="sub" data-i18n="heat.h">Themes over time</h3>
+          <div class="seg" id="heat-mode" role="group">
+            <button type="button" data-heat="seen" data-i18n="heat.seen">Shown</button>
+            <button type="button" data-heat="chosen" data-i18n="heat.chosen">Chosen</button>
+          </div>
+        </div>
+        <div id="theme-heat"></div>
+        <p id="theme-heat-note" class="mono" style="margin-top:10px"></p>
+      </div>
+      <details class="tableview" id="trend-table-box"><summary data-i18n="table.view">Table view</summary><div id="trend-table"></div></details>
+    </section>
+
+    <section class="sec" id="sec-account" hidden>
+      <h2 class="sec-h"><span class="sec-n">03</span><span class="sec-i" data-icon="account"></span><span data-i18n="sec.account">Your account, as others meet it</span></h2>
+      <p class="lede" style="margin-bottom:14px" data-i18n="perf.lede">Instagram's own numbers for your profile. Every point is a
+        total for the 90 days ending that day, so points a week apart share 83 days: they move slowly, and they must
+        never be added together. Hollow points are worked out from Instagram's own "% vs the previous 90 days".</p>
+      <div id="perf-notes"></div>
+      <div class="grid-sm" id="perf"></div>
+      <div class="cols" id="perf-audience"></div>
+      <details class="tableview"><summary data-i18n="table.view">Table view</summary><div id="perf-table"></div></details>
+    </section>
+
     <section class="sec" id="sec-feed">
-      <h2 class="sec-h"><span class="sec-n">01</span><span class="sec-i" data-icon="feed"></span><span data-i18n="sec.feed">What the feed showed you</span></h2>
+      <h2 class="sec-h"><span class="sec-n">04</span><span class="sec-i" data-icon="feed"></span><span data-i18n="sec.feed">What the feed showed you</span></h2>
       <div class="cols cols-donut">
         <div class="panel panel-centre"><div id="theme-donut"></div><div class="legend" id="theme-legend"></div></div>
         <div class="panel" id="themes"></div>
@@ -86,7 +139,7 @@
     </section>
 
     <section class="sec" id="sec-time">
-      <h2 class="sec-h"><span class="sec-n">02</span><span class="sec-i" data-icon="clock"></span><span data-i18n="sec.time">When it took your time</span></h2>
+      <h2 class="sec-h"><span class="sec-n">05</span><span class="sec-i" data-icon="clock"></span><span data-i18n="sec.time">When it took your time</span></h2>
       <div class="panel">
         <h3 class="sub" data-i18n="daily.h">Minutes per day, in the window Instagram kept</h3>
         <div id="daily"></div>
@@ -100,7 +153,7 @@
     </section>
 
     <section class="sec" id="sec-people">
-      <h2 class="sec-h"><span class="sec-n">03</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
+      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
       <div class="pow" id="pow" hidden></div>
       <div class="cols">
         <div class="panel">
@@ -126,28 +179,50 @@
     </section>
 
     <section class="sec" id="sec-feeling">
-      <h2 class="sec-h"><span class="sec-n">04</span><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
+      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
       <div class="panel">
-        <h3 class="sub" data-i18n="emo.h">Emotional tone of the captions you were shown · items per 100 seen</h3>
+        <div class="sub-row">
+          <h3 class="sub" id="emo-h"></h3>
+          <div class="seg" id="emo-mode" role="group">
+            <button type="button" data-tone="shown" data-i18n="tone.shown">Shown to you</button>
+            <button type="button" data-tone="yours" data-i18n="tone.yours">Your words</button>
+            <button type="button" data-tone="theirs" data-i18n="tone.theirs">Words to you</button>
+          </div>
+        </div>
         <div id="emotions"></div>
       </div>
     </section>
 
+    <!-- Personality and needs are read from behaviour only; the feed diet is what the recommender served; the
+         influence panel is the relation between the two. Each indicator is a strip of every bucket on record,
+         so where this one sits is read against your own range rather than as a verdict on a 0–100 scale. -->
     <section class="sec" id="sec-profile">
-      <h2 class="sec-h"><span class="sec-n">05</span><span class="sec-i" data-icon="person"></span><span data-i18n="sec.profile">Who it thinks you are</span></h2>
-      <div class="cols cols-radar">
-        <div class="panel panel-centre"><h3 class="sub" data-i18n="radar.big5">Personality · Big Five proxy</h3><div id="radar-big5"></div></div>
-        <div class="panel panel-centre"><h3 class="sub" data-i18n="radar.desire">What it feeds · desire proxies</h3><div id="radar-desire"></div></div>
+      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="person"></span><span data-i18n="sec.profile">What you do, and what you are shown</span></h2>
+      <div class="cols cols-strips">
+        <div class="panel"><h3 class="sub" data-i18n="strips.do">What you do · personality and needs, from behaviour</h3><div id="strips-do"></div></div>
+        <div class="panel"><h3 class="sub" data-i18n="strips.shown">What you were shown · the feed diet</h3><div id="strips-shown"></div></div>
+      </div>
+      <p class="mono strip-key" id="strip-key"></p>
+      <div class="panel" id="influence">
+        <h3 class="sub" data-i18n="infl.h">The feed and you · share of what you were shown against share of what you chose</h3>
+        <div id="strips-influence"></div>
+        <div id="dumbbell"></div>
+        <p id="influence-note" class="mono" style="margin-top:10px"></p>
       </div>
       <div class="panel" id="profile"></div>
     </section>
 
     <section class="sec" id="sec-belonging" hidden>
-      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
-      <p class="lede" style="margin-bottom:14px" data-i18n="bel.lede">Four things belonging is made of. An Instagram export can
-        speak to two of them and is silent on the other two — those rows say so rather than being dropped,
-        because a missing row reads as nothing to report, which is the opposite of what is true.</p>
+      <h2 class="sec-h"><span class="sec-n">09</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
+      <p class="lede" style="margin-bottom:14px" data-i18n="bel.lede">Four things belonging is made of. An Instagram export
+        measures two of them, reaches a third only by proxy, and is silent on the fourth — that row says so rather
+        than being dropped, because a missing row reads as nothing to report, which is the opposite of what is true.</p>
       <div id="belonging"></div>
+      <div class="panel" id="conversations-panel" hidden>
+        <h3 class="sub" data-i18n="conv.h">Conversations · who wrote, who answered, how fast</h3>
+        <div id="conversations"></div>
+        <p class="mono" style="margin-top:10px" data-i18n="conv.note">Counts and timings only. Message text is read to score its tone and is never stored.</p>
+      </div>
       <div class="panel" id="bel-needs">
         <h3 class="sub" data-i18n="bel.needs">What would make this measurable</h3>
         <div id="bel-needs-list"></div>
@@ -155,7 +230,7 @@
     </section>
 
     <section class="sec" id="sec-risks">
-      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
+      <h2 class="sec-h"><span class="sec-n">10</span><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
       <div class="cols cols-matrix">
         <div class="panel panel-centre"><div id="risk-matrix"></div></div>
         <div class="panel" id="risks"></div>
@@ -163,7 +238,7 @@
     </section>
 
     <section class="sec" id="sec-signals">
-      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
+      <h2 class="sec-h"><span class="sec-n">11</span><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
       <div class="panel" id="signals"></div>
     </section>
 

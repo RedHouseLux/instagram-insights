@@ -242,8 +242,14 @@ console.log('Sparkline:', dash.cells.get('7:2'));
 console.log('Sheet order:', spreadsheet.getSheets().map(s => s.getName()).join(', '));
 
 // ── Checks against counts taken straight from the HTML ──────────────────────
-const exportDirs = fs.readdirSync(exportsRoot).map(n => path.join(exportsRoot, n)).filter(p => fs.existsSync(path.join(p, 'start_here.html')));
-const stampRe = />\s*([A-Z][a-z]{2} \d{1,2}, \d{4} \d{1,2}:\d{2}[\s\u202f]*[ap]m)\s*</g;
+// Meta's own Drive delivery nests the export one folder down ("meta-2026-Sep-20-…/instagram-…/"), and the
+// pipeline looks up to three folders deep for it, so the raw counts have to be found the same way.
+const findExportDirs = (dir, depth) => fs.readdirSync(dir).map(n => path.join(dir, n))
+  .filter(p => fs.statSync(p).isDirectory())
+  .flatMap(p => (fs.existsSync(path.join(p, 'start_here.html')) ? [p] : depth < 3 ? findExportDirs(p, depth + 1) : []));
+const exportDirs = findExportDirs(exportsRoot, 1);
+// Case-insensitive, like the parser's own: an Italian export writes "set 13, 2026", lower-case month and all.
+const stampRe = />\s*([A-Z][a-z]{2} \d{1,2}, \d{4} \d{1,2}:\d{2}[\s\u202f]*[ap]m)\s*</gi;
 const stampCount = file => (fs.existsSync(file) ? (fs.readFileSync(file, 'utf8').match(stampRe) || []).length : 0);
 // Meta sometimes logs the same post twice in the same minute; those count once.
 const uniqueEntries = file => {
@@ -276,20 +282,18 @@ exportDirs.forEach(dir => {
 });
 [['Posts viewed', 'postsViewed'], ['Videos watched', 'videosWatched'], ['Ads viewed', 'adsViewed'], ['Liked posts', 'likedPosts']]
   .forEach(([col, key]) => {
-    const total = monthly.filter(m => m.Month >= '2026-07' && m.Month <= '2026-09').reduce((n, m) => n + (+m[col] || 0), 0);
+    const total = monthly.reduce((n, m) => n + (+m[col] || 0), 0);
     const expected = Object.values(rawByDir).reduce((n, r) => n + r[key], 0);
-    assert.strictEqual(total, expected, `${col}: July+Aug+Sep sums to the two raw exports combined - the day-level split loses or double-counts nothing`);
+    assert.strictEqual(total, expected, `${col}: every month together holds exactly what the raw exports hold - the day-level split loses or double-counts nothing`);
   });
-// 'Following total' is a snapshot (see SNAPSHOT_FIELDS), never summed - each month shows whichever
-// contributing export is newest by periodEnd: the older export alone for July, the newer one for both August
-// (where it outranks the older export) and September (where it's the only contributor).
-const [olderDir, newerDir] = Object.keys(rawByDir).sort((a, b) => rawByDir[a].periodEnd.localeCompare(rawByDir[b].periodEnd));
+// 'Following total' is a snapshot (see SNAPSHOT_FIELDS), never summed: the latest month shows the newest export's
+// following list, whichever export happened to be processed last.
 const byMonth = m => monthly.find(x => x.Month === m);
-assert.strictEqual(byMonth('2026-07')['Following total'], rawByDir[olderDir].following, 'July (older export only) shows its following count');
-assert.strictEqual(byMonth('2026-08')['Following total'], rawByDir[newerDir].following, 'August (both, newer wins) shows the newer export\'s following count');
-assert.strictEqual(byMonth('2026-09')['Following total'], rawByDir[newerDir].following, 'September (newer export only) shows the same following count');
-console.log('checks passed for the two real exports merging into July/Aug/Sep: '
-  + ['2026-07', '2026-08', '2026-09'].map(m => `${m} coverage ${(100 * byMonth(m).Coverage).toFixed(0)}%`).join(', '));
+const newerDir = Object.keys(rawByDir).sort((a, b) => rawByDir[a].periodEnd.localeCompare(rawByDir[b].periodEnd)).pop();
+assert.strictEqual(monthly[monthly.length - 1]['Following total'], rawByDir[newerDir].following,
+  'the latest month shows the newest export\'s following count');
+console.log(`checks passed for ${exportDirs.length} real exports merging into ${monthly.length} month(s): `
+  + monthly.map(m => `${m.Month} coverage ${(100 * m.Coverage).toFixed(0)}%`).join(', '));
 
 // ── Looker Studio: date columns are real dates, and the link connects every tab ─────
 // Dates made inside the sandbox fail `instanceof Date` out here, so check their type tag instead.
@@ -343,8 +347,13 @@ const allFollows = network.filter(r => ['You follow', 'Mutual'].includes(r.Relat
 const entry = (name, when) => `<div class="pam _3-95 _2ph- _a6-g uiBoxWhite noborder"><div class="_a6-p"><div><div><a target="_blank" href="https://www.instagram.com/${name}">${name}</a></div><div>${when}</div></div></div></div>`;
 const page = entries => `<html><body><main class="_a706" role="main">${entries.join('')}</main></body></html>`;
 const gone = followingNow[followingNow.length - 1];
+const newestEnd = Math.max.apply(null, read('Log').filter(l => l['Period end']).map(l => +l['Period end']));
+const allTimeAt = new Date(Math.floor(newestEnd / 86400000) * 86400000 + 5 * 86400000 + 8 * 3600000);
 const allTimeFiles = {
-  'start_here.html': ['<aside>Generated by tester on <time datetime="2026-09-12T08:00Z">Saturday, September 12, 2026 at 1:00 AM UTC</time></aside><main></main>'],
+  // Generated just after the newest real export, whatever that is, so it is the newest following list on record.
+  'start_here.html': ['<aside>Generated by tester on <time datetime="' + allTimeAt.toISOString() + '">'
+    + allTimeAt.toLocaleString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+    + ' at 8:00 AM UTC</time></aside><main></main>'],
   'following.html': [page(allFollows.filter(a => a !== gone).map(a => entry(a, 'Mar 03, 2021 9:15 pm')))],
   'followers.html': [page(followingNow.slice(0, 150).map(a => entry(a, 'Mar 03, 2021 9:15 pm')).concat([1, 2, 3].map(i => entry('fan_test_' + i, 'Jan 10, 2024 8:00 am'))))],
   'close_friends.html': [page(followingNow.slice(0, 2).map(a => entry(a, 'Feb 02, 2022 10:00 am')))],
@@ -896,4 +905,146 @@ console.log('localised-label check passed: caption and owner read from both layo
   assert(anyInherited, 'inheritance actually fired on the real exports — otherwise the guards are too tight');
   console.log('inheritance check passed: ' + report.map(r =>
     `${r.m} Other ${(100 * r.otherShare).toFixed(0)}% (${r.inherited} inherited tags)`).join(', '));
+}
+
+
+// ── Account performance, behaviour layers and the pages behind them ────────────────────────────────────
+// Everything above may have wiped and rebuilt tabs; start this section from a clean, complete run.
+context.reprocessAll();
+
+// Card numbers in both languages. English and Italian use both separators, for opposite things.
+const num = v => context.localNum_(v);
+assert.strictEqual(num('1,014'), 1014, 'English thousands: "1,014" is one thousand and fourteen, not 1.014');
+assert.strictEqual(num('1.130'), 1130, 'Italian thousands: "1.130"');
+assert.strictEqual(num('85.5%'), 85.5, 'English decimal');
+assert.strictEqual(num('85,8%'), 85.8, 'Italian decimal');
+assert.strictEqual(num('0,4%'), 0.4, 'a leading zero is a decimal, never a thousands group');
+assert.strictEqual(num('+300%'), 300, 'signed percentages');
+assert.strictEqual(num("You reached -9.1% more accounts that weren't following you compared to Mar 31 - Jun 28."), -9.1,
+  'the first number in a delta sentence, not the dates that follow it');
+assert.strictEqual(context.insightNum_({ 'Accounts Reached': '276' }, ['Accounts reached']), 276,
+  'an English card capitalises its labels differently and is still read');
+const range = (text, ref) => JSON.stringify(context.parseCardRange_(text, new Date(ref)));
+assert.strictEqual(range('Jun 29 - Sep 26', '2026-09-27T12:00:00Z'), '{"start":"2026-06-29","end":"2026-09-26"}', 'English window');
+assert.strictEqual(range('22 giu - 19 set', '2026-09-20T12:00:00Z'), '{"start":"2026-06-22","end":"2026-09-19"}', 'Italian window');
+assert.strictEqual(range('Oct 3 - Dec 31', '2027-01-01T12:00:00Z'), '{"start":"2026-10-03","end":"2026-12-31"}',
+  'a window ending in December, read in January, is last year\'s');
+
+// Performance: one reported window per export carrying the cards, worked-out windows before them.
+const perf = read('Performance');
+const withCards = exportDirs.filter(d => fs.existsSync(path.join(d, 'logged_information/past_instagram_insights/profiles_reached.html')));
+const reported = perf.filter(r => r.Kind === 'Reported');
+assert.strictEqual(reported.length, withCards.length, 'one reported window per export that carries the insight cards');
+reported.forEach(r => {
+  ['Accounts reached', 'Impressions', 'Profile visits', 'Followers'].forEach(col =>
+    assert(Number.isInteger(r[col]), `${r['Window end']} ${col} is a whole number in either language (got ${r[col]})`));
+  assert(r['Engagement rate'] >= 0 && r['Engagement rate'] <= 1, `${r['Window end']} engagement rate is a fraction`);
+});
+perf.filter(r => r.Kind === 'Worked out').forEach(w => {
+  const source = reported.find(r => r['From export'] === w['From export']);
+  if (source) assert(w['Window end'] < source['Window start'], `worked-out ${w['Window end']} ends before the window it was worked out from`);
+});
+const perfHeaders = context.__t.HEADERS.Performance;
+const savedPerf = context.readRows_('Performance');
+const fakePerf = (end, kind, from, reach) => perfHeaders.map(c => (c === 'Window end' ? end : c === 'Kind' ? kind
+  : c === 'From export' ? from : c === 'Accounts reached' ? reach : ''));
+context.upsertPerformance_([fakePerf('2001-01-07', 'Worked out', '2001-04-10', 10)]);
+context.upsertPerformance_([fakePerf('2001-01-07', 'Reported', '2001-01-08', 20)]);
+context.upsertPerformance_([fakePerf('2001-01-07', 'Worked out', '2001-06-01', 30)]);
+assert.strictEqual(read('Performance').find(r => r['Window end'] === '2001-01-07')['Accounts reached'], 20,
+  'a reported window replaces a worked-out one, and is never replaced by one');
+context.writeBody_(context.ensureSheet_('Performance'), 'Performance', savedPerf, savedPerf.length + 1, perfHeaders.length);
+console.log(`performance check passed: ${reported.length} reported and ${perf.length - reported.length} worked-out windows, `
+  + reported.map(r => `${r['Window end']} reach ${r['Accounts reached']} / impressions ${r.Impressions}`).join(', '));
+
+// Back-to-back weekly deliveries split the day they meet on: the older one holds its morning, the newer one
+// its afternoon. Both halves must survive the merge.
+const morning = { src: { id: 'morning' }, exp: bareExp({
+  periodStart: new Date(Date.UTC(2026, 8, 13, 10)), periodEnd: new Date(Date.UTC(2026, 8, 20, 10)),
+  postsViewed: [item(new Date(Date.UTC(2026, 8, 18, 12))), item(new Date(Date.UTC(2026, 8, 20, 8)))],
+}) };
+const evening = { src: { id: 'evening' }, exp: bareExp({
+  periodStart: new Date(Date.UTC(2026, 8, 20, 10)), periodEnd: new Date(Date.UTC(2026, 8, 27, 10)),
+  postsViewed: [item(new Date(Date.UTC(2026, 8, 20, 18))), item(new Date(Date.UTC(2026, 8, 22, 12)))],
+}) };
+assert.strictEqual(context.mergeForMonth_('2026-09', [morning, evening]).postsViewed.length, 4,
+  'a day split between two back-to-back deliveries keeps both halves');
+console.log('boundary-day merge check passed');
+
+// Turn-taking in a conversation.
+const at = (d, h, m) => new Date(Date.UTC(2026, 8, d, h, m || 0));
+const dm = (fromMe, time) => ({ thread: 'T', sender: fromMe ? 'me' : 'them', fromMe: fromMe, time: time, kind: 'text', text: '' });
+const turnStats = context.conversationStats_([
+  dm(false, at(1, 9)), dm(false, at(1, 9, 1)), // their turn: two messages, one turn
+  dm(true, at(1, 9, 30)), // you answer 29 minutes later
+  dm(false, at(1, 20)), // 10½ hours later: a new conversation they start, answering you within the day
+  dm(true, at(3, 10)), // 38 hours later: yours, too late to count as answering them; a new conversation
+  dm(true, at(4, 11)), // a day later: another turn of yours, two hours before the export ends
+], at(4, 13))[0];
+assert.deepStrictEqual([turnStats.conversations, turnStats.youStarted], [4, 2], 'conversations split on silences over 8h');
+assert.deepStrictEqual([turnStats.theirsAsked, turnStats.theirsAnswered, turnStats.myWaits.length, Math.round(turnStats.myWaits[0])],
+  [2, 1, 1, 29], 'their two turns: one answered in 29 minutes, one left past the reply window');
+assert.deepStrictEqual([turnStats.mineAsked, turnStats.mineAnswered, Math.round(turnStats.theirWaits[0])], [2, 1, 630],
+  'your last turn is still inside its reply window when the export ends, so it counts neither way');
+console.log('conversation check passed');
+
+// The pages behind the layers, parsed straight from each real export the way the pipeline reads them.
+const parseDir = dir => {
+  const files = {};
+  const walk = d => fs.readdirSync(d).forEach(n => {
+    const p = path.join(d, n);
+    if (fs.statSync(p).isDirectory()) walk(p); else context.addExportFile_(files, p, () => fs.readFileSync(p, 'utf8'));
+  });
+  walk(dir);
+  return context.parseExport_(files);
+};
+const parsedDirs = exportDirs.map(parseDir);
+parsedDirs.forEach((e, k) => {
+  const inbox = path.join(exportDirs[k], 'your_instagram_activity/messages/inbox');
+  const blocks = fs.existsSync(inbox) ? fs.readdirSync(inbox).reduce((n, t) => n + fs.readdirSync(path.join(inbox, t))
+    .filter(f => /^message_\d+\.html$/.test(f))
+    .reduce((m, f) => m + (fs.readFileSync(path.join(inbox, t, f), 'utf8').match(/<div class="pam[^"]*">\s*<h2/g) || []).length, 0), 0) : 0;
+  assert.strictEqual(e.messages.length, blocks, `${path.basename(exportDirs[k])}: every message block is read`);
+  if (e.messages.length && e.displayName) assert(e.messages.some(m => m.fromMe), 'your own messages are recognised by your display name');
+});
+
+// Privacy: message text is read for tone and never written. Not one cell of one tab may contain it.
+const messageTexts = parsedDirs.flatMap(e => e.messages.map(m => m.text)).filter(t => t && t.length >= 12);
+const leaked = spreadsheet.getSheets().flatMap(sh => [...sh._sheet.cells.values()])
+  .filter(v => typeof v === 'string' && messageTexts.some(t => v.includes(t)));
+assert.strictEqual(leaked.length, 0, 'no direct-message text appears anywhere in the spreadsheet');
+
+// Unfollowed accounts are named as such, not as accounts the feed pushes at you.
+const unfollowedNames = new Set(parsedDirs.flatMap(e => e.unfollowed.map(u => u.account.toLowerCase())));
+read('Quiet interests').concat(read('Weekly quiet')).filter(q => unfollowedNames.has(String(q.Account).toLowerCase()))
+  .forEach(q => assert(['Unfollowed', 'Yes'].includes(q['You follow']), `${q.Account} reads as unfollowed, not "No"`));
+
+// Heard follows the conversation rows it is computed from.
+read('Weekly belonging').filter(b => b.Dimension === 'Heard').forEach(b => {
+  const rows = read('Weekly conversations').filter(c => c.Week === b.Week);
+  const asked = rows.reduce((n, c) => n + c['Your turns'], 0);
+  const answered = rows.reduce((n, c) => n + c['Your turns answered'], 0);
+  assert.strictEqual(b.Status, asked ? 'Measured' : 'No data this bucket', `${b.Week} Heard status follows its message turns`);
+  if (asked) assert.strictEqual(b.Score, Math.round(100 * answered / asked), `${b.Week} Heard score is the reply rate to you`);
+});
+
+// Every Profile row says which layer it reads and what it rests on; personality is behaviour, never exposure.
+const layers = ['Behaviour', 'Exposure', 'Social', 'Inbound', 'Influence'];
+read('Profile').concat(read('Weekly profile')).forEach(p => {
+  assert(layers.includes(p.Layer), `${p.Dimension}: a known layer (${p.Layer})`);
+  assert(typeof p.Evidence === 'number', `${p.Dimension}: evidence is a count`);
+  if (/Personality|Needs/.test(p.Framework)) assert.strictEqual(p.Layer, 'Behaviour', `${p.Dimension} is read from behaviour`);
+  if (p.Score === '') assert(p.Change === '', `${p.Dimension}: no score, no change`);
+});
+assert(!read('Profile').some(p => /Big Five proxy|Desire ·/.test(p.Framework)), 'the old exposure-based personality frameworks are gone');
+const payloadNow = context.getDashboardPayload();
+assert(payloadNow.performance.length === read('Performance').length && Array.isArray(payloadNow.conversations),
+  'the dashboard payload carries performance and conversations');
+console.log(`layers check passed: ${parsedDirs.reduce((n, e) => n + e.messages.length, 0)} messages read, none written; `
+  + `${read('Weekly conversations').length} weekly conversation rows; ${unfollowedNames.size} unfollowed account(s) recognised`);
+
+// A local preview of the dashboard needs exactly what the web app would receive: PAYLOAD_OUT=<file> writes it.
+if (process.env.PAYLOAD_OUT) {
+  fs.writeFileSync(process.env.PAYLOAD_OUT, JSON.stringify(context.getDashboardPayload()));
+  console.log('dashboard payload written to ' + process.env.PAYLOAD_OUT);
 }

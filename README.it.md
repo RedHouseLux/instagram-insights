@@ -122,13 +122,15 @@ I nomi delle schede e delle colonne restano in inglese: sono identificatori usat
 | **Monthly** | Una riga per mese con tutte le metriche. Usala come fonte dati per Looker Studio. |
 | **Risks** | Il registro dei rischi: 11 rischi valutati probabilità × impatto, con evidenze, tendenza e mitigazione (vedi sotto). |
 | **Signals** | Segnalazioni di rischio basate su regole (✅ OK / ℹ️ Info / ⚠️ Attenzione / 🔴 Allarme), cosa significano e qualcosa da provare. |
-| **Profile** | Indicatori 0–100 mappati sui Big Five e sulla Teoria dell'Autodeterminazione, più il tono emotivo delle didascalie. Ogni riga spiega la propria formula. |
-| **Themes** | Quota di elementi visti e piaciuti per tema. Un post può contare per più temi. |
+| **Profile** | Indicatori 0–100 in quattro gruppi: personalità (Big Five) e bisogni (Teoria dell'Autodeterminazione) letti da **ciò che hai fatto**; la **dieta del feed**, letta da ciò che ti è stato mostrato; e l'**influenza**, l'uno contro l'altra. Più il tono emotivo in tre modi — di ciò che ti è stato mostrato, delle tue parole, delle parole rivolte a te. Ogni riga spiega la propria formula, indica il suo livello e su quanti eventi poggia; con troppo pochi, il punteggio resta vuoto. Vedi [METHODOLOGY.it.md](METHODOLOGY.it.md). |
+| **Themes** | Quota di elementi visti per tema, accanto a ciò che hai scelto: like, salvataggi, ricerche, commenti, la loro **quota di azioni** pesata e il **lift** (scelto ÷ mostrato). Un post può contare per più temi. |
 | **Rhythm** | Attività per ora e giorno della settimana, nel tuo fuso orario. |
 | **Daily** | Per giorno: elementi visti, azioni, sessioni e minuti stimati, con la finestra di visualizzazione segnalata. |
 | **Hourly** | Attività per ogni ora × giorno, usata dalla mappa di calore. |
 | **Top** | Account più visti, account a cui hai messo like, hashtag, inserzionisti negli annunci che hai visto, e gli account con cui hai scambiato note o repost. |
 | **Quiet interests** | Account che hai continuato a vedere senza alcuna azione visibile da parte tua (vedi sotto). |
+| **Performance** | Il tuo profilo come lo incontrano gli altri: follower, copertura, impression, visite al profilo, interazioni e pubblico, una riga per ogni finestra di 90 giorni riportata da Instagram — più la finestra precedente a ciascuna, ricavata dal "% rispetto a" della scheda stessa. Vedi sotto. |
+| **Conversations** | Una riga per ogni persona con cui hai scambiato messaggi diretti: inviati, ricevuti, chi ha iniziato, quanti turni hanno avuto risposta in ciascuna direzione e in quanto tempo. Solo conteggi e tempi — il testo dei messaggi non viene mai salvato. |
 | **Belonging** | Quattro dimensioni dell'appartenenza — Visto, Ascoltato, Investito, Connesso — misurate dove l'export lo consente e segnalate come non misurabili dove non lo consente (vedi sotto). |
 | **Network** | Una riga per ogni account che segui, che ti segue o che continui a incrociare, con relazione, stato, cluster tematico e attenzione. Region e Note sono tue da compilare e vengono mantenute a ogni ricostruzione. Vedi sotto. |
 | **Actions** | Quello che hai scelto di fare: like, follow, ricerche, blocchi, segnalazioni. |
@@ -145,23 +147,36 @@ Un **interesse silenzioso** è un account di cui hai visto post o video almeno 5
 - **Perché conta.** I like sono ciò che sei disposto a mostrare. Le visualizzazioni ripetute sono ciò che davvero trattiene la tua attenzione. Instagram non esporta il tempo di visione, quindi le visualizzazioni ripetute sono il miglior segnale disponibile per l'attenzione che dai ma non esprimi. Questi account indicano spesso preoccupazioni, curiosità o piaceri inconfessabili più vicini al presente di quanto facciano i tuoi like.
 - **Colonne.**
   - **Times seen**, diviso fra post e video.
-  - **You follow**: *Yes* significa fedeltà passiva verso un account che avevi scelto. *No* significa che è il feed a continuare a spingertelo.
+  - **You follow**: *Yes* significa fedeltà passiva verso un account che avevi scelto. *No* significa che è il feed a continuare a spingertelo. *Unfollowed* significa che hai scelto di smettere di seguirlo, e il feed ha continuato a mostrartelo lo stesso.
   - **Vs previous**: *Continuing* significa che era silenzioso anche il mese scorso, il che è un segnale più forte. *New* significa che è appena comparso.
   - **Latest caption**, per rinfrescarti la memoria.
 - **Avvertenza.** "Visto" significa che Instagram l'ha registrato sul tuo schermo. Non significa che l'hai guardato fino in fondo, quindi un account su cui l'algoritmo insiste può comparire anche se lo scorri via.
 
 ## Appartenenza, spiegata
 
-Quattro elementi di cui è fatta l'appartenenza, una riga ciascuno per mese e per settimana. L'export può dire qualcosa su due di essi ed è muto sugli altri due — e le righe mute restano nella scheda invece di sparire, perché una riga assente si legge come "niente da segnalare" mentre la verità è "non è mai stato misurato niente".
+Quattro elementi di cui è fatta l'appartenenza, una riga ciascuno per mese e per settimana. L'export ne misura due, ne raggiunge un terzo solo in modo indiretto ed è muto sul quarto — e la riga muta resta nella scheda invece di sparire, perché una riga assente si legge come "niente da segnalare" mentre la verità è "non è mai stato misurato niente".
 
 | Dimensione | Stato | Costruita da |
 |---|---|---|
 | **Connesso** | Misurato | `note_and_repost_interactions.html` — note e repost in cui vi siete presentati entrambi. Valutato come ampiezza dei contatti reciproci distinti rispetto a `BELONGING_TIES_FULL` (valore predefinito 15), con tetto a 100. Gli account coinvolti compaiono anche nella scheda **Top** come elenco *Notes & reposts*. |
 | **Visto** | Solo indiretto | `profiles_reached.html` e `content_interactions.html`. Il punteggio è account che hanno interagito ÷ account raggiunti — un tasso di risposta. Misura l'essere *guardato*, non l'essere *riconosciuto*, che è un'altra cosa, ed è etichettato come tale. |
-| **Ascoltato** | Non ancora misurabile | Nient'altro che un conteggio di risposte alle storie. `your_instagram_activity/comments/` arriva vuota e la cartella dei messaggi non contiene né contenuti né metadati dei DM: nell'export non c'è nessuna conversazione da leggere. |
+| **Ascoltato** | Misurato | `messages/inbox/` — la quota dei tuoi turni nei messaggi a cui l'altra persona ha risposto entro 24h, e in quanto tempo, per persona (vedi la scheda **Conversations**). Misura il ricevere *risposta*; le risposte ai tuoi commenti pubblici non sono ancora nell'export. Le settimane senza messaggi lo dichiarano. |
 | **Investito** | Non ancora misurabile | Assolutamente nulla. Nessun file di un export Instagram descrive qualcuno che agisce a tuo beneficio. |
 
-Note e repost **non hanno alcun timestamp**, e le tre schede dei "past Instagram insights" sono aggregati mobili di circa 90 giorni calcolati da Instagram su una finestra che non coincide con il tuo mese. Tutti e quattro vengono quindi trattati come istantanee — vince la consegna più recente — e mai suddivisi per giorno. È per questo che i numeri della scheda Belonging non si muovono con la finestra di visualizzazione giornaliera come fa il resto della dashboard.
+Note e repost **non hanno alcun timestamp**, e le tre schede dei "past Instagram insights" sono aggregati mobili di circa 90 giorni calcolati da Instagram su una finestra che non coincide con il tuo mese. Tutti e quattro vengono quindi trattati come istantanee — vince la consegna più recente — e mai suddivisi per giorno. È per questo che i numeri di Connesso e Visto non si muovono con la finestra di visualizzazione giornaliera come fa il resto della dashboard. Ascoltato è datato messaggio per messaggio, quindi sì.
+
+## Andamento del profilo, spiegato
+
+La scheda **Performance** e la sezione *Il tuo profilo* della dashboard leggono i numeri di Instagram sul tuo profilo. Ogni export li riporta per i **90 giorni che terminano il giorno prima**, quindi gli export settimanali danno finestre a 7 giorni l'una dall'altra che condividono 83 giorni:
+
+- **Non sommare mai due finestre.** Impression, visite al profilo e interazioni sono totali su 90 giorni; account raggiunti e account che hanno interagito sono account unici, che non si possono sommare affatto. I follower sono un numero nel giorno — l'unica normale serie temporale.
+- **"rispetto a una settimana prima"** è la settimana entrata nella finestra meno quella uscita, tredici settimane prima — non l'ultima settimana da sola.
+- **Finestre ricavate.** Ogni scheda indica la propria variazione rispetto ai 90 giorni precedenti. La finestra precedente si ricava come valore ÷ (1 + variazione) ed è disegnata vuota, così già il primo export disegna una linea e non un punto.
+- **La tua ultima storia** è segnata sui grafici. Quando la finestra di 90 giorni la supera, le interazioni con le storie scendono a zero se non pubblichi di nuovo — leggi un calo alla luce di quella data prima di leggerlo come un pubblico che se ne va.
+
+## Comportamento, esposizione e influenza
+
+L'export registra soprattutto ciò che è arrivato sul tuo schermo, scelto dall'algoritmo. Personalità e bisogni si leggono quindi **solo da ciò che hai fatto** — ricerche, salvataggi, commenti, messaggi, like, follow, e quando — mentre ciò che ti è stato mostrato viene riportato a parte come dieta del feed, e l'**influenza** confronta i due: quali temi cerchi oltre ciò che ti viene mostrato, se i nuovi account ti arrivano dalla ricerca o dal feed e, dopo 12 settimane, se i cambiamenti del feed tendono a precedere i cambiamenti in ciò che fai o viceversa. Tutte le formule sono in [METHODOLOGY.it.md](METHODOLOGY.it.md).
 
 ## Rete, spiegata
 
@@ -240,7 +255,7 @@ Una pagina che legge in tempo reale dalle schede che `processNewExports()` tiene
 
 **Lingua:** la dashboard ha un selettore EN/IT in alto a destra e ricorda la tua scelta. Al primo accesso segue la lingua del browser.
 
-Cosa mostra: i riquadri del mese con le variazioni rispetto al mese precedente, gli 11 rischi con evidenze e una freccia di tendenza per rischio, i minuti al giorno, i temi, la mappa di calore ora × giorno, gli account più visti, gli interessi silenziosi, gli indicatori, i segnali e un link alla vista di rete.
+Cosa mostra: i riquadri della settimana o del mese con le variazioni rispetto al periodo precedente; i quattro livelli (ciò che ti ha raggiunto, come l'hai usato, ciò che hai fatto verso le persone, ciò che loro hanno fatto in risposta); ogni misura **nel tempo**, con un filtro dell'intervallo (ultima settimana per giorno, 8 settimane, 6 mesi, tutto, o un intervallo personalizzato), il tuo intervallo abituale ombreggiato, le settimane parziali vuote e quelle mancanti lasciate come vuoti; l'andamento a 90 giorni del tuo profilo; temi mostrati e scelti; la mappa di calore ora × giorno; gli account più visti e gli interessi silenziosi; il tono emotivo di ciò che ti è stato mostrato, delle tue parole e delle parole rivolte a te; personalità, bisogni, dieta del feed e influenza come strisce confrontate con ogni altra settimana registrata; appartenenza e conversazioni; gli 11 rischi; i segnali; e un link alla vista di rete. Ogni grafico ha una vista tabella.
 
 ## Condividerlo con altri
 
@@ -263,10 +278,11 @@ gli errori da evitare, sono in [docs/TEMPLATE.it.md](docs/TEMPLATE.it.md).
 - **Ogni export contiene solo gli ultimi 7 giorni circa di cronologia di visualizzazione** (post, video, annunci), mentre like, follow e ricerche coprono tutto il mese. Lo script rileva questa *finestra di visualizzazione*; tassi, ritmo e stime di tempo usano solo quei giorni. Temi e interessi silenziosi descrivono quella settimana.
 - I minuti stimati derivano dai timestamp registrati, con una sessione che si chiude dopo 15 minuti di silenzio. Consideralo un valore minimo, non una misurazione.
 - Temi, emozioni e indicatori nascono da **regole di parole chiave**. Sono approssimazioni di schemi, non una valutazione psicologica.
+- **I messaggi diretti vengono letti, mai salvati.** Il loro testo viene valutato per il tono in memoria; nel Foglio arrivano solo conteggi e tempi, e la scheda Prompt non contiene il contenuto dei messaggi.
 - Se Meta cambia la struttura dell'export, l'elaborazione può rompersi. La scheda Log mostra un errore invece di scrivere silenziosamente numeri sbagliati.
 - Se aggiungi un mese più vecchio dopo altri più recenti, esegui **Rielabora tutto** così i confronti mese su mese vengono ricalcolati.
 - Dopo aver incollato una nuova versione di `Code.gs`, esegui **Rielabora tutto** una volta, così i mesi passati ricevono le nuove colonne e schede.
 
 ## Test in locale
 
-`node test/run-local.js <cartella con gli export>` fa girare tutta la pipeline su export locali, usando sostituti in memoria per Drive e Fogli. Confronta i conteggi elaborati con l'HTML grezzo e verifica che rieseguirlo non duplichi righe.
+`node test/run-local.js <cartella con gli export>` fa girare tutta la pipeline su export locali, usando sostituti in memoria per Drive e Fogli. Confronta i conteggi elaborati con l'HTML grezzo e verifica che rieseguirlo non duplichi righe. La cartella può contenere gli export annidati come li consegna Meta su Drive, in inglese o in italiano. Aggiungi `PAYLOAD_OUT=payload.json` per scrivere anche i dati esatti che riceve la dashboard, così da provare `webapp/Index.html` senza pubblicarla.
