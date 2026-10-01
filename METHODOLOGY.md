@@ -148,6 +148,58 @@ answered each way, median reply times, and how many messages carried a heavy ton
 measures being *answered*, not being echoed or credited, and replies to your public comments are still not in
 the export.
 
+## Context triggers
+
+What came just before what you did (`contextTriggers_`). Six outcomes, each counted against the contexts it could
+have followed. **These are associations, not causes**: they say what goes together in your own data, not what makes
+what happen — the feed that pulled you in may also be the feed you would have opened anyway.
+
+| Outcome | Counted per | A hit is |
+|---|---|---|
+| **Pull** — opening the app | idle minute (a minute you were not already in a session) | a session starting in it |
+| **Stay** — long sessions | session | minutes in the top quarter of the bucket's sessions (≥ its 75th percentile) |
+| **Late** | session | starting 00:00–05:59 |
+| **Act** — like, save, comment, follow, story like | item seen in a session | you acted on that item (same URL) or on its account within 30 minutes |
+| **Seek** — search, link | item seen · session | a search or link in the 10 minutes after the item · anywhere in the session |
+| **Reach** — message, comment | item seen · session | a message you sent or comment you wrote in the 10 minutes after · anywhere in the session |
+
+**Contexts**, in five families:
+
+- *When*: part of day (night 00–06, morning, afternoon, evening 18–24), weekday or weekend.
+- *What came just before*: a message arriving in the 10 minutes before (Pull) or before a session started (Pulled
+  by); your own post, story or reel in the hour before; what the session opened into (feed, stories, messages,
+  search); coming back within 30 minutes of the last session; another story by the same account in the hour before.
+- *What was on screen*: format (post, video, story, ad), whose it was (an account you follow, or one you don't),
+  tone (heavy = the anxiety, sadness, anger and fear word lists; light = hope, joy, love), theme.
+- *How the session began*: the same four, read over its **first five minutes** — a session's length is read
+  against how it began, not against everything it went on to show (a long session shows more of everything).
+  A quarter or more heavy items makes a heavy opening.
+- *How far into a session*: the first 5 minutes, 5–20, past 20.
+
+Each dimension splits the whole of its outcome's exposure, so its rows add up to the same total. "Opened into" is
+left out of Seek and Reach, because a session opened by a search or a message contains one by definition.
+
+**Method.** The sheet stores counts — *Exposure* and *Hits* per context (Triggers, Weekly triggers) — never rates,
+so any range of buckets adds up exactly: Σ hits ÷ Σ exposure over its weeks or months. The **lift** of a context
+is its rate against the outcome's overall rate across the same dimension, after shrinking it toward that overall
+rate with three hits' worth of prior: with `p₀` the overall rate and `m = 3 / p₀`,
+`lift = ((hits + m·p₀) / (exposure + m)) / p₀`. Two out of three cannot outrank thirty out of three hundred.
+
+- **Evidence**: fewer than 3 hits is *too few* — shown dotted, never ranked; 3–9 is *some*; 10 or more is
+  *strong*. A context that makes something rarer is shown by the absence of hits, so a dampener's evidence is the
+  hits it would have had at the usual rate.
+- **Ranking**: only lifts ≥ 1.25 (more often) or ≤ 0.8 (less often); strength = |ln lift|, × 0.6 for *some*.
+  Contexts that are the absence of one ("nothing seen", "no story first") are counted but never ranked.
+- **Social joins** are reported as shares with their counts: conversations you started within a day of that
+  person's story (the thread is matched to the story by display name), likes within an hour of that account's
+  story, sessions that began within 10 minutes of a message arriving, quick returns.
+- **Acts on items seen / elsewhere**: a like or save either lands on something the view log holds (the same post,
+  or its account in the half hour before) or comes from somewhere it never recorded — a profile, a share, the web.
+
+Behaviour this rare accumulates slowly: a week holds 40–55 sessions, enough for session patterns within a few
+weeks, but only a handful of deliberate acts, so act, seek and reach patterns build over months. The dashboard
+says *too few* rather than guessing, and its range filter is how the evidence is pooled.
+
 ## Account performance
 
 Performance tab, one row per 90-day window (`performanceRows_`, `upsertPerformance_`).
@@ -187,6 +239,11 @@ Performance tab, one row per 90-day window (`performanceRows_`, `upsertPerforman
 - **Your usual range** (the shaded band) is what the previous 8 usable periods covered, leaving out the single
   highest and lowest once there are six or more; it needs at least four. A ring marks a point outside it.
 - **Gaps** are left as gaps: a missing week is not a zero.
+- **Sessions** (`sessionsOf_`) are runs of activity with no silence longer than 15 minutes, read off every
+  timestamp that shows you on the app: items seen and acted on, stories, ads and the messages you sent. Daily
+  minutes, sessions per day and the Sessions tab all come from the one pass, so they always agree. Counting
+  stories, ads and messages raised minutes and sessions per day against earlier versions, which counted feed
+  items and acts only; the hour-of-day rhythm still counts items and acts.
 
 ## Privacy
 
@@ -197,7 +254,9 @@ content. `node test/run-local.js` checks that no message text appears in any cel
 ## Limits
 
 - Instagram keeps about 7 days of viewing history per export; weekly exports are what build a record.
-- Minutes are a floor built from logged timestamps (a session ends after 15 minutes of silence).
+- Minutes are a floor built from logged timestamps (a session ends after 15 minutes of silence). Time spent
+  reading a message thread or an in-app link leaves no timestamp until you do something.
+- Context triggers are associations within your own data, not causes.
 - Your comments are exported; the threads they sat in, and replies to them, are not.
 - Own posts, stories and reels are parsed from pages the weekly exports this was built on did not contain; they
   are counted by distinct timestamps and should be checked the first time they appear.
@@ -210,6 +269,7 @@ content. `node test/run-local.js` checks that no message text appears in any cel
 |---|---|
 | Evidence threshold, reply window, conversation gap, action weights | `CONFIG` at the top of `Code.gs` |
 | Indicator formulas | `profileDefs` in `analyzeExport_` |
+| Trigger outcomes, contexts and thresholds | `contextTriggers_`, `TRIGGER_MIN_HITS`, `TRIGGER_STRONG` (and `rankTriggers` in `webapp/app.js`) |
 | Layer metrics (Monthly/Weekly columns) | `layerColumns` in `analyzeExport_` |
 | Themes, emotions, signals word lists | the Settings tab (then *Reprocess everything*) |
 | Performance fields and labels | `PERF_FIELDS` |

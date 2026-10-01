@@ -35,6 +35,14 @@
      Checked monotonic in OKLab L and >= 3:1 against both surfaces. Identity never rests on these steps
      alone — every slice is named in the legend and in the hover card. */
   --t1: #8a93a3; --t2: #7a8496; --t3: #6a7589; --t4: #5b667b; --t5: #4d586d; --t6: #3f4a5e; --t7: #333d4f;
+  /* The four layers (METHODOLOGY.md), one hue each. Validated as a set, all pairs, in both modes (validate_palette.js
+     --pairs all): normal-vision floor 15.2, CVD 7.0 deutan — inside the floor band, which is legal here because a
+     layer is always named in text beside its colour, never told apart by colour alone. The same four hexes clear
+     the dark surface too, so dark mode reuses them. */
+  --l-exposure: #2a78d6; --l-consumption: #0f9b9b; --l-social: #d4326e; --l-inbound: #b8860b;
+  /* Diverging pair for lifts: orange for "more often", slate for "less often", a neutral grey at "about the same".
+     Outside the layer hues and the status reds on purpose, so a lift never reads as a layer or as an alarm. */
+  --div-more: #eb6834; --div-less: #5b667b; --div-mid: #efeeea; --div-more-ink: #14161a; --div-less-ink: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -43,12 +51,14 @@
     /* Dark re-steps the ramp rather than flipping it: the same hue, re-anchored so light→dark still runs
        from most to least prominent against a dark surface. */
     --t1: #c3c9d4; --t2: #b2b9c6; --t3: #a1a9b8; --t4: #9099aa; --t5: #7f899c; --t6: #6f7a8e; --t7: #5f6b80;
+    --div-more: #dc6230; --div-less: #9099aa; --div-mid: #2c2f35; --div-more-ink: #121317; --div-less-ink: #121317;
   }
 }
 :root[data-theme="dark"] {
   --ground: #121317; --panel: #1a1c21; --ink: #f0f1f4; --ink-2: #b6bac1; --muted: #82868d; --line: #2b2e34;
   --seen: #4f95e0; --accent: #dc6230; --better: #0ca30c; --worse: #f08a80; --untagged: #4a4e56;
   --t1: #c3c9d4; --t2: #b2b9c6; --t3: #a1a9b8; --t4: #9099aa; --t5: #7f899c; --t6: #6f7a8e; --t7: #5f6b80;
+  --div-more: #dc6230; --div-less: #9099aa; --div-mid: #2c2f35; --div-more-ink: #121317; --div-less-ink: #121317;
 }
 * { box-sizing: border-box; }
 /* [hidden] is only a display:none of normal weight, so any later rule that sets display — .panel-centre's
@@ -507,6 +517,73 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
   .aud-row { grid-template-columns: 84px 1fr; }
 }
 
+/* ── Context triggers ────────────────────────────────────────────────────────────────────────────────────
+   A card per pattern, railed in the colour of the layer its behaviour belongs to; the lift is the headline and
+   the two bars underneath are the evidence for it, so the number is never read without what it rests on. */
+.trig-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; }
+.trig { display: grid; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--layer, var(--line));
+  border-radius: 10px; padding: 12px 14px; }
+.trig.is-consumption, .tm-head.is-consumption { --layer: var(--l-consumption); }
+.trig.is-social, .tm-head.is-social { --layer: var(--l-social); }
+.trig-k { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.trig-tier { font-family: var(--mono); letter-spacing: .04em; text-transform: none; }
+.trig.tier-strong .trig-tier { color: var(--ink-2); }
+.trig-main { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
+.trig-s { margin: 0; font-size: 14px; line-height: 1.4; }
+.trig-lift { font-family: var(--cond); font-size: 26px; line-height: 1; }
+.trig-bar { display: grid; grid-template-columns: 112px 1fr 78px; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-2); }
+.trig-bar .bar i.is-now { background: var(--layer); }
+.trig-bar .bar i.is-usual { background: var(--muted); opacity: .55; }
+.trig-bar-v { font-family: var(--mono); font-size: 11.5px; text-align: right; font-variant-numeric: tabular-nums; }
+.trig-n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.trig-damp { margin-top: 14px; }
+.trig-damp:empty { display: none; }
+.trig-low { display: grid; grid-template-columns: 44px 1fr; gap: 0 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.trig-low:last-child { border-bottom: 0; }
+.trig-low b { font-family: var(--mono); font-size: 13px; color: var(--ink-2); grid-row: span 2; }
+.trig-low .trig-n { grid-column: 2; }
+
+/* The matrix is a table that colours itself: every cell is the same lift a card would show, on a diverging scale. */
+.tm-scroll { overflow-x: auto; }
+.tm { display: grid; grid-template-columns: minmax(170px, 1.6fr) repeat(6, minmax(58px, 1fr)); gap: 2px; min-width: 560px; align-items: stretch; }
+.tm-c { display: flex; align-items: center; justify-content: center; min-height: 26px; font-size: 12px; }
+.tm-head { font-size: 11.5px; font-weight: 600; color: var(--ink-2); border-bottom: 3px solid var(--layer, var(--line)); padding: 2px 4px 4px; text-align: center; }
+.tm-fam { grid-column: 1 / -1; font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 12px 0 2px; }
+.tm-row { justify-content: flex-start; flex-wrap: wrap; gap: 0 8px; padding: 0 6px 0 0; border-top: 1px solid transparent; }
+.tm-row.is-first { border-top-color: var(--line); }
+.tm-row i { font-style: normal; color: var(--muted); font-size: 11px; width: 100%; }
+.tm-row i:empty { display: none; }
+.tm-row b { font-weight: 500; color: var(--ink); }
+.tm-cell { border-radius: 4px; background: var(--div-mid); font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--ink);
+  font-variant-numeric: tabular-nums; cursor: default; outline-offset: 1px; }
+.tm-cell.is-more { color: var(--div-more-ink); }
+.tm-cell.is-less { color: var(--div-less-ink); }
+.tm-cell.is-na { background: transparent; }
+.tm-cell.tier-few { color: var(--muted); background: repeating-linear-gradient(45deg, transparent 0 3px, color-mix(in srgb, var(--ink) 7%, transparent) 3px 4px); }
+.tm-cell.tier-some { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 30%, transparent); outline: 1px dashed color-mix(in srgb, var(--ink) 35%, transparent); outline-offset: -3px; }
+.tm-cell:focus-visible { outline: 2px solid var(--seen); outline-offset: 1px; }
+.bar i.is-consumption { background: var(--l-consumption); }
+
+/* Sessions as dots: an HTML row per group, so the labels keep their size at any width. */
+.dg-row { display: grid; grid-template-columns: minmax(130px, 210px) 1fr; gap: 12px; align-items: center; }
+.dg-l { display: grid; line-height: 1.25; }
+.dg-l b { font-size: 13px; font-weight: 600; }
+.dg-l span { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.ch-dg { display: block; overflow: visible; }
+.ch-dg-dot { fill: var(--l-consumption); fill-opacity: .62; stroke: var(--panel); stroke-width: 2; }
+.ch-dg-dot.is-hot { fill-opacity: 1; stroke: var(--ink); stroke-width: 1.5; }
+.ch-dg-med { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
+.ch-dg-line { stroke: var(--ink-2); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.dg-axis { margin-top: 2px; }
+.dg-ticks { position: relative; height: 30px; }
+.dg-ticks span { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.dg-ticks .dg-line-l { top: 14px; color: var(--ink-2); white-space: nowrap; }
+@media (max-width: 620px) {
+  .dg-row { grid-template-columns: 1fr; gap: 0; margin-bottom: 6px; }
+  .dg-axis > div:first-child { display: none; }
+  .trig-bar { grid-template-columns: 92px 1fr 70px; }
+}
+
 </style>
 </head>
 <body>
@@ -648,8 +725,55 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
       </div>
     </section>
 
+    <!-- Context triggers: the conditions behaviour follows. Counts per bucket are summed over the range in the filter
+         row and turned into lifts in the browser, so the evidence for a pattern grows as weeks accumulate. -->
+    <section class="sec" id="sec-triggers">
+      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="trigger"></span><span data-i18n="sec.triggers">What comes just before what you do</span></h2>
+      <p class="lede" style="margin-bottom:8px" data-i18n="trig.lede">Under which conditions you open the app, stay long, act on what you
+        see, look something up or write to someone — read from what came just before. These are associations, not causes:
+        they say what goes together, not what makes what happen.</p>
+      <p class="mono" id="trig-empty" hidden data-i18n="trig.empty">Nothing here yet: sessions and their contexts are worked out when exports
+        are processed. In the Sheet, run Instagram Insights → Reprocess everything.</p>
+      <div id="trig-body">
+        <p class="mono" id="trig-scope" style="margin-bottom:14px"></p>
+        <h3 class="sub" data-i18n="trig.top">What stands out</h3>
+        <div class="trig-cards" id="trig-top"></div>
+        <div class="trig-damp" id="trig-damp"></div>
+        <div class="panel" style="margin-top:12px">
+          <h3 class="sub" data-i18n="trig.matrix.h">Context × behaviour</h3>
+          <div class="tm-scroll" id="trig-matrix"></div>
+          <p id="trig-matrix-key" class="mono" style="margin-top:10px"></p>
+          <details class="tableview"><summary data-i18n="table.view">Table view</summary><div id="trig-table"></div></details>
+        </div>
+        <div class="cols" style="margin-top:12px">
+          <div class="panel">
+            <h3 class="sub" data-i18n="trig.starts.h">When you open the app</h3>
+            <div id="trig-starts"></div>
+          </div>
+          <div class="panel">
+            <h3 class="sub" data-i18n="trig.open.h">What it opens into</h3>
+            <div id="trig-open"></div>
+            <p id="trig-open-note" class="mono" style="margin-top:10px"></p>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <div class="sub-row">
+            <h3 class="sub" data-i18n="trig.dots.h">What keeps you scrolling</h3>
+            <div class="seg" id="dots-by" role="group" data-i18n-title="trig.dots.by" title="Group by">
+              <button type="button" data-by="Opening format" data-i18n="trig.by.format">Opening format</button>
+              <button type="button" data-by="Opening source" data-i18n="trig.by.source">Opening accounts</button>
+              <button type="button" data-by="Opening tone" data-i18n="trig.by.tone">Opening tone</button>
+              <button type="button" data-by="Part of day" data-i18n="trig.by.part">Part of day</button>
+            </div>
+          </div>
+          <div id="trig-dots"></div>
+          <p id="trig-dots-note" class="mono" style="margin-top:10px"></p>
+        </div>
+      </div>
+    </section>
+
     <section class="sec" id="sec-people">
-      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
+      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
       <div class="pow" id="pow" hidden></div>
       <div class="cols">
         <div class="panel">
@@ -675,7 +799,7 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
     </section>
 
     <section class="sec" id="sec-feeling">
-      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
+      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
       <div class="panel">
         <div class="sub-row">
           <h3 class="sub" id="emo-h"></h3>
@@ -693,7 +817,7 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
          influence panel is the relation between the two. Each indicator is a strip of every bucket on record,
          so where this one sits is read against your own range rather than as a verdict on a 0–100 scale. -->
     <section class="sec" id="sec-profile">
-      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="person"></span><span data-i18n="sec.profile">What you do, and what you are shown</span></h2>
+      <h2 class="sec-h"><span class="sec-n">09</span><span class="sec-i" data-icon="person"></span><span data-i18n="sec.profile">What you do, and what you are shown</span></h2>
       <div class="cols cols-strips">
         <div class="panel"><h3 class="sub" data-i18n="strips.do">What you do · personality and needs, from behaviour</h3><div id="strips-do"></div></div>
         <div class="panel"><h3 class="sub" data-i18n="strips.shown">What you were shown · the feed diet</h3><div id="strips-shown"></div></div>
@@ -709,7 +833,7 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
     </section>
 
     <section class="sec" id="sec-belonging" hidden>
-      <h2 class="sec-h"><span class="sec-n">09</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
+      <h2 class="sec-h"><span class="sec-n">10</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
       <p class="lede" style="margin-bottom:14px" data-i18n="bel.lede">Four things belonging is made of. An Instagram export
         measures two of them, reaches a third only by proxy, and is silent on the fourth — that row says so rather
         than being dropped, because a missing row reads as nothing to report, which is the opposite of what is true.</p>
@@ -726,7 +850,7 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
     </section>
 
     <section class="sec" id="sec-risks">
-      <h2 class="sec-h"><span class="sec-n">10</span><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
+      <h2 class="sec-h"><span class="sec-n">11</span><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
       <div class="cols cols-matrix">
         <div class="panel panel-centre"><div id="risk-matrix"></div></div>
         <div class="panel" id="risks"></div>
@@ -734,7 +858,7 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
     </section>
 
     <section class="sec" id="sec-signals">
-      <h2 class="sec-h"><span class="sec-n">11</span><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
+      <h2 class="sec-h"><span class="sec-n">12</span><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
       <div class="panel" id="signals"></div>
     </section>
 
@@ -1203,7 +1327,93 @@ var CH = (function () {
     layers: 'M12 3 2 8l10 5 10-5zM2 12.5l10 5 10-5M2 17l10 5 10-5',
     trend: 'M3 20h18M4 16l5-5 4 3 7-8M16 6h4v4',
     account: 'M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5.5 19c.8-3 3.4-4.5 6.5-4.5s5.7 1.5 6.5 4.5M3 3h18v18H3z',
+    trigger: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v4M12 18v4M2 12h4M18 12h4',
   };
+
+  // ── Dot groups ───────────────────────────────────────────────────────────────────────────────────────
+  // Every session as a dot on one minutes axis, one row per group, with each row's median as a tick and one line
+  // across all rows for the threshold that counts as long. Rows are HTML with an SVG track each, so the labels stay
+  // at their real size on a phone instead of shrinking with a single wide viewBox.
+  // groups: [{ label, sub, values: [{ v, data }] }]
+  // opts:   { max, line: { v, label }, fmt, onHover(data, evt|null, anchor), onLeave() }
+  function dotGroups(groups, opts) {
+    opts = opts || {};
+    var H = 34;
+    var max = opts.max || 1;
+    // Percent of the track's width, so the track can be any width and a dot stays a circle: a stretched viewBox
+    // would squash every dot into an ellipse.
+    var pct = function (v) { return 1.5 + Math.min(1, v / max) * 97; };
+    var X = function (v) { return pct(v) + '%'; };
+    var step = max <= 30 ? 5 : max <= 60 ? 10 : max <= 150 ? 20 : 60;
+    var wrap = document.createElement('div');
+    wrap.className = 'dg';
+    var track = function (kids) {
+      var svg = n('svg', { class: 'ch-dg', height: H, width: '100%' });
+      for (var t = 0; t <= max; t += step) svg.appendChild(n('line', { x1: X(t), x2: X(t), y1: 0, y2: H, class: 'ch-ring' }));
+      if (opts.line) svg.appendChild(n('line', { x1: X(opts.line.v), x2: X(opts.line.v), y1: 0, y2: H, class: 'ch-dg-line' }));
+      kids.forEach(function (k) { svg.appendChild(k); });
+      return svg;
+    };
+    groups.forEach(function (g) {
+      var row = document.createElement('div');
+      row.className = 'dg-row';
+      var label = document.createElement('div');
+      label.className = 'dg-l';
+      var b = document.createElement('b');
+      b.textContent = g.label;
+      var s = document.createElement('span');
+      s.textContent = g.sub || '';
+      label.appendChild(b);
+      label.appendChild(s);
+      var dots = [];
+      var hits = [];
+      var sorted = g.values.map(function (x) { return x.v; }).sort(function (a, z) { return a - z; });
+      var med = sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : null;
+      // A fixed, deterministic spread across the row's height: the same session lands in the same place on every
+      // render, and dots that share a minute fan out rather than stacking into one.
+      g.values.forEach(function (x, k) {
+        var y = H / 2 + (((k * 7) % 9) - 4) * 2.6;
+        var dot = n('circle', { cx: X(x.v), cy: y, r: 4, class: 'ch-dg-dot' });
+        var hit = n('circle', { cx: X(x.v), cy: y, r: 9, class: 'ch-hit' });
+        if (opts.onHover) {
+          hit.addEventListener('mouseenter', function (e) { dot.classList.add('is-hot'); opts.onHover(x.data, e); });
+          hit.addEventListener('mousemove', function (e) { opts.onHover(x.data, e); });
+          hit.addEventListener('mouseleave', function () { dot.classList.remove('is-hot'); if (opts.onLeave) opts.onLeave(); });
+        }
+        dots.push(dot);
+        hits.push(hit);
+      });
+      var marks = med === null ? dots : dots.concat([n('line', { x1: X(med), x2: X(med), y1: 3, y2: H - 3, class: 'ch-dg-med' })]);
+      var svg = track(marks.concat(hits));
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', g.label + ': ' + g.values.length + (med !== null ? ', median ' + (opts.fmt ? opts.fmt(med) : med) : ''));
+      row.appendChild(label);
+      row.appendChild(svg);
+      wrap.appendChild(row);
+    });
+    // The axis shares the tracks' geometry, so a tick and a dot at the same minute line up exactly.
+    var axis = document.createElement('div');
+    axis.className = 'dg-row dg-axis';
+    axis.appendChild(document.createElement('div'));
+    var labels = document.createElement('div');
+    labels.className = 'dg-ticks';
+    for (var t = 0; t <= max; t += step) {
+      var tick = document.createElement('span');
+      tick.style.left = X(t);
+      tick.textContent = opts.fmt ? opts.fmt(t) : String(t);
+      labels.appendChild(tick);
+    }
+    if (opts.line) {
+      var mark = document.createElement('span');
+      mark.className = 'dg-line-l';
+      mark.style.left = X(opts.line.v);
+      mark.textContent = opts.line.label;
+      labels.appendChild(mark);
+    }
+    axis.appendChild(labels);
+    wrap.appendChild(axis);
+    return wrap;
+  }
 
   function icon(name, size) {
     var svg = root(24, 24, 'ch-icon');
@@ -1218,7 +1428,7 @@ var CH = (function () {
     return svg;
   }
 
-  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, line: line, icon: icon, icons: ICONS };
+  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, line: line, dotGroups: dotGroups, icon: icon, icons: ICONS };
 }());
 
 </script>
@@ -1239,6 +1449,7 @@ var CH = (function () {
     Belonging: 'belonging', 'Weekly belonging': 'weeklyBelonging',
     Conversations: 'conversations', 'Weekly conversations': 'weeklyConversations',
     Performance: 'performance',
+    Triggers: 'triggers', 'Weekly triggers': 'weeklyTriggers', Sessions: 'sessions',
   };
   // Monthly tab name → its weekly twin. bucketTable() below picks between them off the current mode, so each
   // draw* function names the monthly tab once and stays bucket-agnostic.
@@ -1425,6 +1636,34 @@ var CH = (function () {
       'conv.person': 'Persona', 'conv.msgs': 'Inviati · ricevuti', 'conv.convs': 'Conversazioni (avviate da te)',
       'conv.yours': 'Tuoi turni con risposta', 'conv.theirs': 'Loro turni a cui hai risposto', 'conv.wait': 'Risposta mediana: loro · tu',
       'conv.voice': 'vocali',
+      // Context triggers
+      'sec.triggers': 'Cosa viene subito prima di ciò che fai',
+      'trig.lede': 'In quali condizioni apri l’app, ci resti a lungo, agisci su ciò che vedi, cerchi qualcosa o scrivi a qualcuno — letto da ciò che è venuto subito prima. Sono associazioni, non cause: dicono cosa va insieme, non cosa provoca cosa.',
+      'trig.empty': 'Qui non c’è ancora nulla: le sessioni e i loro contesti si calcolano durante l’elaborazione. Nel Foglio, usa Instagram Insights → Rielabora tutto.',
+      'trig.scope': '{range}: {s} sessioni e {i} elementi visti, su {b} {unit}. Associazioni, non cause.',
+      'trig.months': 'mesi', 'trig.weeks': 'settimane',
+      'trig.top': 'Ciò che spicca', 'trig.damp': 'Meno spesso del solito',
+      'trig.none': 'Per ora non spicca nulla: nessun contesto sposta questi comportamenti di un quarto o più con abbastanza eventi alle spalle. Allarga l’intervallo per avere più prove.',
+      'trig.when': 'In questo contesto', 'trig.usual': 'Il tuo ritmo abituale', 'trig.perhour': 'all’ora',
+      'trig.n.pull': '{h} aperture in {e} ore libere', 'trig.n': '{h} su {e} {u}',
+      'trig.u.sessions': 'sessioni', 'trig.u.items': 'elementi visti',
+      'trig.tier.strong': 'Prove solide', 'trig.tier.some': 'Qualche prova', 'trig.tier.few': 'Troppo pochi per dirlo',
+      'trig.matrix.h': 'Contesto × comportamento', 'trig.notheme': 'Nessun tema riconosciuto',
+      'trig.key': 'Arancione: succede più spesso del tuo ritmo abituale in quel contesto · grigio-blu: meno spesso · grigio: più o meno uguale · punto: troppo pochi eventi per dirlo · bordo tratteggiato: qualche prova (3–9 eventi), pieno: prove solide (10+). Avvicinato al "solito" in proporzione, così una manciata di eventi non sembra mai uno schema.',
+      'trig.f.time': 'Quando', 'trig.f.before': 'Cosa è venuto subito prima', 'trig.f.screen': 'Cosa c’era sullo schermo',
+      'trig.f.opening': 'Come è iniziata la sessione', 'trig.f.phase': 'Quanto dentro la sessione',
+      'trig.t.outcome': 'Comportamento', 'trig.t.dim': 'Contesto', 'trig.t.counts': 'Conteggi', 'trig.t.rate': 'Ritmo',
+      'trig.t.usual': 'Abituale', 'trig.t.lift': 'Rapporto', 'trig.t.tier': 'Prove',
+      'trig.starts.h': 'Quando apri l’app', 'trig.starts.cell': '{d} {h}:00 · {n} sessioni iniziate',
+      'trig.open.h': 'Su cosa si apre',
+      'trig.open.note': '{m} sessioni su {n} sono iniziate entro 10 minuti dall’arrivo di un messaggio, {p} entro un’ora da un tuo post, e {q} sono state ritorni rapidi — di nuovo dentro entro 30 minuti dalla precedente.',
+      'trig.dots.h': 'Cosa ti tiene a scorrere', 'trig.dots.by': 'Raggruppa per',
+      'trig.by.format': 'Formato iniziale', 'trig.by.source': 'Account iniziali', 'trig.by.tone': 'Tono iniziale', 'trig.by.part': 'Momento del giorno',
+      'trig.dots.nothing': 'Aperta su messaggi o ricerca', 'trig.dots.sub': '{n} sessioni · mediana {m} min · {l} lunghe',
+      'trig.dots.long': 'lunga: {m}+ min',
+      'trig.dots.tip': '{i} post e video, {st} storie, {a} inserzioni · aperta su {o}{p}', 'trig.dots.msg': ', dopo un messaggio',
+      'trig.dots.acts': 'azioni', 'trig.dots.searches': 'ricerche', 'trig.dots.sent': 'messaggi inviati',
+      'trig.dots.note': 'Ogni punto è una sessione; il trattino corto su ogni riga è la sua mediana, la linea tratteggiata segna il quarto più lungo di tutte le sessioni mostrate. Inizio = i primi cinque minuti. Le sessioni oltre {m} min stanno sul bordo destro.',
     },
   };
 
@@ -1839,6 +2078,7 @@ var CH = (function () {
     drawBelonging();
     drawConversations();
     drawDaily();
+    drawTriggers();
     drawEmotions();
     drawStrips();
     drawInfluence();
@@ -3307,6 +3547,435 @@ var CH = (function () {
     ]));
   }
 
+  // ── Context triggers ─────────────────────────────────────────────────────────────────────────────────
+  // The Sheet stores counts (Triggers, Weekly triggers) and the sessions themselves (Sessions); the lift is worked
+  // out here, over whatever range the filter row selects, so a range of weeks adds up exactly instead of
+  // averaging rates. rankTriggers mirrors rankTriggers_ in Code.gs — keep the two in step.
+  const TRIG_MIN = 3; // mirrors TRIGGER_MIN_HITS
+  const TRIG_STRONG = 10; // mirrors TRIGGER_STRONG
+  const TRIG_UNRANKED = ['Nothing seen', 'Unknown', 'Sponsored', 'Nothing in particular', 'Nothing just before',
+    'No story first', 'Not a quick return'];
+  const TRIG_OUTCOMES = ['Pull', 'Stay', 'Late', 'Act', 'Seek', 'Reach'];
+  // Which layer each outcome belongs to: opening, staying and looking things up are how you used the app; acting on
+  // content and writing to people are what you did toward them.
+  const TRIG_LAYER = { Pull: 'consumption', Stay: 'consumption', Late: 'consumption', Seek: 'consumption', Act: 'social', Reach: 'social' };
+  let dotsBy = 'Opening format';
+
+  function rankTriggers(rows) {
+    const groups = {};
+    rows.forEach(r => {
+      const gk = r.Outcome + '|' + r.Dimension;
+      const g = groups[gk] = groups[gk] || { exposure: 0, hits: 0, contexts: {} };
+      const x = g.contexts[r.Context] = g.contexts[r.Context]
+        || { outcome: r.Outcome, dimension: r.Dimension, context: r.Context, unit: r.Unit, exposure: 0, hits: 0 };
+      x.exposure += +r.Exposure || 0;
+      x.hits += +r.Hits || 0;
+      g.exposure += +r.Exposure || 0;
+      g.hits += +r.Hits || 0;
+    });
+    const all = [];
+    Object.keys(groups).forEach(gk => {
+      const g = groups[gk];
+      if (!g.hits || !g.exposure) return;
+      const p0 = g.hits / g.exposure;
+      Object.keys(g.contexts).forEach(name => {
+        const x = g.contexts[name];
+        if (!x.exposure) return;
+        const lift = ((x.hits + TRIG_MIN) / (x.exposure + TRIG_MIN / p0)) / p0;
+        const evidence = lift >= 1 ? x.hits : x.exposure * p0;
+        const tier = evidence < TRIG_MIN ? 'few' : evidence < TRIG_STRONG ? 'some' : 'strong';
+        all.push(Object.assign(x, {
+          p0: p0, rate: x.hits / x.exposure, lift: lift, tier: tier, ranked: TRIG_UNRANKED.indexOf(name) < 0,
+          strength: tier === 'few' || TRIG_UNRANKED.indexOf(name) >= 0 ? 0 : Math.abs(Math.log(lift)) * (tier === 'strong' ? 1 : 0.6),
+        }));
+      });
+    });
+    const ranked = all.filter(x => x.strength > 0).sort((a, b) => b.strength - a.strength);
+    return { all: all, triggers: ranked.filter(x => x.lift >= 1.25), dampeners: ranked.filter(x => x.lift <= 0.8) };
+  }
+
+  /** The trigger counts and sessions inside the range the filter row shows. */
+  function triggerScope() {
+    const tp = trendPeriods();
+    if (!tp) return null;
+    const monthly = tp.unit === 'month';
+    const rows = monthly
+      ? table('Triggers').filter(r => r.Month >= tp.from.slice(0, 7) && r.Month <= tp.to.slice(0, 7))
+      : table('Weekly triggers').filter(r => r['Week start'] >= mondayOf(tp.from) && r['Week start'] <= tp.to);
+    const sessions = table('Sessions').filter(s => s.Date >= tp.from && s.Date <= tp.to);
+    return { tp: tp, rows: rows, sessions: sessions, buckets: unique(rows.map(r => (monthly ? r.Month : r.Week))).length };
+  }
+  const unique = list => Array.from(new Set(list));
+
+  const TRIG_WORDS = {
+    en: {
+      outcome: { Pull: 'Opening the app', Stay: 'Long sessions', Late: 'Late-night sessions', Act: 'Acting on content', Seek: 'Looking things up', Reach: 'Reaching out' },
+      col: { Pull: 'Open', Stay: 'Stay long', Late: 'Late', Act: 'Act', Seek: 'Look up', Reach: 'Reach out' },
+      lead: {
+        Pull: ['You open the app more often', 'You open the app less often'],
+        Stay: ['Sessions run long more often', 'Sessions run long less often'],
+        Late: ['Sessions start late at night more often', 'Sessions start late at night less often'],
+        Act: ['You like, save, comment or follow more', 'You like, save, comment or follow less'],
+        Seek: ['You look things up more', 'You look things up less'],
+        Reach: ['You write to people more', 'You write to people less'],
+      },
+      dim: {
+        'Part of day': 'Part of day', Weekend: 'Day of the week', 'Just before': 'What just happened', 'Pulled by': 'Pulled in by',
+        'Opened with': 'Opened into', 'Quick return': 'Coming straight back', 'Their story first': 'Their story first',
+        Format: 'Format on screen', Source: 'Whose it was', Tone: 'Tone on screen', Theme: 'Theme on screen',
+        'Opening format': 'Opening format', 'Opening source': 'Opening accounts', 'Opening tone': 'Opening tone',
+        'Opening theme': 'Opening theme', 'Session phase': 'How far into a session',
+      },
+      ctx: {},
+    },
+    it: {
+      outcome: { Pull: 'Aprire l’app', Stay: 'Sessioni lunghe', Late: 'Sessioni notturne', Act: 'Agire sui contenuti', Seek: 'Cercare', Reach: 'Scrivere alle persone' },
+      col: { Pull: 'Apri', Stay: 'Lunghe', Late: 'Notte', Act: 'Agisci', Seek: 'Cerchi', Reach: 'Scrivi' },
+      lead: {
+        Pull: ['Apri l’app più spesso', 'Apri l’app meno spesso'],
+        Stay: ['Le sessioni durano a lungo più spesso', 'Le sessioni durano a lungo meno spesso'],
+        Late: ['Le sessioni iniziano a notte fonda più spesso', 'Le sessioni iniziano a notte fonda meno spesso'],
+        Act: ['Metti like, salvi, commenti o segui di più', 'Metti like, salvi, commenti o segui di meno'],
+        Seek: ['Cerchi cose di più', 'Cerchi cose di meno'],
+        Reach: ['Scrivi alle persone di più', 'Scrivi alle persone di meno'],
+      },
+      dim: {
+        'Part of day': 'Momento del giorno', Weekend: 'Giorno della settimana', 'Just before': 'Cosa è appena successo', 'Pulled by': 'Richiamato da',
+        'Opened with': 'Aperto su', 'Quick return': 'Ritorno immediato', 'Their story first': 'Prima la sua storia',
+        Format: 'Formato sullo schermo', Source: 'Di chi era', Tone: 'Tono sullo schermo', Theme: 'Tema sullo schermo',
+        'Opening format': 'Formato iniziale', 'Opening source': 'Account iniziali', 'Opening tone': 'Tono iniziale',
+        'Opening theme': 'Tema iniziale', 'Session phase': 'Quanto dentro la sessione',
+      },
+      ctx: {
+        Morning: 'Mattina', Afternoon: 'Pomeriggio', Evening: 'Sera', Night: 'Notte', Weekend: 'Fine settimana', Weekday: 'Giorno feriale',
+        'A message arrived': 'È arrivato un messaggio', 'Your post went up': 'Hai appena pubblicato', 'A message': 'Un messaggio',
+        'Your own post': 'Un tuo post', Feed: 'Feed', Stories: 'Storie', Messages: 'Messaggi', Search: 'Ricerca', Other: 'Altro',
+        'Quick return': 'Entro mezz’ora', 'After their story': 'Dopo una sua storia', Post: 'Post', Video: 'Video', Story: 'Storia',
+        Ad: 'Inserzione', Followed: 'Account che segui', Recommended: 'Account che non segui', Heavy: 'Pesante', Light: 'Leggero',
+        Neutral: 'Neutro', Videos: 'Video', Posts: 'Post', 'Mostly recommended': 'Soprattutto non seguiti',
+        'Mostly followed': 'Soprattutto seguiti', 'First 5 min': 'Primi 5 min', '5–20 min': '5–20 min', '20+ min': 'Oltre 20 min',
+      },
+    },
+  };
+  // English context labels, where the stored value alone reads badly.
+  TRIG_WORDS.en.ctx = {
+    Weekday: 'Weekday', 'A message arrived': 'A message arrived', 'Your post went up': 'Your post went up', 'Quick return': 'Within 30 min',
+    'After their story': 'After their story', Followed: 'Accounts you follow', Recommended: 'Accounts you don’t follow',
+    'Mostly recommended': 'Mostly not followed', 'Mostly followed': 'Mostly followed',
+  };
+  const tw = () => TRIG_WORDS[lang] || TRIG_WORDS.en;
+  const ctxLabel = c => tw().ctx[c] || c;
+
+  /** "…on videos", "…when a session opens with stories": the context half of a trigger sentence. */
+  function ctxPhrase(x) {
+    const c = x.context;
+    if (lang === 'it') {
+      const prep = x.outcome === 'Act' ? 'su' : 'dopo';
+      const tone = { Heavy: 'pesanti', Light: 'leggeri', Neutral: 'neutri' };
+      switch (x.dimension) {
+        case 'Part of day': return { Morning: 'di mattina', Afternoon: 'di pomeriggio', Evening: 'di sera', Night: 'di notte' }[c];
+        case 'Weekend': return c === 'Weekend' ? 'nel fine settimana' : 'nei giorni feriali';
+        case 'Just before': return c === 'A message arrived' ? 'subito dopo l’arrivo di un messaggio' : 'subito dopo aver pubblicato qualcosa';
+        case 'Pulled by': return c === 'A message' ? 'quando ti ha richiamato un messaggio' : 'quando torni a controllare un tuo post';
+        case 'Opened with': return { Feed: 'quando apri direttamente sul feed', Stories: 'quando apri sulle storie', Messages: 'quando apri sui messaggi',
+          Search: 'quando apri con una ricerca', Other: 'quando apri con altro' }[c];
+        case 'Quick return': return 'quando torni entro mezz’ora';
+        case 'Opening format': return 'quando una sessione si apre con ' + ({ Videos: 'video', Posts: 'post', Stories: 'storie' }[c] || c);
+        case 'Opening source': return c === 'Mostly recommended' ? 'quando una sessione si apre con account che non segui' : 'quando una sessione si apre con account che segui';
+        case 'Opening tone': return 'quando una sessione si apre su contenuti ' + (tone[c] || c);
+        case 'Opening theme': return 'quando una sessione si apre con ' + c;
+        case 'Format': return prep + ' ' + ({ Post: 'i post', Video: 'i video', Story: 'le storie', Ad: 'le inserzioni' }[c] || c);
+        case 'Source': return prep + (c === 'Followed' ? ' account che segui' : ' account che non segui');
+        case 'Theme': return prep + ' ' + c;
+        case 'Tone': return prep + ' contenuti ' + (tone[c] || c);
+        case 'Session phase': return { 'First 5 min': 'nei primi cinque minuti di una sessione', '5–20 min': 'tra 5 e 20 minuti dall’inizio di una sessione',
+          '20+ min': 'quando una sessione ha superato i 20 minuti' }[c];
+        case 'Their story first': return 'subito dopo aver visto una sua storia';
+        default: return x.dimension + ': ' + c;
+      }
+    }
+    const prep = x.outcome === 'Act' ? 'on' : 'after';
+    switch (x.dimension) {
+      case 'Part of day': return { Morning: 'in the morning', Afternoon: 'in the afternoon', Evening: 'in the evening', Night: 'at night' }[c];
+      case 'Weekend': return c === 'Weekend' ? 'at weekends' : 'on weekdays';
+      case 'Just before': return c === 'A message arrived' ? 'just after a message arrives' : 'just after your own post goes up';
+      case 'Pulled by': return c === 'A message' ? 'when a message pulled you in' : 'when you are checking back on your own post';
+      case 'Opened with': return { Feed: 'when you open straight into the feed', Stories: 'when you open into stories', Messages: 'when you open into your messages',
+        Search: 'when you open with a search', Other: 'when you open with something else' }[c];
+      case 'Quick return': return 'when you come back within half an hour';
+      case 'Opening format': return 'when a session opens with ' + String(c).toLowerCase();
+      case 'Opening source': return c === 'Mostly recommended' ? 'when a session opens with accounts you don’t follow' : 'when a session opens with accounts you follow';
+      case 'Opening tone': return 'when a session opens on ' + String(c).toLowerCase() + ' content';
+      case 'Opening theme': return 'when a session opens with ' + c;
+      case 'Format': return prep + ' ' + ({ Post: 'posts', Video: 'videos', Story: 'stories', Ad: 'ads' }[c] || c);
+      case 'Source': return prep + (c === 'Followed' ? ' accounts you follow' : ' accounts you don’t follow');
+      case 'Theme': return prep + ' ' + c;
+      case 'Tone': return prep + ' ' + String(c).toLowerCase() + ' content';
+      case 'Session phase': return { 'First 5 min': 'in the first five minutes of a session', '5–20 min': '5–20 minutes into a session',
+        '20+ min': 'once a session has run past 20 minutes' }[c];
+      case 'Their story first': return 'right after watching that account’s story';
+      default: return x.dimension + ': ' + c;
+    }
+  }
+  const triggerSentence = x => tw().lead[x.outcome][x.lift >= 1 ? 0 : 1] + ' ' + ctxPhrase(x);
+  const liftText = v => (v >= 10 ? Math.round(v) : v.toFixed(1)) + '×';
+  const isPull = x => x.unit === 'idle minutes';
+  const rateText = (x, v) => (isPull(x) ? `${(60 * v).toFixed(2)} ${t('trig.perhour', 'an hour')}` : fmt.pct(v));
+  function countText(x) {
+    if (isPull(x)) return t('trig.n.pull', '{h} starts in {e} idle hours', { h: fmt.int(x.hits), e: fmt.int(x.exposure / 60) });
+    const unit = x.unit === 'sessions' ? t('trig.u.sessions', 'sessions') : t('trig.u.items', 'items seen');
+    return t('trig.n', '{h} of {e} {u}', { h: fmt.int(x.hits), e: fmt.int(x.exposure), u: unit });
+  }
+  const tierText = tier => ({ strong: t('trig.tier.strong', 'Strong evidence'), some: t('trig.tier.some', 'Some evidence'),
+    few: t('trig.tier.few', 'Too few to say') })[tier];
+
+  function drawTriggers() {
+    const sec = $('#sec-triggers');
+    if (!sec) return;
+    const scope = triggerScope();
+    const empty = !scope || (!scope.rows.length && !scope.sessions.length);
+    $('#trig-body').hidden = empty;
+    $('#trig-empty').hidden = !empty;
+    if (empty) return;
+    const ranked = rankTriggers(scope.rows);
+    const items = ranked.all.filter(x => x.outcome === 'Act' && x.dimension === 'Format').reduce((n, x) => n + x.exposure, 0);
+    $('#trig-scope').textContent = t('trig.scope', '{range}: {s} sessions and {i} items seen, across {b} {unit}. Associations, not causes.', {
+      range: `${periodLabel({ key: scope.tp.from, start: scope.tp.from }, 'day')} – ${periodLabel({ key: scope.tp.to, start: scope.tp.to }, 'day')}`,
+      s: fmt.int(scope.sessions.length), i: fmt.int(items), b: scope.buckets,
+      unit: scope.tp.unit === 'month' ? t('trig.months', 'months') : t('trig.weeks', 'weeks'),
+    });
+    drawTopTriggers(ranked);
+    drawTriggerMatrix(ranked);
+    drawStarts(scope.sessions);
+    drawSessionDots(scope.sessions);
+  }
+
+  function triggerCard(x) {
+    const max = Math.max(x.rate, x.p0) || 1;
+    const bar = (label, v, cls) => el('div', { class: 'trig-bar' }, [
+      el('span', { class: 'trig-bar-k', text: label }),
+      el('div', { class: 'bar' }, [el('i', { class: cls, style: `width:${(100 * v / max).toFixed(1)}%` })]),
+      el('span', { class: 'trig-bar-v', text: rateText(x, v) }),
+    ]);
+    return el('div', { class: `trig is-${TRIG_LAYER[x.outcome]} tier-${x.tier}` }, [
+      el('div', { class: 'trig-k' }, [
+        el('span', { text: tw().outcome[x.outcome] }),
+        el('span', { class: 'trig-tier', text: tierText(x.tier) }),
+      ]),
+      el('div', { class: 'trig-main' }, [
+        el('p', { class: 'trig-s', text: triggerSentence(x) }),
+        el('b', { class: 'trig-lift', text: liftText(x.lift) }),
+      ]),
+      bar(t('trig.when', 'In this context'), x.rate, 'is-now'),
+      bar(t('trig.usual', 'Your usual rate'), x.p0, 'is-usual'),
+      el('span', { class: 'trig-n', text: countText(x) }),
+    ]);
+  }
+
+  function drawTopTriggers(ranked) {
+    const box = $('#trig-top');
+    box.innerHTML = '';
+    // At most two per outcome, so six cards show six different kinds of behaviour rather than one dominating.
+    const per = {};
+    const picks = ranked.triggers.filter(x => (per[x.outcome] = (per[x.outcome] || 0) + 1) <= 2).slice(0, 6);
+    if (!picks.length) {
+      box.appendChild(el('p', { class: 'mono', text: t('trig.none', 'Nothing stands out yet: no context shifts any of these by a quarter or more with enough events behind it. Widen the range for more evidence.') }));
+    }
+    picks.forEach(x => box.appendChild(triggerCard(x)));
+    const damp = $('#trig-damp');
+    damp.innerHTML = '';
+    const lows = ranked.dampeners.slice(0, 4);
+    if (!lows.length) return;
+    damp.appendChild(el('h3', { class: 'sub', text: t('trig.damp', 'Less often than usual') }));
+    lows.forEach(x => damp.appendChild(el('div', { class: 'trig-low' }, [
+      el('b', { text: liftText(x.lift) }),
+      el('span', { text: triggerSentence(x) }),
+      el('span', { class: 'trig-n', text: countText(x) + ' · ' + tierText(x.tier) }),
+    ])));
+  }
+
+  // Families of contexts, in the order the matrix reads: when, what just happened, what was on screen, how the
+  // session began, how far into it.
+  const TRIG_FAMILIES = [
+    { label: ['trig.f.time', 'When'], dims: ['Part of day', 'Weekend'] },
+    { label: ['trig.f.before', 'What came just before'], dims: ['Just before', 'Pulled by', 'Opened with', 'Quick return', 'Their story first'] },
+    { label: ['trig.f.screen', 'What was on screen'], dims: ['Format', 'Source', 'Tone', 'Theme'] },
+    { label: ['trig.f.opening', 'How the session began'], dims: ['Opening format', 'Opening source', 'Opening tone', 'Opening theme'] },
+    { label: ['trig.f.phase', 'How far into a session'], dims: ['Session phase'] },
+  ];
+  const CONTEXT_ORDER = {
+    'Part of day': ['Morning', 'Afternoon', 'Evening', 'Night'], Weekend: ['Weekday', 'Weekend'],
+    Format: ['Post', 'Video', 'Story', 'Ad'], Source: ['Followed', 'Recommended'], Tone: ['Heavy', 'Light', 'Neutral'],
+    'Opening format': ['Posts', 'Videos', 'Stories'], 'Opening source': ['Mostly followed', 'Mostly recommended'],
+    'Opening tone': ['Heavy', 'Light', 'Neutral'], 'Session phase': ['First 5 min', '5–20 min', '20+ min'],
+    'Opened with': ['Feed', 'Stories', 'Messages', 'Search', 'Other'],
+  };
+
+  function drawTriggerMatrix(ranked) {
+    const box = $('#trig-matrix');
+    box.innerHTML = '';
+    const byKey = {};
+    ranked.all.forEach(x => { byKey[x.outcome + '|' + x.dimension + '|' + x.context] = x; });
+    const grid = el('div', { class: 'tm', role: 'table' });
+    grid.appendChild(el('span', { class: 'tm-c tm-corner' }));
+    TRIG_OUTCOMES.forEach(o => grid.appendChild(el('span', { class: `tm-c tm-head is-${TRIG_LAYER[o]}`, role: 'columnheader', text: tw().col[o], title: tw().outcome[o] })));
+    const tableRows = [];
+    TRIG_FAMILIES.forEach(fam => {
+      const lines = [];
+      fam.dims.forEach(dim => {
+        const mine = ranked.all.filter(x => x.dimension === dim && x.ranked);
+        let contexts = unique(mine.map(x => x.context));
+        const exposureOf = c => Math.max.apply(null, mine.filter(x => x.context === c).map(x => x.exposure));
+        if (CONTEXT_ORDER[dim]) contexts.sort((a, b) => CONTEXT_ORDER[dim].indexOf(a) - CONTEXT_ORDER[dim].indexOf(b));
+        else contexts.sort((a, b) => exposureOf(b) - exposureOf(a));
+        // Themes are the long tail: the six biggest carry the matrix, the table view carries the rest.
+        if (/theme/i.test(dim)) contexts = contexts.slice(0, 5);
+        contexts.forEach(c => lines.push({ dim: dim, context: c }));
+      });
+      if (!lines.length) return;
+      grid.appendChild(el('span', { class: 'tm-fam', text: tr(fam.label) }));
+      lines.forEach((line, k) => {
+        const first = k === 0 || lines[k - 1].dim !== line.dim;
+        grid.appendChild(el('span', { class: 'tm-c tm-row' + (first ? ' is-first' : ''), role: 'rowheader' }, [
+          el('i', { text: first ? tw().dim[line.dim] || line.dim : '' }),
+          el('b', { text: /theme/i.test(line.dim) && line.context === 'Other' ? t('trig.notheme', 'No theme matched') : ctxLabel(line.context) }),
+        ]));
+        TRIG_OUTCOMES.forEach(o => {
+          const x = byKey[o + '|' + line.dim + '|' + line.context];
+          if (!x) { grid.appendChild(el('span', { class: 'tm-c tm-cell is-na', role: 'cell' })); return; }
+          tableRows.push(x);
+          const cell = el('span', { class: 'tm-c tm-cell tier-' + x.tier, role: 'cell', tabindex: '0' });
+          if (x.tier !== 'few') {
+            const k2 = Math.min(1, Math.abs(Math.log(x.lift)) / Math.log(3));
+            const pole = x.lift >= 1 ? 'var(--div-more)' : 'var(--div-less)';
+            cell.style.background = `color-mix(in oklab, ${pole} ${Math.round(85 * k2)}%, var(--div-mid))`;
+            if (k2 > 0.55) cell.classList.add(x.lift >= 1 ? 'is-more' : 'is-less');
+            // Numbers only where they say something: a lift of 1.1 is a colour, not a finding.
+            if (x.lift >= 1.25 || x.lift <= 0.8) cell.textContent = liftText(x.lift);
+          } else cell.textContent = '·';
+          const show = (evt, anchor) => tip.show(card => {
+            card.appendChild(el('div', { class: 'tipcard-h' }, [
+              el('b', { text: liftText(x.lift) }),
+              el('span', { class: 'tipcard-v', text: tierText(x.tier) }),
+            ]));
+            card.appendChild(el('p', { class: 'tipcard-note', text: triggerSentence(x) }));
+            card.appendChild(el('p', { class: 'tipcard-note', text: countText(x) + ' · ' + t('trig.usual', 'Your usual rate') + ' ' + rateText(x, x.p0) }));
+          }, evt, anchor);
+          cell.addEventListener('mousemove', e => show(e));
+          cell.addEventListener('mouseleave', () => tip.hide());
+          cell.addEventListener('focus', () => show(null, cell));
+          cell.addEventListener('blur', () => tip.hide());
+          grid.appendChild(cell);
+        });
+      });
+    });
+    box.appendChild(grid);
+    $('#trig-matrix-key').textContent = t('trig.key', 'Orange: happens more often in that context than your usual rate · grey-blue: less often · grey: about the same · dotted: too few events to say · dashed outline: some evidence (3–9 events), solid: strong (10+). Shrunk toward "usual" so a handful of events can never look like a pattern.');
+    const tbl = $('#trig-table');
+    tbl.innerHTML = '';
+    const head = el('tr', {}, ['trig.t.outcome|Outcome', 'trig.t.dim|Context', 'trig.t.counts|Counts', 'trig.t.rate|Rate',
+      'trig.t.usual|Usual', 'trig.t.lift|Lift', 'trig.t.tier|Evidence'].map(s => el('th', { text: t(s.split('|')[0], s.split('|')[1]) })));
+    const body = ranked.all.filter(x => x.ranked).sort((a, b) => TRIG_OUTCOMES.indexOf(a.outcome) - TRIG_OUTCOMES.indexOf(b.outcome) || b.lift - a.lift)
+      .map(x => el('tr', {}, [tw().outcome[x.outcome], `${tw().dim[x.dimension] || x.dimension}: ${ctxLabel(x.context)}`, countText(x),
+        rateText(x, x.rate), rateText(x, x.p0), liftText(x.lift), tierText(x.tier)].map(v => el('td', { text: v }))));
+    tbl.appendChild(el('table', { class: 'tv' }, [el('thead', {}, [head]), el('tbody', {}, body)]));
+  }
+
+  /** When sessions begin, by weekday and hour, and what they opened into. */
+  function drawStarts(sessions) {
+    const box = $('#trig-starts');
+    box.innerHTML = '';
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const grid = days.map(() => new Array(24).fill(0));
+    sessions.forEach(s => {
+      const wd = (new Date(dayMs(s.Date)).getUTCDay() || 7) - 1;
+      grid[wd][+String(s.Start).slice(0, 2)]++;
+    });
+    const max = Math.max(1, ...grid.map(r => Math.max(...r)));
+    const heat = el('div', { class: 'heat' });
+    heat.appendChild(el('span', {}));
+    for (let h = 0; h < 24; h++) heat.appendChild(el('span', { class: 'h', text: h % 3 === 0 ? String(h) : '' }));
+    days.forEach((day, i) => {
+      heat.appendChild(el('span', { class: 'wd', text: day }));
+      for (let h = 0; h < 24; h++) {
+        const n = grid[i][h];
+        const cell = el('div', { class: 'cell', title: t('trig.starts.cell', '{d} {h}:00 · {n} sessions began', { d: day, h: String(h).padStart(2, '0'), n: n }) });
+        if (n) {
+          cell.style.background = 'var(--l-consumption)';
+          cell.style.opacity = (0.2 + 0.8 * Math.sqrt(n / max)).toFixed(2);
+        }
+        heat.appendChild(cell);
+      }
+    });
+    box.appendChild(heat);
+
+    const open = $('#trig-open');
+    open.innerHTML = '';
+    const total = sessions.length || 1;
+    const by = k => sessions.reduce((o, s) => Object.assign(o, { [s[k]]: (o[s[k]] || 0) + 1 }), {});
+    const opened = by('Opened with');
+    ['Feed', 'Stories', 'Messages', 'Search', 'Other'].filter(k => opened[k]).forEach(k => open.appendChild(el('div', { class: 'theme' }, [
+      el('span', { class: 'theme-n', text: ctxLabel(k) }),
+      el('div', { class: 'bar' }, [el('i', { class: 'is-consumption', style: `width:${(100 * opened[k] / total).toFixed(1)}%` })]),
+      el('span', { class: 'theme-v', text: fmt.pct(opened[k] / total) }),
+      el('span', { class: 'theme-l', text: fmt.int(opened[k]) }),
+    ])));
+    const pulled = by('Pulled by');
+    const quick = sessions.filter(s => s['Quick return'] === 'Yes').length;
+    $('#trig-open-note').textContent = t('trig.open.note', '{m} of {n} sessions began within 10 minutes of a message arriving, {p} within an hour of your own post going up, and {q} were quick returns — back within 30 minutes of the last one.', {
+      m: fmt.int(pulled['A message'] || 0), n: fmt.int(sessions.length), p: fmt.int(pulled['Your own post'] || 0), q: fmt.int(quick),
+    });
+  }
+
+  const DOT_GROUPINGS = {
+    'Opening format': ['Videos', 'Posts', 'Stories', 'Nothing seen'],
+    'Opening source': ['Mostly recommended', 'Mostly followed', 'Nothing seen'],
+    'Opening tone': ['Heavy', 'Light', 'Neutral', 'Nothing seen'],
+    'Part of day': ['Morning', 'Afternoon', 'Evening', 'Night'],
+  };
+
+  /** Every session as a dot on a minutes axis, grouped by how it began. */
+  function drawSessionDots(sessions) {
+    const box = $('#trig-dots');
+    box.innerHTML = '';
+    document.querySelectorAll('#dots-by [data-by]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.by === dotsBy)));
+    if (!sessions.length) return;
+    const mins = sessions.map(s => +s.Minutes).sort((a, b) => a - b);
+    const p75 = mins[Math.ceil(0.75 * mins.length) - 1];
+    // The axis stops at the 98th percentile: one 80-minute session should not squeeze everyone else into a corner.
+    const top = mins[Math.min(mins.length - 1, Math.floor(0.98 * mins.length))];
+    const groups = DOT_GROUPINGS[dotsBy].map(g => {
+      const mine = sessions.filter(s => s[dotsBy] === g);
+      const sorted = mine.map(s => +s.Minutes).sort((a, b) => a - b);
+      const med = sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : null;
+      const long = mine.filter(s => +s.Minutes >= p75).length;
+      return {
+        label: g === 'Nothing seen' ? t('trig.dots.nothing', 'Opened into messages or search') : ctxLabel(g),
+        sub: mine.length ? t('trig.dots.sub', '{n} sessions · median {m} min · {l} long', { n: mine.length, m: med, l: fmt.pct(long / mine.length) }) : '',
+        values: mine.map(s => ({ v: Math.min(+s.Minutes, top), data: s })),
+      };
+    }).filter(g => g.values.length);
+    box.appendChild(CH.dotGroups(groups, {
+      max: Math.max(10, top), fmt: v => String(v),
+      line: { v: p75, label: t('trig.dots.long', 'long: {m}+ min', { m: p75 }) },
+      onLeave: () => tip.hide(),
+      onHover: (s, evt) => tip.show(card => {
+        card.appendChild(el('div', { class: 'tipcard-h' }, [
+          el('b', { text: `${s.Minutes} min` }),
+          el('span', { class: 'tipcard-v', text: `${shortDate(s.Date)} ${s.Start}` }),
+        ]));
+        card.appendChild(el('p', { class: 'tipcard-note', text: t('trig.dots.tip', '{i} posts and videos, {st} stories, {a} ads · opened into {o}{p}', {
+          i: s.Items, st: s.Stories, a: s.Ads, o: ctxLabel(s['Opened with']).toLowerCase(),
+          p: s['Pulled by'] === 'A message' ? t('trig.dots.msg', ', after a message') : '',
+        }) }));
+        const acts = [[s.Acts, t('trig.dots.acts', 'acts')], [s.Searches, t('trig.dots.searches', 'searches')],
+          [s['Messages sent'], t('trig.dots.sent', 'messages sent')]].filter(a => +a[0]);
+        if (acts.length) card.appendChild(el('p', { class: 'tipcard-note', text: acts.map(a => `${a[0]} ${a[1]}`).join(' · ') }));
+      }, evt),
+    }));
+    $('#trig-dots-note').textContent = t('trig.dots.note', 'Each dot is one session; the short tick on each row is its median, the dashed line marks the top quarter of all sessions shown. Opening = the first five minutes. Sessions over {m} min sit at the right edge.', { m: top });
+  }
+
   // ── Theme toggle ──────────────────────────────────────────────────────────────
   function initTheme() {
     const saved = localStorage.getItem('theme');
@@ -3377,6 +4046,11 @@ var CH = (function () {
     document.querySelectorAll('#emo-mode [data-tone]').forEach(b => b.addEventListener('click', () => {
       toneMode = b.dataset.tone;
       if (payload) drawEmotions();
+    }));
+    document.querySelectorAll('#dots-by [data-by]').forEach(b => b.addEventListener('click', () => {
+      dotsBy = b.dataset.by;
+      const scope = payload ? triggerScope() : null;
+      if (scope) drawSessionDots(scope.sessions);
     }));
   }
 

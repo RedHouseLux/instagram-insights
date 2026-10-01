@@ -64,6 +64,11 @@ function getDashboardPayload() {
     weeklyHourly: sheetRows_('Weekly hourly'),
     weeklyBelonging: sheetRows_('Weekly belonging'),
     weeklyConversations: sheetRows_('Weekly conversations'),
+    // Context triggers: counts per bucket (the lift is worked out in the browser, over whatever range is shown),
+    // and the sessions themselves, keyed by date like Daily so any range selects them directly.
+    triggers: sheetRows_('Triggers'),
+    weeklyTriggers: sheetRows_('Weekly triggers'),
+    sessions: sheetRows_('Sessions'),
     conversations: sheetRows_('Conversations'),
     // Per 90-day insights window rather than per bucket: the dashboard draws it on its own time axis.
     performance: sheetRows_('Performance'),

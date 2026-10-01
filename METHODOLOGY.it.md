@@ -155,6 +155,64 @@ messaggi avevano un tono pesante.
 il dettaglio per persona. Misura il ricevere *risposta*, non l'essere ripresi o riconosciuti, e le risposte ai
 tuoi commenti pubblici non sono ancora nell'export.
 
+## Fattori di contesto
+
+Cosa è venuto subito prima di ciò che hai fatto (`contextTriggers_`). Sei comportamenti, ciascuno contato rispetto
+ai contesti che avrebbe potuto seguire. **Sono associazioni, non cause**: dicono cosa va insieme nei tuoi dati, non
+cosa provoca cosa — il feed che ti ha richiamato potrebbe essere anche quello che avresti aperto comunque.
+
+| Comportamento | Contato per | Un caso è |
+|---|---|---|
+| **Pull** — aprire l'app | minuto libero (un minuto in cui non eri già in una sessione) | una sessione che inizia in quel minuto |
+| **Stay** — sessioni lunghe | sessione | minuti nel quarto più lungo delle sessioni del periodo (≥ il suo 75° percentile) |
+| **Late** | sessione | inizio tra le 00:00 e le 05:59 |
+| **Act** — like, salvataggio, commento, follow, like a una storia | elemento visto in una sessione | hai agito su quell'elemento (stesso URL) o sul suo account entro 30 minuti |
+| **Seek** — ricerca, link | elemento visto · sessione | una ricerca o un link nei 10 minuti dopo l'elemento · in qualsiasi punto della sessione |
+| **Reach** — messaggio, commento | elemento visto · sessione | un messaggio inviato o un commento scritto nei 10 minuti dopo · in qualsiasi punto della sessione |
+
+**Contesti**, in cinque famiglie:
+
+- *Quando*: momento del giorno (notte 00–06, mattina, pomeriggio, sera 18–24), giorno feriale o fine settimana.
+- *Cosa è venuto subito prima*: un messaggio arrivato nei 10 minuti precedenti (Pull) o prima dell'inizio di una
+  sessione (Richiamato da); un tuo post, storia o reel nell'ora precedente; su cosa si è aperta la sessione (feed,
+  storie, messaggi, ricerca); il ritorno entro 30 minuti dalla sessione precedente; un'altra storia dello stesso
+  account nell'ora precedente.
+- *Cosa c'era sullo schermo*: formato (post, video, storia, inserzione), di chi era (un account che segui o no),
+  tono (pesante = le liste di ansia, tristezza, rabbia e paura; leggero = speranza, gioia, amore), tema.
+- *Come è iniziata la sessione*: le stesse quattro cose, lette sui suoi **primi cinque minuti** — la durata di una
+  sessione si legge rispetto a come è iniziata, non rispetto a tutto ciò che ha poi mostrato (una sessione lunga
+  mostra più di tutto). Un quarto o più di elementi pesanti fa un inizio pesante.
+- *Quanto dentro la sessione*: primi 5 minuti, 5–20, oltre 20.
+
+Ogni dimensione divide l'intera esposizione del suo comportamento, quindi le sue righe sommano allo stesso totale.
+"Aperto su" è escluso da Seek e Reach, perché una sessione aperta da una ricerca o da un messaggio ne contiene una
+per definizione.
+
+**Metodo.** Il foglio salva conteggi — *Exposure* e *Hits* per contesto (Triggers, Weekly triggers) — mai tassi,
+così qualsiasi intervallo di periodi si somma esattamente: Σ casi ÷ Σ esposizione sulle sue settimane o mesi. Il
+**rapporto** (lift) di un contesto è il suo tasso rispetto al tasso complessivo del comportamento sulla stessa
+dimensione, dopo averlo avvicinato a quel tasso con tre casi di prior: con `p₀` il tasso complessivo e `m = 3 / p₀`,
+`lift = ((casi + m·p₀) / (esposizione + m)) / p₀`. Due su tre non possono superare trenta su trecento.
+
+- **Prove**: meno di 3 casi è *troppo poco* — mostrato a puntini, mai in classifica; 3–9 è *qualche prova*; 10 o
+  più è *prove solide*. Un contesto che rende qualcosa più raro si vede dall'assenza di casi, quindi le prove di un
+  freno sono i casi che avrebbe avuto al ritmo abituale.
+- **Classifica**: solo rapporti ≥ 1,25 (più spesso) o ≤ 0,8 (meno spesso); forza = |ln rapporto|, × 0,6 per
+  *qualche prova*. I contesti che sono l'assenza di uno ("nulla visto", "nessuna storia prima") si contano ma non
+  entrano mai in classifica.
+- **Collegamenti sociali**, riportati come quote con i loro conteggi: conversazioni avviate da te entro un giorno
+  da una storia di quella persona (la conversazione si abbina alla storia tramite il nome visualizzato), like entro
+  un'ora da una storia di quell'account, sessioni iniziate entro 10 minuti dall'arrivo di un messaggio, ritorni
+  rapidi.
+- **Azioni su elementi visti / altrove**: un like o un salvataggio cade su qualcosa che il registro delle
+  visualizzazioni contiene (lo stesso post, o il suo account nella mezz'ora precedente) oppure arriva da un posto che
+  non ha registrato — un profilo, una condivisione, il web.
+
+Comportamenti così rari si accumulano lentamente: una settimana contiene 40–55 sessioni, abbastanza per gli schemi
+delle sessioni in poche settimane, ma solo una manciata di azioni deliberate, quindi gli schemi di act, seek e reach
+si costruiscono in mesi. Il cruscotto dice *troppo pochi* invece di indovinare, e il filtro dell'intervallo è il modo
+in cui le prove si sommano.
+
 ## Andamento del profilo
 
 Scheda Performance, una riga per ogni finestra di 90 giorni (`performanceRows_`, `upsertPerformance_`).
@@ -198,6 +256,11 @@ Scheda Performance, una riga per ogni finestra di 90 giorni (`performanceRows_`,
   precedenti, escludendo il valore più alto e il più basso quando ce ne sono almeno sei; ne servono almeno quattro.
   Un anello segna un punto che ne esce.
 - **I vuoti restano vuoti**: una settimana mancante non è uno zero.
+- **Sessioni** (`sessionsOf_`): tratti di attività senza silenzi più lunghi di 15 minuti, letti da ogni timestamp
+  che ti mostra sull'app: elementi visti e su cui hai agito, storie, inserzioni e i messaggi che hai inviato. Minuti
+  al giorno, sessioni al giorno e la scheda Sessions vengono tutti dallo stesso calcolo, quindi coincidono sempre.
+  Contare storie, inserzioni e messaggi ha alzato minuti e sessioni al giorno rispetto alle versioni precedenti,
+  che contavano solo elementi del feed e azioni; il ritmo per ora del giorno conta ancora elementi e azioni.
 
 ## Privacy
 
@@ -210,6 +273,8 @@ mai il contenuto. `node test/run-local.js` verifica che nessun testo di messaggi
 - Instagram conserva circa 7 giorni di cronologia di visualizzazione per export; sono gli export settimanali a
   costruire uno storico.
 - I minuti sono una stima minima costruita dai timestamp registrati (una sessione finisce dopo 15 minuti di silenzio).
+  Il tempo passato a leggere una conversazione o un link nell'app non lascia timestamp finché non fai qualcosa.
+- I fattori di contesto sono associazioni dentro i tuoi dati, non cause.
 - I tuoi commenti vengono esportati; le discussioni in cui si trovavano e le risposte no.
 - Post, storie e reel tuoi vengono letti da pagine che gli export settimanali su cui è stato costruito questo non
   contenevano; si contano per timestamp distinti e vanno controllati la prima volta che compaiono.
@@ -222,6 +287,7 @@ mai il contenuto. `node test/run-local.js` verifica che nessun testo di messaggi
 |---|---|
 | Soglia delle prove, finestra di risposta, pausa tra conversazioni, pesi delle azioni | `CONFIG` in cima a `Code.gs` |
 | Formule degli indicatori | `profileDefs` in `analyzeExport_` |
+| Comportamenti, contesti e soglie dei fattori di contesto | `contextTriggers_`, `TRIGGER_MIN_HITS`, `TRIGGER_STRONG` (e `rankTriggers` in `webapp/app.js`) |
 | Metriche dei livelli (colonne Monthly/Weekly) | `layerColumns` in `analyzeExport_` |
 | Elenchi di parole per temi, emozioni, segnali | la scheda Settings (poi *Rielabora tutto*) |
 | Campi ed etichette dell'andamento del profilo | `PERF_FIELDS` |

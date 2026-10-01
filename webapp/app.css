@@ -23,6 +23,14 @@
      Checked monotonic in OKLab L and >= 3:1 against both surfaces. Identity never rests on these steps
      alone — every slice is named in the legend and in the hover card. */
   --t1: #8a93a3; --t2: #7a8496; --t3: #6a7589; --t4: #5b667b; --t5: #4d586d; --t6: #3f4a5e; --t7: #333d4f;
+  /* The four layers (METHODOLOGY.md), one hue each. Validated as a set, all pairs, in both modes (validate_palette.js
+     --pairs all): normal-vision floor 15.2, CVD 7.0 deutan — inside the floor band, which is legal here because a
+     layer is always named in text beside its colour, never told apart by colour alone. The same four hexes clear
+     the dark surface too, so dark mode reuses them. */
+  --l-exposure: #2a78d6; --l-consumption: #0f9b9b; --l-social: #d4326e; --l-inbound: #b8860b;
+  /* Diverging pair for lifts: orange for "more often", slate for "less often", a neutral grey at "about the same".
+     Outside the layer hues and the status reds on purpose, so a lift never reads as a layer or as an alarm. */
+  --div-more: #eb6834; --div-less: #5b667b; --div-mid: #efeeea; --div-more-ink: #14161a; --div-less-ink: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -31,12 +39,14 @@
     /* Dark re-steps the ramp rather than flipping it: the same hue, re-anchored so light→dark still runs
        from most to least prominent against a dark surface. */
     --t1: #c3c9d4; --t2: #b2b9c6; --t3: #a1a9b8; --t4: #9099aa; --t5: #7f899c; --t6: #6f7a8e; --t7: #5f6b80;
+    --div-more: #dc6230; --div-less: #9099aa; --div-mid: #2c2f35; --div-more-ink: #121317; --div-less-ink: #121317;
   }
 }
 :root[data-theme="dark"] {
   --ground: #121317; --panel: #1a1c21; --ink: #f0f1f4; --ink-2: #b6bac1; --muted: #82868d; --line: #2b2e34;
   --seen: #4f95e0; --accent: #dc6230; --better: #0ca30c; --worse: #f08a80; --untagged: #4a4e56;
   --t1: #c3c9d4; --t2: #b2b9c6; --t3: #a1a9b8; --t4: #9099aa; --t5: #7f899c; --t6: #6f7a8e; --t7: #5f6b80;
+  --div-more: #dc6230; --div-less: #9099aa; --div-mid: #2c2f35; --div-more-ink: #121317; --div-less-ink: #121317;
 }
 * { box-sizing: border-box; }
 /* [hidden] is only a display:none of normal weight, so any later rule that sets display — .panel-centre's
@@ -493,4 +503,71 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
   .db { grid-template-columns: 96px 1fr; }
   .db-v { grid-column: 2; text-align: left; margin-top: -4px; }
   .aud-row { grid-template-columns: 84px 1fr; }
+}
+
+/* ── Context triggers ────────────────────────────────────────────────────────────────────────────────────
+   A card per pattern, railed in the colour of the layer its behaviour belongs to; the lift is the headline and
+   the two bars underneath are the evidence for it, so the number is never read without what it rests on. */
+.trig-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; }
+.trig { display: grid; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--layer, var(--line));
+  border-radius: 10px; padding: 12px 14px; }
+.trig.is-consumption, .tm-head.is-consumption { --layer: var(--l-consumption); }
+.trig.is-social, .tm-head.is-social { --layer: var(--l-social); }
+.trig-k { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.trig-tier { font-family: var(--mono); letter-spacing: .04em; text-transform: none; }
+.trig.tier-strong .trig-tier { color: var(--ink-2); }
+.trig-main { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
+.trig-s { margin: 0; font-size: 14px; line-height: 1.4; }
+.trig-lift { font-family: var(--cond); font-size: 26px; line-height: 1; }
+.trig-bar { display: grid; grid-template-columns: 112px 1fr 78px; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-2); }
+.trig-bar .bar i.is-now { background: var(--layer); }
+.trig-bar .bar i.is-usual { background: var(--muted); opacity: .55; }
+.trig-bar-v { font-family: var(--mono); font-size: 11.5px; text-align: right; font-variant-numeric: tabular-nums; }
+.trig-n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.trig-damp { margin-top: 14px; }
+.trig-damp:empty { display: none; }
+.trig-low { display: grid; grid-template-columns: 44px 1fr; gap: 0 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.trig-low:last-child { border-bottom: 0; }
+.trig-low b { font-family: var(--mono); font-size: 13px; color: var(--ink-2); grid-row: span 2; }
+.trig-low .trig-n { grid-column: 2; }
+
+/* The matrix is a table that colours itself: every cell is the same lift a card would show, on a diverging scale. */
+.tm-scroll { overflow-x: auto; }
+.tm { display: grid; grid-template-columns: minmax(170px, 1.6fr) repeat(6, minmax(58px, 1fr)); gap: 2px; min-width: 560px; align-items: stretch; }
+.tm-c { display: flex; align-items: center; justify-content: center; min-height: 26px; font-size: 12px; }
+.tm-head { font-size: 11.5px; font-weight: 600; color: var(--ink-2); border-bottom: 3px solid var(--layer, var(--line)); padding: 2px 4px 4px; text-align: center; }
+.tm-fam { grid-column: 1 / -1; font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 12px 0 2px; }
+.tm-row { justify-content: flex-start; flex-wrap: wrap; gap: 0 8px; padding: 0 6px 0 0; border-top: 1px solid transparent; }
+.tm-row.is-first { border-top-color: var(--line); }
+.tm-row i { font-style: normal; color: var(--muted); font-size: 11px; width: 100%; }
+.tm-row i:empty { display: none; }
+.tm-row b { font-weight: 500; color: var(--ink); }
+.tm-cell { border-radius: 4px; background: var(--div-mid); font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--ink);
+  font-variant-numeric: tabular-nums; cursor: default; outline-offset: 1px; }
+.tm-cell.is-more { color: var(--div-more-ink); }
+.tm-cell.is-less { color: var(--div-less-ink); }
+.tm-cell.is-na { background: transparent; }
+.tm-cell.tier-few { color: var(--muted); background: repeating-linear-gradient(45deg, transparent 0 3px, color-mix(in srgb, var(--ink) 7%, transparent) 3px 4px); }
+.tm-cell.tier-some { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 30%, transparent); outline: 1px dashed color-mix(in srgb, var(--ink) 35%, transparent); outline-offset: -3px; }
+.tm-cell:focus-visible { outline: 2px solid var(--seen); outline-offset: 1px; }
+.bar i.is-consumption { background: var(--l-consumption); }
+
+/* Sessions as dots: an HTML row per group, so the labels keep their size at any width. */
+.dg-row { display: grid; grid-template-columns: minmax(130px, 210px) 1fr; gap: 12px; align-items: center; }
+.dg-l { display: grid; line-height: 1.25; }
+.dg-l b { font-size: 13px; font-weight: 600; }
+.dg-l span { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.ch-dg { display: block; overflow: visible; }
+.ch-dg-dot { fill: var(--l-consumption); fill-opacity: .62; stroke: var(--panel); stroke-width: 2; }
+.ch-dg-dot.is-hot { fill-opacity: 1; stroke: var(--ink); stroke-width: 1.5; }
+.ch-dg-med { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
+.ch-dg-line { stroke: var(--ink-2); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.dg-axis { margin-top: 2px; }
+.dg-ticks { position: relative; height: 30px; }
+.dg-ticks span { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.dg-ticks .dg-line-l { top: 14px; color: var(--ink-2); white-space: nowrap; }
+@media (max-width: 620px) {
+  .dg-row { grid-template-columns: 1fr; gap: 0; margin-bottom: 6px; }
+  .dg-axis > div:first-child { display: none; }
+  .trig-bar { grid-template-columns: 92px 1fr 70px; }
 }

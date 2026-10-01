@@ -152,8 +152,55 @@
       </div>
     </section>
 
+    <!-- Context triggers: the conditions behaviour follows. Counts per bucket are summed over the range in the filter
+         row and turned into lifts in the browser, so the evidence for a pattern grows as weeks accumulate. -->
+    <section class="sec" id="sec-triggers">
+      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="trigger"></span><span data-i18n="sec.triggers">What comes just before what you do</span></h2>
+      <p class="lede" style="margin-bottom:8px" data-i18n="trig.lede">Under which conditions you open the app, stay long, act on what you
+        see, look something up or write to someone — read from what came just before. These are associations, not causes:
+        they say what goes together, not what makes what happen.</p>
+      <p class="mono" id="trig-empty" hidden data-i18n="trig.empty">Nothing here yet: sessions and their contexts are worked out when exports
+        are processed. In the Sheet, run Instagram Insights → Reprocess everything.</p>
+      <div id="trig-body">
+        <p class="mono" id="trig-scope" style="margin-bottom:14px"></p>
+        <h3 class="sub" data-i18n="trig.top">What stands out</h3>
+        <div class="trig-cards" id="trig-top"></div>
+        <div class="trig-damp" id="trig-damp"></div>
+        <div class="panel" style="margin-top:12px">
+          <h3 class="sub" data-i18n="trig.matrix.h">Context × behaviour</h3>
+          <div class="tm-scroll" id="trig-matrix"></div>
+          <p id="trig-matrix-key" class="mono" style="margin-top:10px"></p>
+          <details class="tableview"><summary data-i18n="table.view">Table view</summary><div id="trig-table"></div></details>
+        </div>
+        <div class="cols" style="margin-top:12px">
+          <div class="panel">
+            <h3 class="sub" data-i18n="trig.starts.h">When you open the app</h3>
+            <div id="trig-starts"></div>
+          </div>
+          <div class="panel">
+            <h3 class="sub" data-i18n="trig.open.h">What it opens into</h3>
+            <div id="trig-open"></div>
+            <p id="trig-open-note" class="mono" style="margin-top:10px"></p>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <div class="sub-row">
+            <h3 class="sub" data-i18n="trig.dots.h">What keeps you scrolling</h3>
+            <div class="seg" id="dots-by" role="group" data-i18n-title="trig.dots.by" title="Group by">
+              <button type="button" data-by="Opening format" data-i18n="trig.by.format">Opening format</button>
+              <button type="button" data-by="Opening source" data-i18n="trig.by.source">Opening accounts</button>
+              <button type="button" data-by="Opening tone" data-i18n="trig.by.tone">Opening tone</button>
+              <button type="button" data-by="Part of day" data-i18n="trig.by.part">Part of day</button>
+            </div>
+          </div>
+          <div id="trig-dots"></div>
+          <p id="trig-dots-note" class="mono" style="margin-top:10px"></p>
+        </div>
+      </div>
+    </section>
+
     <section class="sec" id="sec-people">
-      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
+      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
       <div class="pow" id="pow" hidden></div>
       <div class="cols">
         <div class="panel">
@@ -179,7 +226,7 @@
     </section>
 
     <section class="sec" id="sec-feeling">
-      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
+      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
       <div class="panel">
         <div class="sub-row">
           <h3 class="sub" id="emo-h"></h3>
@@ -197,7 +244,7 @@
          influence panel is the relation between the two. Each indicator is a strip of every bucket on record,
          so where this one sits is read against your own range rather than as a verdict on a 0–100 scale. -->
     <section class="sec" id="sec-profile">
-      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="person"></span><span data-i18n="sec.profile">What you do, and what you are shown</span></h2>
+      <h2 class="sec-h"><span class="sec-n">09</span><span class="sec-i" data-icon="person"></span><span data-i18n="sec.profile">What you do, and what you are shown</span></h2>
       <div class="cols cols-strips">
         <div class="panel"><h3 class="sub" data-i18n="strips.do">What you do · personality and needs, from behaviour</h3><div id="strips-do"></div></div>
         <div class="panel"><h3 class="sub" data-i18n="strips.shown">What you were shown · the feed diet</h3><div id="strips-shown"></div></div>
@@ -213,7 +260,7 @@
     </section>
 
     <section class="sec" id="sec-belonging" hidden>
-      <h2 class="sec-h"><span class="sec-n">09</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
+      <h2 class="sec-h"><span class="sec-n">10</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
       <p class="lede" style="margin-bottom:14px" data-i18n="bel.lede">Four things belonging is made of. An Instagram export
         measures two of them, reaches a third only by proxy, and is silent on the fourth — that row says so rather
         than being dropped, because a missing row reads as nothing to report, which is the opposite of what is true.</p>
@@ -230,7 +277,7 @@
     </section>
 
     <section class="sec" id="sec-risks">
-      <h2 class="sec-h"><span class="sec-n">10</span><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
+      <h2 class="sec-h"><span class="sec-n">11</span><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
       <div class="cols cols-matrix">
         <div class="panel panel-centre"><div id="risk-matrix"></div></div>
         <div class="panel" id="risks"></div>
@@ -238,7 +285,7 @@
     </section>
 
     <section class="sec" id="sec-signals">
-      <h2 class="sec-h"><span class="sec-n">11</span><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
+      <h2 class="sec-h"><span class="sec-n">12</span><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
       <div class="panel" id="signals"></div>
     </section>
 

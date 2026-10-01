@@ -14,6 +14,7 @@
     Belonging: 'belonging', 'Weekly belonging': 'weeklyBelonging',
     Conversations: 'conversations', 'Weekly conversations': 'weeklyConversations',
     Performance: 'performance',
+    Triggers: 'triggers', 'Weekly triggers': 'weeklyTriggers', Sessions: 'sessions',
   };
   // Monthly tab name → its weekly twin. bucketTable() below picks between them off the current mode, so each
   // draw* function names the monthly tab once and stays bucket-agnostic.
@@ -200,6 +201,34 @@
       'conv.person': 'Persona', 'conv.msgs': 'Inviati · ricevuti', 'conv.convs': 'Conversazioni (avviate da te)',
       'conv.yours': 'Tuoi turni con risposta', 'conv.theirs': 'Loro turni a cui hai risposto', 'conv.wait': 'Risposta mediana: loro · tu',
       'conv.voice': 'vocali',
+      // Context triggers
+      'sec.triggers': 'Cosa viene subito prima di ciò che fai',
+      'trig.lede': 'In quali condizioni apri l’app, ci resti a lungo, agisci su ciò che vedi, cerchi qualcosa o scrivi a qualcuno — letto da ciò che è venuto subito prima. Sono associazioni, non cause: dicono cosa va insieme, non cosa provoca cosa.',
+      'trig.empty': 'Qui non c’è ancora nulla: le sessioni e i loro contesti si calcolano durante l’elaborazione. Nel Foglio, usa Instagram Insights → Rielabora tutto.',
+      'trig.scope': '{range}: {s} sessioni e {i} elementi visti, su {b} {unit}. Associazioni, non cause.',
+      'trig.months': 'mesi', 'trig.weeks': 'settimane',
+      'trig.top': 'Ciò che spicca', 'trig.damp': 'Meno spesso del solito',
+      'trig.none': 'Per ora non spicca nulla: nessun contesto sposta questi comportamenti di un quarto o più con abbastanza eventi alle spalle. Allarga l’intervallo per avere più prove.',
+      'trig.when': 'In questo contesto', 'trig.usual': 'Il tuo ritmo abituale', 'trig.perhour': 'all’ora',
+      'trig.n.pull': '{h} aperture in {e} ore libere', 'trig.n': '{h} su {e} {u}',
+      'trig.u.sessions': 'sessioni', 'trig.u.items': 'elementi visti',
+      'trig.tier.strong': 'Prove solide', 'trig.tier.some': 'Qualche prova', 'trig.tier.few': 'Troppo pochi per dirlo',
+      'trig.matrix.h': 'Contesto × comportamento', 'trig.notheme': 'Nessun tema riconosciuto',
+      'trig.key': 'Arancione: succede più spesso del tuo ritmo abituale in quel contesto · grigio-blu: meno spesso · grigio: più o meno uguale · punto: troppo pochi eventi per dirlo · bordo tratteggiato: qualche prova (3–9 eventi), pieno: prove solide (10+). Avvicinato al "solito" in proporzione, così una manciata di eventi non sembra mai uno schema.',
+      'trig.f.time': 'Quando', 'trig.f.before': 'Cosa è venuto subito prima', 'trig.f.screen': 'Cosa c’era sullo schermo',
+      'trig.f.opening': 'Come è iniziata la sessione', 'trig.f.phase': 'Quanto dentro la sessione',
+      'trig.t.outcome': 'Comportamento', 'trig.t.dim': 'Contesto', 'trig.t.counts': 'Conteggi', 'trig.t.rate': 'Ritmo',
+      'trig.t.usual': 'Abituale', 'trig.t.lift': 'Rapporto', 'trig.t.tier': 'Prove',
+      'trig.starts.h': 'Quando apri l’app', 'trig.starts.cell': '{d} {h}:00 · {n} sessioni iniziate',
+      'trig.open.h': 'Su cosa si apre',
+      'trig.open.note': '{m} sessioni su {n} sono iniziate entro 10 minuti dall’arrivo di un messaggio, {p} entro un’ora da un tuo post, e {q} sono state ritorni rapidi — di nuovo dentro entro 30 minuti dalla precedente.',
+      'trig.dots.h': 'Cosa ti tiene a scorrere', 'trig.dots.by': 'Raggruppa per',
+      'trig.by.format': 'Formato iniziale', 'trig.by.source': 'Account iniziali', 'trig.by.tone': 'Tono iniziale', 'trig.by.part': 'Momento del giorno',
+      'trig.dots.nothing': 'Aperta su messaggi o ricerca', 'trig.dots.sub': '{n} sessioni · mediana {m} min · {l} lunghe',
+      'trig.dots.long': 'lunga: {m}+ min',
+      'trig.dots.tip': '{i} post e video, {st} storie, {a} inserzioni · aperta su {o}{p}', 'trig.dots.msg': ', dopo un messaggio',
+      'trig.dots.acts': 'azioni', 'trig.dots.searches': 'ricerche', 'trig.dots.sent': 'messaggi inviati',
+      'trig.dots.note': 'Ogni punto è una sessione; il trattino corto su ogni riga è la sua mediana, la linea tratteggiata segna il quarto più lungo di tutte le sessioni mostrate. Inizio = i primi cinque minuti. Le sessioni oltre {m} min stanno sul bordo destro.',
     },
   };
 
@@ -614,6 +643,7 @@
     drawBelonging();
     drawConversations();
     drawDaily();
+    drawTriggers();
     drawEmotions();
     drawStrips();
     drawInfluence();
@@ -2082,6 +2112,435 @@
     ]));
   }
 
+  // ── Context triggers ─────────────────────────────────────────────────────────────────────────────────
+  // The Sheet stores counts (Triggers, Weekly triggers) and the sessions themselves (Sessions); the lift is worked
+  // out here, over whatever range the filter row selects, so a range of weeks adds up exactly instead of
+  // averaging rates. rankTriggers mirrors rankTriggers_ in Code.gs — keep the two in step.
+  const TRIG_MIN = 3; // mirrors TRIGGER_MIN_HITS
+  const TRIG_STRONG = 10; // mirrors TRIGGER_STRONG
+  const TRIG_UNRANKED = ['Nothing seen', 'Unknown', 'Sponsored', 'Nothing in particular', 'Nothing just before',
+    'No story first', 'Not a quick return'];
+  const TRIG_OUTCOMES = ['Pull', 'Stay', 'Late', 'Act', 'Seek', 'Reach'];
+  // Which layer each outcome belongs to: opening, staying and looking things up are how you used the app; acting on
+  // content and writing to people are what you did toward them.
+  const TRIG_LAYER = { Pull: 'consumption', Stay: 'consumption', Late: 'consumption', Seek: 'consumption', Act: 'social', Reach: 'social' };
+  let dotsBy = 'Opening format';
+
+  function rankTriggers(rows) {
+    const groups = {};
+    rows.forEach(r => {
+      const gk = r.Outcome + '|' + r.Dimension;
+      const g = groups[gk] = groups[gk] || { exposure: 0, hits: 0, contexts: {} };
+      const x = g.contexts[r.Context] = g.contexts[r.Context]
+        || { outcome: r.Outcome, dimension: r.Dimension, context: r.Context, unit: r.Unit, exposure: 0, hits: 0 };
+      x.exposure += +r.Exposure || 0;
+      x.hits += +r.Hits || 0;
+      g.exposure += +r.Exposure || 0;
+      g.hits += +r.Hits || 0;
+    });
+    const all = [];
+    Object.keys(groups).forEach(gk => {
+      const g = groups[gk];
+      if (!g.hits || !g.exposure) return;
+      const p0 = g.hits / g.exposure;
+      Object.keys(g.contexts).forEach(name => {
+        const x = g.contexts[name];
+        if (!x.exposure) return;
+        const lift = ((x.hits + TRIG_MIN) / (x.exposure + TRIG_MIN / p0)) / p0;
+        const evidence = lift >= 1 ? x.hits : x.exposure * p0;
+        const tier = evidence < TRIG_MIN ? 'few' : evidence < TRIG_STRONG ? 'some' : 'strong';
+        all.push(Object.assign(x, {
+          p0: p0, rate: x.hits / x.exposure, lift: lift, tier: tier, ranked: TRIG_UNRANKED.indexOf(name) < 0,
+          strength: tier === 'few' || TRIG_UNRANKED.indexOf(name) >= 0 ? 0 : Math.abs(Math.log(lift)) * (tier === 'strong' ? 1 : 0.6),
+        }));
+      });
+    });
+    const ranked = all.filter(x => x.strength > 0).sort((a, b) => b.strength - a.strength);
+    return { all: all, triggers: ranked.filter(x => x.lift >= 1.25), dampeners: ranked.filter(x => x.lift <= 0.8) };
+  }
+
+  /** The trigger counts and sessions inside the range the filter row shows. */
+  function triggerScope() {
+    const tp = trendPeriods();
+    if (!tp) return null;
+    const monthly = tp.unit === 'month';
+    const rows = monthly
+      ? table('Triggers').filter(r => r.Month >= tp.from.slice(0, 7) && r.Month <= tp.to.slice(0, 7))
+      : table('Weekly triggers').filter(r => r['Week start'] >= mondayOf(tp.from) && r['Week start'] <= tp.to);
+    const sessions = table('Sessions').filter(s => s.Date >= tp.from && s.Date <= tp.to);
+    return { tp: tp, rows: rows, sessions: sessions, buckets: unique(rows.map(r => (monthly ? r.Month : r.Week))).length };
+  }
+  const unique = list => Array.from(new Set(list));
+
+  const TRIG_WORDS = {
+    en: {
+      outcome: { Pull: 'Opening the app', Stay: 'Long sessions', Late: 'Late-night sessions', Act: 'Acting on content', Seek: 'Looking things up', Reach: 'Reaching out' },
+      col: { Pull: 'Open', Stay: 'Stay long', Late: 'Late', Act: 'Act', Seek: 'Look up', Reach: 'Reach out' },
+      lead: {
+        Pull: ['You open the app more often', 'You open the app less often'],
+        Stay: ['Sessions run long more often', 'Sessions run long less often'],
+        Late: ['Sessions start late at night more often', 'Sessions start late at night less often'],
+        Act: ['You like, save, comment or follow more', 'You like, save, comment or follow less'],
+        Seek: ['You look things up more', 'You look things up less'],
+        Reach: ['You write to people more', 'You write to people less'],
+      },
+      dim: {
+        'Part of day': 'Part of day', Weekend: 'Day of the week', 'Just before': 'What just happened', 'Pulled by': 'Pulled in by',
+        'Opened with': 'Opened into', 'Quick return': 'Coming straight back', 'Their story first': 'Their story first',
+        Format: 'Format on screen', Source: 'Whose it was', Tone: 'Tone on screen', Theme: 'Theme on screen',
+        'Opening format': 'Opening format', 'Opening source': 'Opening accounts', 'Opening tone': 'Opening tone',
+        'Opening theme': 'Opening theme', 'Session phase': 'How far into a session',
+      },
+      ctx: {},
+    },
+    it: {
+      outcome: { Pull: 'Aprire l’app', Stay: 'Sessioni lunghe', Late: 'Sessioni notturne', Act: 'Agire sui contenuti', Seek: 'Cercare', Reach: 'Scrivere alle persone' },
+      col: { Pull: 'Apri', Stay: 'Lunghe', Late: 'Notte', Act: 'Agisci', Seek: 'Cerchi', Reach: 'Scrivi' },
+      lead: {
+        Pull: ['Apri l’app più spesso', 'Apri l’app meno spesso'],
+        Stay: ['Le sessioni durano a lungo più spesso', 'Le sessioni durano a lungo meno spesso'],
+        Late: ['Le sessioni iniziano a notte fonda più spesso', 'Le sessioni iniziano a notte fonda meno spesso'],
+        Act: ['Metti like, salvi, commenti o segui di più', 'Metti like, salvi, commenti o segui di meno'],
+        Seek: ['Cerchi cose di più', 'Cerchi cose di meno'],
+        Reach: ['Scrivi alle persone di più', 'Scrivi alle persone di meno'],
+      },
+      dim: {
+        'Part of day': 'Momento del giorno', Weekend: 'Giorno della settimana', 'Just before': 'Cosa è appena successo', 'Pulled by': 'Richiamato da',
+        'Opened with': 'Aperto su', 'Quick return': 'Ritorno immediato', 'Their story first': 'Prima la sua storia',
+        Format: 'Formato sullo schermo', Source: 'Di chi era', Tone: 'Tono sullo schermo', Theme: 'Tema sullo schermo',
+        'Opening format': 'Formato iniziale', 'Opening source': 'Account iniziali', 'Opening tone': 'Tono iniziale',
+        'Opening theme': 'Tema iniziale', 'Session phase': 'Quanto dentro la sessione',
+      },
+      ctx: {
+        Morning: 'Mattina', Afternoon: 'Pomeriggio', Evening: 'Sera', Night: 'Notte', Weekend: 'Fine settimana', Weekday: 'Giorno feriale',
+        'A message arrived': 'È arrivato un messaggio', 'Your post went up': 'Hai appena pubblicato', 'A message': 'Un messaggio',
+        'Your own post': 'Un tuo post', Feed: 'Feed', Stories: 'Storie', Messages: 'Messaggi', Search: 'Ricerca', Other: 'Altro',
+        'Quick return': 'Entro mezz’ora', 'After their story': 'Dopo una sua storia', Post: 'Post', Video: 'Video', Story: 'Storia',
+        Ad: 'Inserzione', Followed: 'Account che segui', Recommended: 'Account che non segui', Heavy: 'Pesante', Light: 'Leggero',
+        Neutral: 'Neutro', Videos: 'Video', Posts: 'Post', 'Mostly recommended': 'Soprattutto non seguiti',
+        'Mostly followed': 'Soprattutto seguiti', 'First 5 min': 'Primi 5 min', '5–20 min': '5–20 min', '20+ min': 'Oltre 20 min',
+      },
+    },
+  };
+  // English context labels, where the stored value alone reads badly.
+  TRIG_WORDS.en.ctx = {
+    Weekday: 'Weekday', 'A message arrived': 'A message arrived', 'Your post went up': 'Your post went up', 'Quick return': 'Within 30 min',
+    'After their story': 'After their story', Followed: 'Accounts you follow', Recommended: 'Accounts you don’t follow',
+    'Mostly recommended': 'Mostly not followed', 'Mostly followed': 'Mostly followed',
+  };
+  const tw = () => TRIG_WORDS[lang] || TRIG_WORDS.en;
+  const ctxLabel = c => tw().ctx[c] || c;
+
+  /** "…on videos", "…when a session opens with stories": the context half of a trigger sentence. */
+  function ctxPhrase(x) {
+    const c = x.context;
+    if (lang === 'it') {
+      const prep = x.outcome === 'Act' ? 'su' : 'dopo';
+      const tone = { Heavy: 'pesanti', Light: 'leggeri', Neutral: 'neutri' };
+      switch (x.dimension) {
+        case 'Part of day': return { Morning: 'di mattina', Afternoon: 'di pomeriggio', Evening: 'di sera', Night: 'di notte' }[c];
+        case 'Weekend': return c === 'Weekend' ? 'nel fine settimana' : 'nei giorni feriali';
+        case 'Just before': return c === 'A message arrived' ? 'subito dopo l’arrivo di un messaggio' : 'subito dopo aver pubblicato qualcosa';
+        case 'Pulled by': return c === 'A message' ? 'quando ti ha richiamato un messaggio' : 'quando torni a controllare un tuo post';
+        case 'Opened with': return { Feed: 'quando apri direttamente sul feed', Stories: 'quando apri sulle storie', Messages: 'quando apri sui messaggi',
+          Search: 'quando apri con una ricerca', Other: 'quando apri con altro' }[c];
+        case 'Quick return': return 'quando torni entro mezz’ora';
+        case 'Opening format': return 'quando una sessione si apre con ' + ({ Videos: 'video', Posts: 'post', Stories: 'storie' }[c] || c);
+        case 'Opening source': return c === 'Mostly recommended' ? 'quando una sessione si apre con account che non segui' : 'quando una sessione si apre con account che segui';
+        case 'Opening tone': return 'quando una sessione si apre su contenuti ' + (tone[c] || c);
+        case 'Opening theme': return 'quando una sessione si apre con ' + c;
+        case 'Format': return prep + ' ' + ({ Post: 'i post', Video: 'i video', Story: 'le storie', Ad: 'le inserzioni' }[c] || c);
+        case 'Source': return prep + (c === 'Followed' ? ' account che segui' : ' account che non segui');
+        case 'Theme': return prep + ' ' + c;
+        case 'Tone': return prep + ' contenuti ' + (tone[c] || c);
+        case 'Session phase': return { 'First 5 min': 'nei primi cinque minuti di una sessione', '5–20 min': 'tra 5 e 20 minuti dall’inizio di una sessione',
+          '20+ min': 'quando una sessione ha superato i 20 minuti' }[c];
+        case 'Their story first': return 'subito dopo aver visto una sua storia';
+        default: return x.dimension + ': ' + c;
+      }
+    }
+    const prep = x.outcome === 'Act' ? 'on' : 'after';
+    switch (x.dimension) {
+      case 'Part of day': return { Morning: 'in the morning', Afternoon: 'in the afternoon', Evening: 'in the evening', Night: 'at night' }[c];
+      case 'Weekend': return c === 'Weekend' ? 'at weekends' : 'on weekdays';
+      case 'Just before': return c === 'A message arrived' ? 'just after a message arrives' : 'just after your own post goes up';
+      case 'Pulled by': return c === 'A message' ? 'when a message pulled you in' : 'when you are checking back on your own post';
+      case 'Opened with': return { Feed: 'when you open straight into the feed', Stories: 'when you open into stories', Messages: 'when you open into your messages',
+        Search: 'when you open with a search', Other: 'when you open with something else' }[c];
+      case 'Quick return': return 'when you come back within half an hour';
+      case 'Opening format': return 'when a session opens with ' + String(c).toLowerCase();
+      case 'Opening source': return c === 'Mostly recommended' ? 'when a session opens with accounts you don’t follow' : 'when a session opens with accounts you follow';
+      case 'Opening tone': return 'when a session opens on ' + String(c).toLowerCase() + ' content';
+      case 'Opening theme': return 'when a session opens with ' + c;
+      case 'Format': return prep + ' ' + ({ Post: 'posts', Video: 'videos', Story: 'stories', Ad: 'ads' }[c] || c);
+      case 'Source': return prep + (c === 'Followed' ? ' accounts you follow' : ' accounts you don’t follow');
+      case 'Theme': return prep + ' ' + c;
+      case 'Tone': return prep + ' ' + String(c).toLowerCase() + ' content';
+      case 'Session phase': return { 'First 5 min': 'in the first five minutes of a session', '5–20 min': '5–20 minutes into a session',
+        '20+ min': 'once a session has run past 20 minutes' }[c];
+      case 'Their story first': return 'right after watching that account’s story';
+      default: return x.dimension + ': ' + c;
+    }
+  }
+  const triggerSentence = x => tw().lead[x.outcome][x.lift >= 1 ? 0 : 1] + ' ' + ctxPhrase(x);
+  const liftText = v => (v >= 10 ? Math.round(v) : v.toFixed(1)) + '×';
+  const isPull = x => x.unit === 'idle minutes';
+  const rateText = (x, v) => (isPull(x) ? `${(60 * v).toFixed(2)} ${t('trig.perhour', 'an hour')}` : fmt.pct(v));
+  function countText(x) {
+    if (isPull(x)) return t('trig.n.pull', '{h} starts in {e} idle hours', { h: fmt.int(x.hits), e: fmt.int(x.exposure / 60) });
+    const unit = x.unit === 'sessions' ? t('trig.u.sessions', 'sessions') : t('trig.u.items', 'items seen');
+    return t('trig.n', '{h} of {e} {u}', { h: fmt.int(x.hits), e: fmt.int(x.exposure), u: unit });
+  }
+  const tierText = tier => ({ strong: t('trig.tier.strong', 'Strong evidence'), some: t('trig.tier.some', 'Some evidence'),
+    few: t('trig.tier.few', 'Too few to say') })[tier];
+
+  function drawTriggers() {
+    const sec = $('#sec-triggers');
+    if (!sec) return;
+    const scope = triggerScope();
+    const empty = !scope || (!scope.rows.length && !scope.sessions.length);
+    $('#trig-body').hidden = empty;
+    $('#trig-empty').hidden = !empty;
+    if (empty) return;
+    const ranked = rankTriggers(scope.rows);
+    const items = ranked.all.filter(x => x.outcome === 'Act' && x.dimension === 'Format').reduce((n, x) => n + x.exposure, 0);
+    $('#trig-scope').textContent = t('trig.scope', '{range}: {s} sessions and {i} items seen, across {b} {unit}. Associations, not causes.', {
+      range: `${periodLabel({ key: scope.tp.from, start: scope.tp.from }, 'day')} – ${periodLabel({ key: scope.tp.to, start: scope.tp.to }, 'day')}`,
+      s: fmt.int(scope.sessions.length), i: fmt.int(items), b: scope.buckets,
+      unit: scope.tp.unit === 'month' ? t('trig.months', 'months') : t('trig.weeks', 'weeks'),
+    });
+    drawTopTriggers(ranked);
+    drawTriggerMatrix(ranked);
+    drawStarts(scope.sessions);
+    drawSessionDots(scope.sessions);
+  }
+
+  function triggerCard(x) {
+    const max = Math.max(x.rate, x.p0) || 1;
+    const bar = (label, v, cls) => el('div', { class: 'trig-bar' }, [
+      el('span', { class: 'trig-bar-k', text: label }),
+      el('div', { class: 'bar' }, [el('i', { class: cls, style: `width:${(100 * v / max).toFixed(1)}%` })]),
+      el('span', { class: 'trig-bar-v', text: rateText(x, v) }),
+    ]);
+    return el('div', { class: `trig is-${TRIG_LAYER[x.outcome]} tier-${x.tier}` }, [
+      el('div', { class: 'trig-k' }, [
+        el('span', { text: tw().outcome[x.outcome] }),
+        el('span', { class: 'trig-tier', text: tierText(x.tier) }),
+      ]),
+      el('div', { class: 'trig-main' }, [
+        el('p', { class: 'trig-s', text: triggerSentence(x) }),
+        el('b', { class: 'trig-lift', text: liftText(x.lift) }),
+      ]),
+      bar(t('trig.when', 'In this context'), x.rate, 'is-now'),
+      bar(t('trig.usual', 'Your usual rate'), x.p0, 'is-usual'),
+      el('span', { class: 'trig-n', text: countText(x) }),
+    ]);
+  }
+
+  function drawTopTriggers(ranked) {
+    const box = $('#trig-top');
+    box.innerHTML = '';
+    // At most two per outcome, so six cards show six different kinds of behaviour rather than one dominating.
+    const per = {};
+    const picks = ranked.triggers.filter(x => (per[x.outcome] = (per[x.outcome] || 0) + 1) <= 2).slice(0, 6);
+    if (!picks.length) {
+      box.appendChild(el('p', { class: 'mono', text: t('trig.none', 'Nothing stands out yet: no context shifts any of these by a quarter or more with enough events behind it. Widen the range for more evidence.') }));
+    }
+    picks.forEach(x => box.appendChild(triggerCard(x)));
+    const damp = $('#trig-damp');
+    damp.innerHTML = '';
+    const lows = ranked.dampeners.slice(0, 4);
+    if (!lows.length) return;
+    damp.appendChild(el('h3', { class: 'sub', text: t('trig.damp', 'Less often than usual') }));
+    lows.forEach(x => damp.appendChild(el('div', { class: 'trig-low' }, [
+      el('b', { text: liftText(x.lift) }),
+      el('span', { text: triggerSentence(x) }),
+      el('span', { class: 'trig-n', text: countText(x) + ' · ' + tierText(x.tier) }),
+    ])));
+  }
+
+  // Families of contexts, in the order the matrix reads: when, what just happened, what was on screen, how the
+  // session began, how far into it.
+  const TRIG_FAMILIES = [
+    { label: ['trig.f.time', 'When'], dims: ['Part of day', 'Weekend'] },
+    { label: ['trig.f.before', 'What came just before'], dims: ['Just before', 'Pulled by', 'Opened with', 'Quick return', 'Their story first'] },
+    { label: ['trig.f.screen', 'What was on screen'], dims: ['Format', 'Source', 'Tone', 'Theme'] },
+    { label: ['trig.f.opening', 'How the session began'], dims: ['Opening format', 'Opening source', 'Opening tone', 'Opening theme'] },
+    { label: ['trig.f.phase', 'How far into a session'], dims: ['Session phase'] },
+  ];
+  const CONTEXT_ORDER = {
+    'Part of day': ['Morning', 'Afternoon', 'Evening', 'Night'], Weekend: ['Weekday', 'Weekend'],
+    Format: ['Post', 'Video', 'Story', 'Ad'], Source: ['Followed', 'Recommended'], Tone: ['Heavy', 'Light', 'Neutral'],
+    'Opening format': ['Posts', 'Videos', 'Stories'], 'Opening source': ['Mostly followed', 'Mostly recommended'],
+    'Opening tone': ['Heavy', 'Light', 'Neutral'], 'Session phase': ['First 5 min', '5–20 min', '20+ min'],
+    'Opened with': ['Feed', 'Stories', 'Messages', 'Search', 'Other'],
+  };
+
+  function drawTriggerMatrix(ranked) {
+    const box = $('#trig-matrix');
+    box.innerHTML = '';
+    const byKey = {};
+    ranked.all.forEach(x => { byKey[x.outcome + '|' + x.dimension + '|' + x.context] = x; });
+    const grid = el('div', { class: 'tm', role: 'table' });
+    grid.appendChild(el('span', { class: 'tm-c tm-corner' }));
+    TRIG_OUTCOMES.forEach(o => grid.appendChild(el('span', { class: `tm-c tm-head is-${TRIG_LAYER[o]}`, role: 'columnheader', text: tw().col[o], title: tw().outcome[o] })));
+    const tableRows = [];
+    TRIG_FAMILIES.forEach(fam => {
+      const lines = [];
+      fam.dims.forEach(dim => {
+        const mine = ranked.all.filter(x => x.dimension === dim && x.ranked);
+        let contexts = unique(mine.map(x => x.context));
+        const exposureOf = c => Math.max.apply(null, mine.filter(x => x.context === c).map(x => x.exposure));
+        if (CONTEXT_ORDER[dim]) contexts.sort((a, b) => CONTEXT_ORDER[dim].indexOf(a) - CONTEXT_ORDER[dim].indexOf(b));
+        else contexts.sort((a, b) => exposureOf(b) - exposureOf(a));
+        // Themes are the long tail: the six biggest carry the matrix, the table view carries the rest.
+        if (/theme/i.test(dim)) contexts = contexts.slice(0, 5);
+        contexts.forEach(c => lines.push({ dim: dim, context: c }));
+      });
+      if (!lines.length) return;
+      grid.appendChild(el('span', { class: 'tm-fam', text: tr(fam.label) }));
+      lines.forEach((line, k) => {
+        const first = k === 0 || lines[k - 1].dim !== line.dim;
+        grid.appendChild(el('span', { class: 'tm-c tm-row' + (first ? ' is-first' : ''), role: 'rowheader' }, [
+          el('i', { text: first ? tw().dim[line.dim] || line.dim : '' }),
+          el('b', { text: /theme/i.test(line.dim) && line.context === 'Other' ? t('trig.notheme', 'No theme matched') : ctxLabel(line.context) }),
+        ]));
+        TRIG_OUTCOMES.forEach(o => {
+          const x = byKey[o + '|' + line.dim + '|' + line.context];
+          if (!x) { grid.appendChild(el('span', { class: 'tm-c tm-cell is-na', role: 'cell' })); return; }
+          tableRows.push(x);
+          const cell = el('span', { class: 'tm-c tm-cell tier-' + x.tier, role: 'cell', tabindex: '0' });
+          if (x.tier !== 'few') {
+            const k2 = Math.min(1, Math.abs(Math.log(x.lift)) / Math.log(3));
+            const pole = x.lift >= 1 ? 'var(--div-more)' : 'var(--div-less)';
+            cell.style.background = `color-mix(in oklab, ${pole} ${Math.round(85 * k2)}%, var(--div-mid))`;
+            if (k2 > 0.55) cell.classList.add(x.lift >= 1 ? 'is-more' : 'is-less');
+            // Numbers only where they say something: a lift of 1.1 is a colour, not a finding.
+            if (x.lift >= 1.25 || x.lift <= 0.8) cell.textContent = liftText(x.lift);
+          } else cell.textContent = '·';
+          const show = (evt, anchor) => tip.show(card => {
+            card.appendChild(el('div', { class: 'tipcard-h' }, [
+              el('b', { text: liftText(x.lift) }),
+              el('span', { class: 'tipcard-v', text: tierText(x.tier) }),
+            ]));
+            card.appendChild(el('p', { class: 'tipcard-note', text: triggerSentence(x) }));
+            card.appendChild(el('p', { class: 'tipcard-note', text: countText(x) + ' · ' + t('trig.usual', 'Your usual rate') + ' ' + rateText(x, x.p0) }));
+          }, evt, anchor);
+          cell.addEventListener('mousemove', e => show(e));
+          cell.addEventListener('mouseleave', () => tip.hide());
+          cell.addEventListener('focus', () => show(null, cell));
+          cell.addEventListener('blur', () => tip.hide());
+          grid.appendChild(cell);
+        });
+      });
+    });
+    box.appendChild(grid);
+    $('#trig-matrix-key').textContent = t('trig.key', 'Orange: happens more often in that context than your usual rate · grey-blue: less often · grey: about the same · dotted: too few events to say · dashed outline: some evidence (3–9 events), solid: strong (10+). Shrunk toward "usual" so a handful of events can never look like a pattern.');
+    const tbl = $('#trig-table');
+    tbl.innerHTML = '';
+    const head = el('tr', {}, ['trig.t.outcome|Outcome', 'trig.t.dim|Context', 'trig.t.counts|Counts', 'trig.t.rate|Rate',
+      'trig.t.usual|Usual', 'trig.t.lift|Lift', 'trig.t.tier|Evidence'].map(s => el('th', { text: t(s.split('|')[0], s.split('|')[1]) })));
+    const body = ranked.all.filter(x => x.ranked).sort((a, b) => TRIG_OUTCOMES.indexOf(a.outcome) - TRIG_OUTCOMES.indexOf(b.outcome) || b.lift - a.lift)
+      .map(x => el('tr', {}, [tw().outcome[x.outcome], `${tw().dim[x.dimension] || x.dimension}: ${ctxLabel(x.context)}`, countText(x),
+        rateText(x, x.rate), rateText(x, x.p0), liftText(x.lift), tierText(x.tier)].map(v => el('td', { text: v }))));
+    tbl.appendChild(el('table', { class: 'tv' }, [el('thead', {}, [head]), el('tbody', {}, body)]));
+  }
+
+  /** When sessions begin, by weekday and hour, and what they opened into. */
+  function drawStarts(sessions) {
+    const box = $('#trig-starts');
+    box.innerHTML = '';
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const grid = days.map(() => new Array(24).fill(0));
+    sessions.forEach(s => {
+      const wd = (new Date(dayMs(s.Date)).getUTCDay() || 7) - 1;
+      grid[wd][+String(s.Start).slice(0, 2)]++;
+    });
+    const max = Math.max(1, ...grid.map(r => Math.max(...r)));
+    const heat = el('div', { class: 'heat' });
+    heat.appendChild(el('span', {}));
+    for (let h = 0; h < 24; h++) heat.appendChild(el('span', { class: 'h', text: h % 3 === 0 ? String(h) : '' }));
+    days.forEach((day, i) => {
+      heat.appendChild(el('span', { class: 'wd', text: day }));
+      for (let h = 0; h < 24; h++) {
+        const n = grid[i][h];
+        const cell = el('div', { class: 'cell', title: t('trig.starts.cell', '{d} {h}:00 · {n} sessions began', { d: day, h: String(h).padStart(2, '0'), n: n }) });
+        if (n) {
+          cell.style.background = 'var(--l-consumption)';
+          cell.style.opacity = (0.2 + 0.8 * Math.sqrt(n / max)).toFixed(2);
+        }
+        heat.appendChild(cell);
+      }
+    });
+    box.appendChild(heat);
+
+    const open = $('#trig-open');
+    open.innerHTML = '';
+    const total = sessions.length || 1;
+    const by = k => sessions.reduce((o, s) => Object.assign(o, { [s[k]]: (o[s[k]] || 0) + 1 }), {});
+    const opened = by('Opened with');
+    ['Feed', 'Stories', 'Messages', 'Search', 'Other'].filter(k => opened[k]).forEach(k => open.appendChild(el('div', { class: 'theme' }, [
+      el('span', { class: 'theme-n', text: ctxLabel(k) }),
+      el('div', { class: 'bar' }, [el('i', { class: 'is-consumption', style: `width:${(100 * opened[k] / total).toFixed(1)}%` })]),
+      el('span', { class: 'theme-v', text: fmt.pct(opened[k] / total) }),
+      el('span', { class: 'theme-l', text: fmt.int(opened[k]) }),
+    ])));
+    const pulled = by('Pulled by');
+    const quick = sessions.filter(s => s['Quick return'] === 'Yes').length;
+    $('#trig-open-note').textContent = t('trig.open.note', '{m} of {n} sessions began within 10 minutes of a message arriving, {p} within an hour of your own post going up, and {q} were quick returns — back within 30 minutes of the last one.', {
+      m: fmt.int(pulled['A message'] || 0), n: fmt.int(sessions.length), p: fmt.int(pulled['Your own post'] || 0), q: fmt.int(quick),
+    });
+  }
+
+  const DOT_GROUPINGS = {
+    'Opening format': ['Videos', 'Posts', 'Stories', 'Nothing seen'],
+    'Opening source': ['Mostly recommended', 'Mostly followed', 'Nothing seen'],
+    'Opening tone': ['Heavy', 'Light', 'Neutral', 'Nothing seen'],
+    'Part of day': ['Morning', 'Afternoon', 'Evening', 'Night'],
+  };
+
+  /** Every session as a dot on a minutes axis, grouped by how it began. */
+  function drawSessionDots(sessions) {
+    const box = $('#trig-dots');
+    box.innerHTML = '';
+    document.querySelectorAll('#dots-by [data-by]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.by === dotsBy)));
+    if (!sessions.length) return;
+    const mins = sessions.map(s => +s.Minutes).sort((a, b) => a - b);
+    const p75 = mins[Math.ceil(0.75 * mins.length) - 1];
+    // The axis stops at the 98th percentile: one 80-minute session should not squeeze everyone else into a corner.
+    const top = mins[Math.min(mins.length - 1, Math.floor(0.98 * mins.length))];
+    const groups = DOT_GROUPINGS[dotsBy].map(g => {
+      const mine = sessions.filter(s => s[dotsBy] === g);
+      const sorted = mine.map(s => +s.Minutes).sort((a, b) => a - b);
+      const med = sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : null;
+      const long = mine.filter(s => +s.Minutes >= p75).length;
+      return {
+        label: g === 'Nothing seen' ? t('trig.dots.nothing', 'Opened into messages or search') : ctxLabel(g),
+        sub: mine.length ? t('trig.dots.sub', '{n} sessions · median {m} min · {l} long', { n: mine.length, m: med, l: fmt.pct(long / mine.length) }) : '',
+        values: mine.map(s => ({ v: Math.min(+s.Minutes, top), data: s })),
+      };
+    }).filter(g => g.values.length);
+    box.appendChild(CH.dotGroups(groups, {
+      max: Math.max(10, top), fmt: v => String(v),
+      line: { v: p75, label: t('trig.dots.long', 'long: {m}+ min', { m: p75 }) },
+      onLeave: () => tip.hide(),
+      onHover: (s, evt) => tip.show(card => {
+        card.appendChild(el('div', { class: 'tipcard-h' }, [
+          el('b', { text: `${s.Minutes} min` }),
+          el('span', { class: 'tipcard-v', text: `${shortDate(s.Date)} ${s.Start}` }),
+        ]));
+        card.appendChild(el('p', { class: 'tipcard-note', text: t('trig.dots.tip', '{i} posts and videos, {st} stories, {a} ads · opened into {o}{p}', {
+          i: s.Items, st: s.Stories, a: s.Ads, o: ctxLabel(s['Opened with']).toLowerCase(),
+          p: s['Pulled by'] === 'A message' ? t('trig.dots.msg', ', after a message') : '',
+        }) }));
+        const acts = [[s.Acts, t('trig.dots.acts', 'acts')], [s.Searches, t('trig.dots.searches', 'searches')],
+          [s['Messages sent'], t('trig.dots.sent', 'messages sent')]].filter(a => +a[0]);
+        if (acts.length) card.appendChild(el('p', { class: 'tipcard-note', text: acts.map(a => `${a[0]} ${a[1]}`).join(' · ') }));
+      }, evt),
+    }));
+    $('#trig-dots-note').textContent = t('trig.dots.note', 'Each dot is one session; the short tick on each row is its median, the dashed line marks the top quarter of all sessions shown. Opening = the first five minutes. Sessions over {m} min sit at the right edge.', { m: top });
+  }
+
   // ── Theme toggle ──────────────────────────────────────────────────────────────
   function initTheme() {
     const saved = localStorage.getItem('theme');
@@ -2152,6 +2611,11 @@
     document.querySelectorAll('#emo-mode [data-tone]').forEach(b => b.addEventListener('click', () => {
       toneMode = b.dataset.tone;
       if (payload) drawEmotions();
+    }));
+    document.querySelectorAll('#dots-by [data-by]').forEach(b => b.addEventListener('click', () => {
+      dotsBy = b.dataset.by;
+      const scope = payload ? triggerScope() : null;
+      if (scope) drawSessionDots(scope.sessions);
     }));
   }
 

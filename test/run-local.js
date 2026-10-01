@@ -1043,6 +1043,108 @@ assert(payloadNow.performance.length === read('Performance').length && Array.isA
 console.log(`layers check passed: ${parsedDirs.reduce((n, e) => n + e.messages.length, 0)} messages read, none written; `
   + `${read('Weekly conversations').length} weekly conversation rows; ${unfollowedNames.size} unfollowed account(s) recognised`);
 
+// ── Sessions and context triggers ──────────────────────────────────────────────────────────────────────
+// Daily and Sessions are two views of one sessionsOf_ pass, so they must agree to the minute; and every item seen
+// inside the viewing window sits in exactly one session.
+{
+  const sessions = read('Sessions');
+  const daily = read('Daily');
+  assert(sessions.length > 0, 'the exports produced sessions');
+  read('Monthly').forEach(m => {
+    const mine = sessions.filter(s => s.Month === m.Month);
+    const days = daily.filter(d => d.Month === m.Month);
+    const sum = (list, col) => list.reduce((n, r) => n + (+r[col] || 0), 0);
+    assert.strictEqual(sum(mine, 'Minutes'), sum(days, 'Est. minutes'), `${m.Month}: session minutes add up to Daily's`);
+    assert.strictEqual(mine.length, sum(days, 'Sessions'), `${m.Month}: one Sessions row per session Daily counted`);
+    assert.strictEqual(sum(mine, 'Items'), sum(days.filter(d => d['In view window'] === 'Yes'), 'Items seen'),
+      `${m.Month}: every item seen in the viewing window belongs to exactly one session`);
+    assert.strictEqual(mine.filter(s => s['Pulled by'] === 'A message').length, m['Sessions pulled by messages'], `${m.Month}: pulled-by count`);
+    assert.strictEqual(m['Acts on items seen'] + m['Acts elsewhere'], m['Liked posts'] + m['Saved posts'],
+      `${m.Month}: every like and save is either on something seen or somewhere else`);
+    assert(m['Conversations after their story'] <= m['Conversations you started'], `${m.Month}: after-story conversations are a share of yours`);
+    assert(m['Likes after their story'] <= m['Liked posts'], `${m.Month}: after-story likes are a share of likes`);
+  });
+  sessions.forEach(s => {
+    assert(s.Minutes >= 1 && /^\d{2}:\d{2}$/.test(s.Start), `${s.Date} ${s.Start}: a session has a start and at least a minute`);
+    assert.strictEqual(s.Late, +s.Start.slice(0, 2) < 6 ? 'Yes' : 'No', `${s.Date} ${s.Start}: late means it began before 06:00`);
+  });
+
+  // Every dimension splits the whole of its outcome's exposure, in one unit, so lifts within it compare like with like.
+  const checkTriggers = (rows, keyCol) => {
+    const groups = {};
+    rows.forEach(t => {
+      assert(t.Hits >= 0 && t.Hits <= t.Exposure, `${t[keyCol]} ${t.Outcome}/${t.Dimension}/${t.Context}: hits within exposure`);
+      const g = groups[t[keyCol] + '|' + t.Outcome] = groups[t[keyCol] + '|' + t.Outcome] || {};
+      const d = g[t.Dimension] = g[t.Dimension] || { exposure: 0, hits: 0, units: new Set() };
+      d.exposure += t.Exposure;
+      d.units.add(t.Unit);
+    });
+    Object.keys(groups).forEach(k => Object.keys(groups[k]).forEach(dim => {
+      assert.strictEqual(groups[k][dim].units.size, 1, `${k} ${dim}: one unit per dimension`);
+    }));
+    Object.keys(groups).forEach(k => {
+      const byUnit = {};
+      Object.keys(groups[k]).forEach(dim => {
+        const d = groups[k][dim];
+        const unit = Array.from(d.units)[0];
+        if (byUnit[unit] === undefined) byUnit[unit] = d.exposure;
+        else assert.strictEqual(d.exposure, byUnit[unit], `${k} ${dim}: adds up to the same ${unit} as every other dimension`);
+      });
+    });
+    return groups;
+  };
+  const monthGroups = checkTriggers(read('Triggers'), 'Month');
+  checkTriggers(read('Weekly triggers'), 'Week');
+  read('Monthly').forEach(m => {
+    const mine = sessions.filter(s => s.Month === m.Month);
+    const sum = col => mine.reduce((n, r) => n + r[col], 0);
+    const format = ctx => (read('Triggers').find(t => t.Month === m.Month && t.Outcome === 'Act' && t.Dimension === 'Format' && t.Context === ctx) || { Exposure: 0 }).Exposure;
+    assert.strictEqual(format('Post') + format('Video'), sum('Items'), `${m.Month}: posts and videos in the trigger counts are the items in sessions`);
+    assert.strictEqual(format('Story'), sum('Stories'), `${m.Month}: stories too`);
+    assert.strictEqual(format('Ad'), sum('Ads'), `${m.Month}: and ads`);
+    assert.strictEqual(monthGroups[m.Month + '|Stay']['Opened with'].exposure, mine.length, `${m.Month}: Stay is counted per session`);
+  });
+
+  // The lift is recomputed from counts, and shrinkage keeps a tiny sample from outranking a large one.
+  const ranked = context.rankTriggers_([
+    { outcome: 'Act', dimension: 'D', context: 'tiny', unit: 'items seen', exposure: 3, hits: 2 },
+    { outcome: 'Act', dimension: 'D', context: 'big', unit: 'items seen', exposure: 100, hits: 30 },
+    { outcome: 'Act', dimension: 'D', context: 'rest', unit: 'items seen', exposure: 900, hits: 30 },
+  ]);
+  const ctxOf = name => ranked.all.find(x => x.context === name);
+  const p0 = 62 / 1003;
+  assert(Math.abs(ctxOf('big').lift - ((30 + 3) / (100 + 3 / p0)) / p0) < 1e-9, 'lift = shrunk rate ÷ overall rate');
+  assert(ctxOf('tiny').lift < (2 / 3) / p0, 'shrinkage pulls a tiny sample toward 1');
+  assert.strictEqual(ctxOf('tiny').tier, 'too few', 'two hits is too few to rank');
+  assert.strictEqual(ranked.triggers[0].context, 'big', '30 of 100 outranks 2 of 3');
+  assert.strictEqual(ctxOf('rest').tier, 'strong', 'a dampener is vouched for by the hits it would have had');
+  assert(ranked.dampeners.some(x => x.context === 'rest'), 'and is ranked as one');
+  assert(!context.rankTriggers_([{ outcome: 'Stay', dimension: 'Opening tone', context: 'Nothing seen', unit: 'sessions', exposure: 40, hits: 30 },
+    { outcome: 'Stay', dimension: 'Opening tone', context: 'Heavy', unit: 'sessions', exposure: 160, hits: 20 }]).triggers.length,
+  'an absence ("Nothing seen") is counted but never ranked as a trigger');
+
+  // Italian exports label a word search "Cerca"; every one written in the raw pages is read.
+  const rawSearches = exportDirs.reduce((n, dir) => {
+    const f = path.join(dir, 'logged_information/recent_searches/word_or_phrase_searches.html');
+    return n + (fs.existsSync(f) ? (fs.readFileSync(f, 'utf8').match(/>(?:Search|Cerca)<div><div>/g) || []).length : 0);
+  }, 0);
+  assert.strictEqual(parsedDirs.reduce((n, e) => n + e.wordSearches.length, 0), rawSearches, 'word searches are read in English and Italian');
+  assert(context.parseWordSearches_('<main><div><table><tr><td colspan="2" class="_a6_q">Cerca<div><div>trekking</div></div></td></tr></table>'
+    + '<div class="_3-94 _a6-o">set 20, 2026 3:01 pm</div></div></main>', s => context.parseEntryTime_(s, 'Europe/Rome'))[0].term === 'trekking',
+  'an Italian search entry yields its term');
+
+  const payloadTriggers = context.getDashboardPayload();
+  assert.strictEqual(payloadTriggers.sessions.length, sessions.length, 'the payload carries every session');
+  assert(payloadTriggers.triggers.length && payloadTriggers.weeklyTriggers.length, 'and the trigger counts for both buckets');
+  assert(/^\d{4}-\d{2}-\d{2}$/.test(payloadTriggers.sessions[0].Day), 'Sessions.Day leaves the payload as yyyy-MM-dd');
+  const prompt = read('Prompt').slice(-1)[0].Text;
+  assert(/== Context triggers/.test(prompt), 'the Prompt carries the context triggers');
+  const top = context.rankTriggers_(read('Triggers').filter(t => t.Month === read('Monthly').slice(-1)[0].Month)
+    .map(t => ({ outcome: t.Outcome, dimension: t.Dimension, context: t.Context, unit: t.Unit, exposure: t.Exposure, hits: t.Hits })));
+  console.log(`triggers check passed: ${sessions.length} sessions, ${read('Triggers').length} monthly and ${read('Weekly triggers').length} weekly count rows, `
+    + `${rawSearches} word searches read; top: ` + top.triggers.slice(0, 3).map(x => `${x.outcome}·${x.context} ${x.lift.toFixed(1)}×`).join(', '));
+}
+
 // A local preview of the dashboard needs exactly what the web app would receive: PAYLOAD_OUT=<file> writes it.
 if (process.env.PAYLOAD_OUT) {
   fs.writeFileSync(process.env.PAYLOAD_OUT, JSON.stringify(context.getDashboardPayload()));

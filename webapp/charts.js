@@ -451,7 +451,93 @@ var CH = (function () {
     layers: 'M12 3 2 8l10 5 10-5zM2 12.5l10 5 10-5M2 17l10 5 10-5',
     trend: 'M3 20h18M4 16l5-5 4 3 7-8M16 6h4v4',
     account: 'M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5.5 19c.8-3 3.4-4.5 6.5-4.5s5.7 1.5 6.5 4.5M3 3h18v18H3z',
+    trigger: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v4M12 18v4M2 12h4M18 12h4',
   };
+
+  // ── Dot groups ───────────────────────────────────────────────────────────────────────────────────────
+  // Every session as a dot on one minutes axis, one row per group, with each row's median as a tick and one line
+  // across all rows for the threshold that counts as long. Rows are HTML with an SVG track each, so the labels stay
+  // at their real size on a phone instead of shrinking with a single wide viewBox.
+  // groups: [{ label, sub, values: [{ v, data }] }]
+  // opts:   { max, line: { v, label }, fmt, onHover(data, evt|null, anchor), onLeave() }
+  function dotGroups(groups, opts) {
+    opts = opts || {};
+    var H = 34;
+    var max = opts.max || 1;
+    // Percent of the track's width, so the track can be any width and a dot stays a circle: a stretched viewBox
+    // would squash every dot into an ellipse.
+    var pct = function (v) { return 1.5 + Math.min(1, v / max) * 97; };
+    var X = function (v) { return pct(v) + '%'; };
+    var step = max <= 30 ? 5 : max <= 60 ? 10 : max <= 150 ? 20 : 60;
+    var wrap = document.createElement('div');
+    wrap.className = 'dg';
+    var track = function (kids) {
+      var svg = n('svg', { class: 'ch-dg', height: H, width: '100%' });
+      for (var t = 0; t <= max; t += step) svg.appendChild(n('line', { x1: X(t), x2: X(t), y1: 0, y2: H, class: 'ch-ring' }));
+      if (opts.line) svg.appendChild(n('line', { x1: X(opts.line.v), x2: X(opts.line.v), y1: 0, y2: H, class: 'ch-dg-line' }));
+      kids.forEach(function (k) { svg.appendChild(k); });
+      return svg;
+    };
+    groups.forEach(function (g) {
+      var row = document.createElement('div');
+      row.className = 'dg-row';
+      var label = document.createElement('div');
+      label.className = 'dg-l';
+      var b = document.createElement('b');
+      b.textContent = g.label;
+      var s = document.createElement('span');
+      s.textContent = g.sub || '';
+      label.appendChild(b);
+      label.appendChild(s);
+      var dots = [];
+      var hits = [];
+      var sorted = g.values.map(function (x) { return x.v; }).sort(function (a, z) { return a - z; });
+      var med = sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : null;
+      // A fixed, deterministic spread across the row's height: the same session lands in the same place on every
+      // render, and dots that share a minute fan out rather than stacking into one.
+      g.values.forEach(function (x, k) {
+        var y = H / 2 + (((k * 7) % 9) - 4) * 2.6;
+        var dot = n('circle', { cx: X(x.v), cy: y, r: 4, class: 'ch-dg-dot' });
+        var hit = n('circle', { cx: X(x.v), cy: y, r: 9, class: 'ch-hit' });
+        if (opts.onHover) {
+          hit.addEventListener('mouseenter', function (e) { dot.classList.add('is-hot'); opts.onHover(x.data, e); });
+          hit.addEventListener('mousemove', function (e) { opts.onHover(x.data, e); });
+          hit.addEventListener('mouseleave', function () { dot.classList.remove('is-hot'); if (opts.onLeave) opts.onLeave(); });
+        }
+        dots.push(dot);
+        hits.push(hit);
+      });
+      var marks = med === null ? dots : dots.concat([n('line', { x1: X(med), x2: X(med), y1: 3, y2: H - 3, class: 'ch-dg-med' })]);
+      var svg = track(marks.concat(hits));
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', g.label + ': ' + g.values.length + (med !== null ? ', median ' + (opts.fmt ? opts.fmt(med) : med) : ''));
+      row.appendChild(label);
+      row.appendChild(svg);
+      wrap.appendChild(row);
+    });
+    // The axis shares the tracks' geometry, so a tick and a dot at the same minute line up exactly.
+    var axis = document.createElement('div');
+    axis.className = 'dg-row dg-axis';
+    axis.appendChild(document.createElement('div'));
+    var labels = document.createElement('div');
+    labels.className = 'dg-ticks';
+    for (var t = 0; t <= max; t += step) {
+      var tick = document.createElement('span');
+      tick.style.left = X(t);
+      tick.textContent = opts.fmt ? opts.fmt(t) : String(t);
+      labels.appendChild(tick);
+    }
+    if (opts.line) {
+      var mark = document.createElement('span');
+      mark.className = 'dg-line-l';
+      mark.style.left = X(opts.line.v);
+      mark.textContent = opts.line.label;
+      labels.appendChild(mark);
+    }
+    axis.appendChild(labels);
+    wrap.appendChild(axis);
+    return wrap;
+  }
 
   function icon(name, size) {
     var svg = root(24, 24, 'ch-icon');
@@ -466,5 +552,5 @@ var CH = (function () {
     return svg;
   }
 
-  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, line: line, icon: icon, icons: ICONS };
+  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, line: line, dotGroups: dotGroups, icon: icon, icons: ICONS };
 }());

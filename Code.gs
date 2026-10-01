@@ -88,6 +88,9 @@ const HEADERS = {
     'DMs received', 'Reply rate to you', 'Their median reply (min)', 'Your reply rate', 'Your median reply (min)',
     // Influence: how the first layer relates to the next two.
     'Feed alignment', 'Self-led discoveries', 'Feed-led discoveries',
+    // Context triggers (METHODOLOGY.md): what came just before what you did.
+    'Sessions pulled by messages', 'Quick returns', 'Acts on items seen', 'Acts elsewhere',
+    'Conversations after their story', 'Likes after their story',
     'Month date'],
   Risks: ['Month', 'Code', 'Risk', 'Category', 'Likelihood', 'Impact', 'Score', 'Rating', 'Previous score', 'Trend', 'Evidence', 'Mitigation', 'Month date'],
   Signals: ['Month', 'Area', 'Signal', 'Value', 'Previous', 'Level', 'What it means', 'Try'],
@@ -106,6 +109,17 @@ const HEADERS = {
   Rhythm: ['Month', 'Kind', 'Bucket', 'Label', 'Count'],
   Daily: ['Month', 'Date', 'Weekday', 'Items seen', 'Actions', 'Sessions', 'Est. minutes', 'Late-night items', 'In view window', 'Month date', 'Day'],
   Hourly: ['Month', 'Weekday no', 'Weekday', 'Hour', 'Count', 'Month date'],
+  // One row per session — a run of activity with no silence longer than 15 minutes — keyed by real date like Daily
+  // and written from month buckets only: a week selects its sessions by date. The Opening columns describe the first
+  // five minutes, so a session's length is read against how it began rather than against everything it went on to
+  // show. Long is the top quarter of the bucket's sessions by minutes.
+  Sessions: ['Month', 'Date', 'Start', 'Minutes', 'Items', 'Stories', 'Ads', 'Opening format', 'Opening source', 'Opening tone',
+    'Opening theme', 'Opened with', 'Pulled by', 'Quick return', 'Acts', 'Searches', 'Links', 'Messages sent', 'Comments',
+    'Part of day', 'Weekend', 'Late', 'Long', 'Month date', 'Day'],
+  // Context triggers as counts (METHODOLOGY.md → Context triggers): for each outcome and each context, how much of it
+  // there was (Exposure, in Unit) and how often the outcome followed (Hits). Counts rather than rates, so any range of
+  // buckets adds up exactly; the lift is worked out where it is read.
+  Triggers: ['Month', 'Outcome', 'Dimension', 'Context', 'Unit', 'Exposure', 'Hits', 'Month date'],
   Top: ['Month', 'List', 'Rank', 'Name', 'Count', 'Liked', 'Themes', 'Month date'],
   'Quiet interests': ['Month', 'Rank', 'Account', 'Times seen', 'Posts', 'Videos', 'You follow', 'Themes', 'Vs previous', 'Latest caption', 'Month date'],
   Network: ['Account', 'Relation', 'Status', 'Cluster', 'Themes', 'Seen', 'Liked', 'Searched', 'Attention', 'Active months',
@@ -163,14 +177,15 @@ HEADERS['Weekly conversations'] = weeklyHeadersOf_('Conversations');
 // against — without a weekly Meta every ad label would read as new again every single week.
 HEADERS['Weekly rhythm'] = weeklyHeadersOf_('Rhythm');
 HEADERS['Weekly meta'] = weeklyHeadersOf_('Meta');
-// Daily and Actions need no weekly twin: their rows are keyed by real date, so a week selects them by range
-// (see drawDaily). Accounts must NOT get one — updateNetwork_ sums that whole tab into per-account attention,
+HEADERS['Weekly triggers'] = weeklyHeadersOf_('Triggers');
+// Daily, Sessions and Actions need no weekly twin: their rows are keyed by real date, so a week selects them by
+// range (see drawDaily). Triggers does need one: its rows are counts over a bucket, not dated events. Accounts must NOT get one — updateNetwork_ sums that whole tab into per-account attention,
 // so weekly rows beside monthly ones would count the same viewing twice. Prompt stays monthly on purpose.
 const WEEKLY_CHILD_TABS = {
   'Weekly themes': 'Themes', 'Weekly subthemes': 'Subthemes', 'Weekly top': 'Top', 'Weekly risks': 'Risks', 'Weekly signals': 'Signals',
   'Weekly profile': 'Profile', 'Weekly quiet': 'Quiet interests', 'Weekly hourly': 'Hourly',
   'Weekly belonging': 'Belonging', 'Weekly conversations': 'Conversations',
-  'Weekly rhythm': 'Rhythm', 'Weekly meta': 'Meta',
+  'Weekly rhythm': 'Rhythm', 'Weekly meta': 'Meta', 'Weekly triggers': 'Triggers',
 };
 
 const TEXT_COLUMNS = {
@@ -184,6 +199,9 @@ const TEXT_COLUMNS = {
   Rhythm: ['Month', 'Label'],
   Daily: ['Month', 'Date', 'Weekday', 'In view window'],
   Hourly: ['Month', 'Weekday'],
+  Sessions: ['Month', 'Date', 'Start', 'Opening format', 'Opening source', 'Opening tone', 'Opening theme', 'Opened with',
+    'Pulled by', 'Quick return', 'Part of day', 'Weekend', 'Late', 'Long'],
+  Triggers: ['Month', 'Outcome', 'Dimension', 'Context', 'Unit'],
   Top: ['Month', 'Name'],
   'Quiet interests': ['Month', 'Account', 'You follow', 'Themes', 'Vs previous', 'Latest caption'],
   Network: ['Account', 'Relation', 'Status', 'Cluster', 'Themes', 'Last active', 'You follow since', 'Follows you since',
@@ -1318,7 +1336,9 @@ function parsePeople_(html, ts) {
 
 function parseWordSearches_(html, ts) {
   return splitEntries_(html).map(({ chunk, stamp }) => ({
-    term: decodeHtml_((chunk.match(/>Search<div><div>([\s\S]*?)<\/div>/) || [])[1] || ''),
+    // "Search" in English, "Cerca" in an Italian export: the label is translated and the markup is not. Reading only
+    // the English label dropped every search in an Italian delivery without a trace — six in the first one checked.
+    term: decodeHtml_((chunk.match(/>(?:Search|Cerca)<div><div>([\s\S]*?)<\/div>/) || [])[1] || ''),
     time: ts(stamp),
   })).filter(s => s.term);
 }
@@ -1880,7 +1900,16 @@ function analyzeExport_(exp, rules, prev) {
     if (p.hour < 6) lateDates.add(p.date);
   });
 
-  // Daily activity and estimated time: a session is activity with no gap longer than 15 minutes
+  // Daily activity and estimated time, in sessions (sessionsOf_). A session is read off everything that shows you
+  // were on the app: items seen and acted on, and also stories, ads and the messages you sent — watching a friend's
+  // stories or answering a message is time on Instagram as much as scrolling the feed is. The rhythm above stays on
+  // items and acts, so the hour chart keeps meaning what it always did.
+  const msgs = exp.messages.filter(m => m.time);
+  const sent = msgs.filter(m => m.fromMe);
+  const received = msgs.filter(m => !m.fromMe);
+  const sessionExtras = [].concat(exp.storiesViewed, exp.adsViewed, sent).filter(e => e.time);
+  sessionExtras.forEach(e => { e.local = localParts_(e.time); });
+  const sessions = sessionsOf_(windowEvents.concat(sessionExtras.filter(inWindow)));
   const dayMap = {};
   const dayOf = p => (dayMap[p.date] = dayMap[p.date]
     || { date: p.date, weekday: p.weekday, items: 0, actions: 0, late: 0, sessions: 0, minutes: 0 });
@@ -1891,23 +1920,11 @@ function analyzeExport_(exp, rules, prev) {
     if (e.local.hour < 6) day.late++;
   });
   actionEvents.forEach(e => { dayOf(e.local).actions++; });
-  const minuteStamps = unique_(windowEvents.map(e => Math.floor(e.time.getTime() / 60000))).sort((a, b) => a - b);
-  let sessionStart = null;
-  let lastStamp = null;
-  const closeSession = () => {
-    if (sessionStart === null) return;
-    const day = dayOf(localParts_(new Date(sessionStart * 60000)));
+  sessions.forEach(s => {
+    const day = dayOf(localParts_(s.start));
     day.sessions++;
-    day.minutes += lastStamp - sessionStart + 1;
-  };
-  minuteStamps.forEach(s => {
-    if (lastStamp === null || s - lastStamp > 15) {
-      closeSession();
-      sessionStart = s;
-    }
-    lastStamp = s;
+    day.minutes += s.minutes;
   });
-  closeSession();
   const dayList = Object.keys(dayMap).sort().map(k => dayMap[k]);
   const usedDays = dayList.filter(d => d.sessions > 0);
   const minutesPerActiveDay = usedDays.length ? round_(usedDays.reduce((n, d) => n + d.minutes, 0) / usedDays.length, 1) : 0;
@@ -2052,10 +2069,8 @@ function analyzeExport_(exp, rules, prev) {
   const regularity = enough(windowDays.length) && meanMin > 0 ? round_(1 - Math.min(1, sdMin / meanMin), 3) : '';
   const selfDirected = owned.length + storiesN ? round_((fromFollowed + storiesN) / (owned.length + storiesN), 4) : '';
 
-  // Social behaviour and inbound, from direct messages. Text is scored for tone and then dropped.
-  const msgs = exp.messages.filter(m => m.time);
-  const sent = msgs.filter(m => m.fromMe);
-  const received = msgs.filter(m => !m.fromMe);
+  // Social behaviour and inbound, from direct messages (msgs, sent and received, above). Text is scored for tone
+  // and then dropped.
   const convo = conversationStats_(msgs, exp.periodEnd);
   const total = key => convo.reduce((n, c) => n + c[key], 0);
   const mineAsked = total('mineAsked');
@@ -2101,6 +2116,16 @@ function analyzeExport_(exp, rules, prev) {
     else if (seen.some(i => i.ownerKey === k && i.time && i.time <= t)) feedLed++;
   });
 
+  // Context triggers: under which conditions you open the app, stay, act, look things up and reach out.
+  const lightRules = emotions.filter(e => /hope|joy|love/i.test(e.name)).map(e => e.rule);
+  const triggers = contextTriggers_({
+    month: month, sessions: sessions, windowStart: windowStart, lastSeenDate: lastSeenDate, periodEnd: exp.periodEnd,
+    posts: exp.postsViewed, videos: exp.videosWatched, stories: exp.storiesViewed, ads: exp.adsViewed,
+    likes: exp.likedPosts, saves: exp.savedPosts, comments: exp.comments, follows: newFollows, storyLikes: exp.storyLikes,
+    searches: searches, links: realLinks, messages: msgs, own: [].concat(exp.ownPosts, exp.ownStories, exp.ownReels),
+    followedThen: followedThen, isHeavy: isHeavy, isLight: item => !isHeavy(item) && lightRules.some(r => matches_(r, item)),
+  });
+
   const layerColumns = {
     'Stories seen': storiesN, 'Recommended share': owned.length ? round_(1 - fromFollowed / owned.length, 4) : '',
     'Ad load': round_(adLoad, 4),
@@ -2114,6 +2139,7 @@ function analyzeExport_(exp, rules, prev) {
     'Your reply rate': yourReplyRate, 'Your median reply (min)': median_(convo.flatMap(c => c.myWaits)),
     'Feed alignment': alignment, 'Self-led discoveries': selfLed, 'Feed-led discoveries': feedLed,
   };
+  Object.assign(layerColumns, triggers.columns);
 
   const monthly = {
     'Month': month, 'Period start': fmtDate_(exp.periodStart), 'Period end': fmtDate_(exp.periodEnd), 'Days': days,
@@ -2399,6 +2425,8 @@ function analyzeExport_(exp, rules, prev) {
       Rhythm: rhythmRows,
       Daily: dailyRows,
       Hourly: hourlyRows,
+      Sessions: triggers.sessionRows,
+      Triggers: triggers.triggerRows,
       Top: topRows,
       Subthemes: subRows,
       'Quiet interests': quietRows,
@@ -2440,6 +2468,18 @@ function buildPrompt_(exp, result, prev, hours) {
   (r.Conversations || []).forEach(c => lines.push(`${c[1]}: sent ${c[2]}, received ${c[3]}, ${c[6]} conversation(s), you started ${c[7]}; `
     + `your turns answered ${c[9]}/${c[8]}, theirs you answered ${c[11]}/${c[10]}`
     + `${c[12] !== '' ? ', their median reply ' + c[12] + ' min' : ''}${c[13] !== '' ? ', yours ' + c[13] + ' min' : ''}`));
+  const ranked = rankTriggers_((r.Triggers || []).map(t => ({ outcome: t[1], dimension: t[2], context: t[3], unit: t[4], exposure: t[5], hits: t[6] })));
+  lines.push('', '== Context triggers (associations, not causes: how much more or less often something happened in a context than '
+    + `it usually does, shrunk toward "usual" for small counts; strong = ${TRIGGER_STRONG}+ events behind it, some = ${TRIGGER_MIN_HITS}–${TRIGGER_STRONG - 1})`);
+  ranked.triggers.slice(0, 8).forEach(x => lines.push(triggerLine_(x)));
+  if (ranked.dampeners.length) {
+    lines.push('Less often than usual:');
+    ranked.dampeners.slice(0, 4).forEach(x => lines.push(triggerLine_(x)));
+  }
+  if (!ranked.triggers.length && !ranked.dampeners.length) lines.push('Too few events in this bucket to name any.');
+  lines.push(`Sessions that began within 10 min of a message arriving: ${m['Sessions pulled by messages']}; quick returns (back within 30 min): ${m['Quick returns']}.`,
+    `Conversations you started within a day of that person's story: ${m['Conversations after their story']} of ${m['Conversations you started']}; `
+      + `likes within an hour of that account's story: ${m['Likes after their story']} of ${m['Liked posts']}.`);
   lines.push('', '== Activity by hour', hours.map((n, h) => pad2_(h) + 'h:' + n).join('  '));
   lines.push('', '== Top accounts seen');
   r.Top.filter(t => t[1] === 'Accounts seen').slice(0, 15).forEach(t => lines.push(`${t[3]}: ${t[4]}${t[5] ? ' (' + t[5] + ' liked)' : ''}${t[6] ? ' [' + t[6] + ']' : ''}`));
@@ -2520,6 +2560,340 @@ function bucketFromRows_(month, rows, isWeekBucket) {
   mine('Risks').forEach(r => { view.risks[String(r[1])] = r[6]; });
   mine('Meta').filter(r => r[3] !== 'Removed').forEach(r => { (view.meta[r[1]] = view.meta[r[1]] || new Set()).add(String(r[2])); });
   return view;
+}
+
+// ── Sessions and context triggers ────────────────────────────────────────────
+
+/** A silence longer than this many minutes ends a session. */
+const SESSION_GAP_MIN = 15;
+
+/**
+ * Sessions, read off the minute stamps of `events`: a run of activity with no silence longer than SESSION_GAP_MIN.
+ * Minutes count inclusively, so one minute of activity is a one-minute session. Oldest first, each with its events.
+ * Daily minutes and the Sessions tab both come from here, which is what keeps the two in agreement.
+ */
+function sessionsOf_(events) {
+  const sessions = [];
+  let cur = null;
+  events.filter(e => e.time).slice().sort((a, b) => a.time - b.time).forEach(e => {
+    const minute = Math.floor(e.time.getTime() / 60000);
+    if (!cur || minute - cur.endMin > SESSION_GAP_MIN) {
+      cur = { startMin: minute, endMin: minute, events: [] };
+      sessions.push(cur);
+    }
+    cur.endMin = minute;
+    cur.events.push(e);
+  });
+  sessions.forEach(s => {
+    s.minutes = s.endMin - s.startMin + 1;
+    s.start = new Date(s.startMin * 60000);
+  });
+  return sessions;
+}
+
+/** Index of the first value in ascending `sorted` that is greater than `x`. */
+function upperBound_(sorted, x) {
+  let lo = 0;
+  let hi = sorted.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (sorted[mid] <= x) lo = mid + 1; else hi = mid;
+  }
+  return lo;
+}
+
+const PARTS_OF_DAY = [[0, 'Night'], [6, 'Morning'], [12, 'Afternoon'], [18, 'Evening']];
+function partOfDay_(hour) {
+  return PARTS_OF_DAY.filter(p => hour >= p[0]).pop()[1];
+}
+
+/**
+ * What came just before what you did (METHODOLOGY.md → Context triggers). Six outcomes, each counted against the
+ * contexts it could have followed:
+ *  · Pull — a session starting, per idle minute (a minute you were not already in a session);
+ *  · Stay — a long session (the bucket's top quarter by minutes) and Late — one starting 00:00–05:59, per session;
+ *  · Act — a like, save, comment, follow or story like on an item seen (its URL, or its account within 30 minutes);
+ *  · Seek — a search or a link opened in the 10 minutes after an item, or anywhere in a session;
+ *  · Reach — a message you sent or a comment you wrote in the 10 minutes after an item, or anywhere in a session.
+ * Each dimension splits the whole of its outcome's exposure, so a dimension's rows always add up to the same total.
+ * Only counts are returned; the lift is computed wherever they are read (rankTriggers_, and the dashboard), so a
+ * range of buckets aggregates exactly rather than averaging rates.
+ *
+ * Returns the bucket's Sessions rows, Triggers rows and its Monthly columns.
+ */
+function contextTriggers_(c) {
+  const MIN = 60000;
+  const month = c.month;
+  const keyOf = e => e.ownerKey || norm_(e.account || e.owner || '');
+  const timesOf = list => list.filter(e => e.time).map(e => e.time.getTime()).sort((a, b) => a - b);
+  const countIn = (sorted, from, to) => upperBound_(sorted, to) - upperBound_(sorted, from); // in (from, to]
+  const anyIn = (sorted, from, to) => countIn(sorted, from, to) > 0;
+  const byKey = list => {
+    const out = {};
+    list.filter(e => e.time).forEach(e => { (out[keyOf(e)] = out[keyOf(e)] || []).push(e.time.getTime()); });
+    Object.keys(out).forEach(k => out[k].sort((a, b) => a - b));
+    return out;
+  };
+
+  const kindOf = new Map();
+  c.posts.forEach(i => kindOf.set(i, 'Post'));
+  c.videos.forEach(i => kindOf.set(i, 'Video'));
+  c.stories.forEach(i => kindOf.set(i, 'Story'));
+  c.ads.forEach(i => kindOf.set(i, 'Ad'));
+  const sentSet = new Set(c.messages.filter(m => m.fromMe));
+  const searchSet = new Set(c.searches);
+  const actSet = new Set([].concat(c.likes, c.saves, c.comments, c.follows));
+  const sent = c.messages.filter(m => m.fromMe);
+  const received = c.messages.filter(m => !m.fromMe);
+
+  const times = {
+    received: timesOf(received), own: timesOf(c.own), acts: timesOf([].concat(c.likes, c.saves, c.comments, c.follows)),
+    searches: timesOf(c.searches), links: timesOf(c.links), sent: timesOf(sent), comments: timesOf(c.comments),
+  };
+  times.seek = times.searches.concat(times.links).sort((a, b) => a - b);
+  times.reach = times.sent.concat(times.comments).sort((a, b) => a - b);
+  const storiesBy = byKey(c.stories);
+  const tone = i => (c.isHeavy(i) ? 'Heavy' : c.isLight(i) ? 'Light' : 'Neutral');
+  const themeOf = i => (i.themes && i.themes[0]) || 'Other';
+  const followed = i => c.followedThen.has(keyOf(i));
+
+  // ── Sessions, described ──
+  const sorted = c.sessions.slice().sort((a, b) => a.startMin - b.startMin);
+  const minutesSorted = sorted.map(s => s.minutes).sort((a, b) => a - b);
+  const p75 = minutesSorted.length ? minutesSorted[Math.ceil(0.75 * minutesSorted.length) - 1] : 0;
+  const described = sorted.map((s, k) => {
+    const from = s.startMin * MIN;
+    const to = (s.endMin + 1) * MIN; // exclusive
+    const inSpan = list => countIn(list, from - 1, to - 1);
+    const feed = s.events.filter(e => kindOf.get(e) === 'Post' || kindOf.get(e) === 'Video');
+    const stories = s.events.filter(e => kindOf.get(e) === 'Story');
+    const opening = s.events.filter(e => e.time.getTime() < from + 5 * MIN && (kindOf.get(e) && kindOf.get(e) !== 'Ad'));
+    const count = (list, kind) => list.filter(e => kindOf.get(e) === kind).length;
+    const openStories = count(opening, 'Story');
+    const openFormat = !opening.length ? 'Nothing seen' : openStories * 2 > opening.length ? 'Stories'
+      : count(opening, 'Video') >= count(opening, 'Post') ? 'Videos' : 'Posts';
+    const owned = opening.filter(e => keyOf(e));
+    const openSource = !owned.length ? 'Nothing seen'
+      : owned.filter(e => !followed(e)).length * 2 > owned.length ? 'Mostly recommended' : 'Mostly followed';
+    // A quarter of the opening, not a single item: one heavy caption turns up in most five-minute stretches.
+    const openTone = !opening.length ? 'Nothing seen' : opening.filter(c.isHeavy).length * 4 >= opening.length ? 'Heavy'
+      : opening.filter(c.isLight).length * 4 >= opening.length ? 'Light' : 'Neutral';
+    const openTheme = !opening.length ? 'Nothing seen' : topEntries_(countBy_(opening, themeOf), 1)[0][0];
+    const first = s.events[0];
+    const openedWith = sentSet.has(first) ? 'Messages' : searchSet.has(first) ? 'Search'
+      : kindOf.get(first) === 'Story' ? 'Stories' : kindOf.get(first) || actSet.has(first) ? 'Feed' : 'Other';
+    const pulledBy = anyIn(times.received, from - 10 * MIN - 1, from) ? 'A message'
+      : anyIn(times.own, from - 60 * MIN - 1, from) ? 'Your own post' : 'Nothing in particular';
+    const prev = sorted[k - 1];
+    const quick = prev && s.startMin - prev.endMin <= 30 ? 'Yes' : 'No';
+    const local = localParts_(s.start);
+    return {
+      s: s, from: from, to: to, local: local,
+      openFormat: openFormat, openSource: openSource, openTone: openTone, openTheme: openTheme,
+      openedWith: openedWith, pulledBy: pulledBy, quick: quick,
+      acts: inSpan(times.acts), searches: inSpan(times.searches), links: inSpan(times.links),
+      sent: inSpan(times.sent), comments: inSpan(times.comments),
+      part: partOfDay_(local.hour), weekend: local.weekday >= 6 ? 'Yes' : 'No', late: local.hour < 6 ? 'Yes' : 'No',
+      long: s.minutes >= p75 && p75 > 0 ? 'Yes' : 'No',
+      items: feed.length, storyCount: stories.length, adCount: s.events.filter(e => kindOf.get(e) === 'Ad').length,
+    };
+  });
+  const sessionRows = described.map(d => [month, d.local.date, d.local.time, d.s.minutes, d.items, d.storyCount, d.adCount,
+    d.openFormat, d.openSource, d.openTone, d.openTheme, d.openedWith, d.pulledBy, d.quick, d.acts, d.searches, d.links,
+    d.sent, d.comments, d.part, d.weekend, d.late, d.long]);
+
+  // ── Counting ──
+  const tally = new Map();
+  const add = (outcome, dimension, context, unit, exposure, hit) => {
+    const k = outcome + '|' + dimension + '|' + context;
+    const t = tally.get(k) || tally.set(k, { outcome: outcome, dimension: dimension, context: context, unit: unit, exposure: 0, hits: 0 }).get(k);
+    t.exposure += exposure;
+    if (hit) t.hits++;
+  };
+
+  // Stay, Late, and the session-level halves of Seek and Reach. Opened with is left out of Seek and Reach because a
+  // session opened by a search or a message contains one by definition — it would rank first and say nothing.
+  const sessionDims = d => [['Opened with', d.openedWith], ['Pulled by', d.pulledBy], ['Quick return', d.quick === 'Yes' ? 'Quick return' : 'Not a quick return'],
+    ['Opening format', d.openFormat], ['Opening source', d.openSource], ['Opening tone', d.openTone], ['Opening theme', d.openTheme]];
+  described.forEach(d => {
+    const dims = sessionDims(d);
+    const timeDims = [['Part of day', d.part], ['Weekend', d.weekend === 'Yes' ? 'Weekend' : 'Weekday']];
+    timeDims.concat(dims).forEach(([dim, ctx]) => add('Stay', dim, ctx, 'sessions', 1, d.long === 'Yes'));
+    timeDims.slice(1).concat(dims).forEach(([dim, ctx]) => add('Late', dim, ctx, 'sessions', 1, d.late === 'Yes'));
+    dims.slice(1).forEach(([dim, ctx]) => {
+      add('Seek', dim, ctx, 'sessions', 1, d.searches + d.links > 0);
+      add('Reach', dim, ctx, 'sessions', 1, d.sent + d.comments > 0);
+    });
+  });
+
+  // Act, Seek and Reach on what was on screen. Every post, video, story and ad seen inside a session counts once.
+  const acted = new Set([].concat(c.likes, c.saves).map(i => i.url).filter(Boolean));
+  const actsBy = byKey([].concat(c.likes, c.saves, c.comments, c.follows, c.storyLikes));
+  described.forEach(d => d.s.events.forEach(i => {
+    const kind = kindOf.get(i);
+    if (!kind) return;
+    const t = i.time.getTime();
+    const k = keyOf(i);
+    const ownStories = storiesBy[k] || [];
+    // Their story first: another of their stories in the hour before (a story never counts as its own context).
+    const storyFirst = k && countIn(ownStories, t - 60 * MIN - 1, t - 1) > 0;
+    const minutesIn = (t - d.from) / MIN;
+    const ctx = [
+      ['Format', kind],
+      ['Source', kind === 'Ad' ? 'Sponsored' : !k ? 'Unknown' : followed(i) ? 'Followed' : 'Recommended'],
+      ['Theme', themeOf(i)],
+      ['Tone', tone(i)],
+      ['Session phase', minutesIn < 5 ? 'First 5 min' : minutesIn < 20 ? '5–20 min' : '20+ min'],
+      ['Part of day', partOfDay_(i.local ? i.local.hour : localParts_(i.time).hour)],
+      ['Weekend', (i.local ? i.local.weekday : localParts_(i.time).weekday) >= 6 ? 'Weekend' : 'Weekday'],
+      ['Their story first', storyFirst ? 'After their story' : 'No story first'],
+    ];
+    const act = (i.url && acted.has(i.url)) || (k && anyIn(actsBy[k] || [], t - 1, t + 30 * MIN));
+    const seek = anyIn(times.seek, t, t + 10 * MIN);
+    const reach = anyIn(times.reach, t, t + 10 * MIN);
+    ctx.forEach(([dim, value]) => {
+      add('Act', dim, value, 'items seen', 1, act);
+      add('Seek', dim, value, 'items seen', 1, seek);
+      add('Reach', dim, value, 'items seen', 1, reach);
+    });
+  }));
+
+  // Pull: every minute of the viewing window you were not already in a session, and which of those a session began
+  // in. A minute is "after a message" when one arrived in the ten minutes before it, "after your post" when your own
+  // post, story or reel went up in the hour before it.
+  const pullContext = m => (anyIn(times.received, (m - 10) * MIN - 1, m * MIN + MIN - 1) ? 'A message arrived'
+    : anyIn(times.own, (m - 60) * MIN - 1, m * MIN + MIN - 1) ? 'Your post went up' : 'Nothing just before');
+  const startMins = new Set(sorted.map(s => s.startMin));
+  let si = 0;
+  const lastDay = c.lastSeenDate || c.windowStart;
+  for (let day = c.windowStart; day && day <= lastDay; ) {
+    const p = day.split('-').map(Number);
+    const dayStart = wallTimeToDate_(p[0], p[1] - 1, p[2], 0, 0, CONFIG.LOCAL_TIMEZONE).getTime();
+    const next = Utilities.formatDate(new Date(dayStart + 30 * 3600000), CONFIG.LOCAL_TIMEZONE, 'yyyy-MM-dd');
+    const n = next.split('-').map(Number);
+    const dayEnd = Math.min(wallTimeToDate_(n[0], n[1] - 1, n[2], 0, 0, CONFIG.LOCAL_TIMEZONE).getTime(), c.periodEnd.getTime());
+    const weekend = localParts_(new Date(dayStart + 12 * 3600000)).weekday >= 6 ? 'Weekend' : 'Weekday';
+    for (let m = dayStart / MIN; m * MIN < dayEnd; m++) {
+      while (si < sorted.length && sorted[si].endMin < m) si++;
+      const inSession = si < sorted.length && sorted[si].startMin <= m;
+      const isStart = startMins.has(m);
+      if (inSession && !isStart) continue;
+      const part = partOfDay_(Math.floor((m * MIN - dayStart) / 3600000));
+      const before = pullContext(m);
+      add('Pull', 'Part of day', part, 'idle minutes', 1, isStart);
+      add('Pull', 'Weekend', weekend, 'idle minutes', 1, isStart);
+      add('Pull', 'Just before', before, 'idle minutes', 1, isStart);
+    }
+    day = next;
+  }
+
+  const triggerRows = Array.from(tally.values())
+    .sort((a, b) => a.outcome.localeCompare(b.outcome) || a.dimension.localeCompare(b.dimension) || b.exposure - a.exposure)
+    .map(t => [month, t.outcome, t.dimension, t.context, t.unit, t.exposure, t.hits]);
+
+  // ── The bucket's own numbers ──
+  // Likes and saves either land on something the view log holds (the same post, or its account in the half hour
+  // before) or come from somewhere it never recorded: a profile, a share, the web.
+  const seenUrls = new Set([].concat(c.posts, c.videos, c.stories, c.ads).map(i => i.url).filter(Boolean));
+  const seenBy = byKey([].concat(c.posts, c.videos, c.stories, c.ads));
+  const onSeen = [].concat(c.likes, c.saves).filter(a => (a.url && seenUrls.has(a.url))
+    || (a.time && anyIn(seenBy[keyOf(a)] || [], a.time.getTime() - 30 * MIN - 1, a.time.getTime()))).length;
+  // Conversations you started, and how many of them came within a day of a story by that person. A thread is named
+  // after the other person's display name, which is how it is matched to the stories you watched.
+  const storiesByName = {};
+  c.stories.filter(s => s.time).forEach(s => {
+    [norm_(s.ownerName), keyOf(s)].filter(Boolean).forEach(n => { (storiesByName[n] = storiesByName[n] || []).push(s.time.getTime()); });
+  });
+  Object.keys(storiesByName).forEach(n => storiesByName[n].sort((a, b) => a - b));
+  const gap = CONFIG.CONVERSATION_GAP_HOURS * 3600000;
+  const lastInThread = {};
+  let afterStory = 0;
+  c.messages.filter(m => m.time).slice().sort((a, b) => a.time - b.time).forEach(m => {
+    const t = m.time.getTime();
+    const before = lastInThread[m.thread];
+    lastInThread[m.thread] = t;
+    if (before !== undefined && t - before <= gap) return;
+    if (m.fromMe && anyIn(storiesByName[norm_(m.thread)] || [], t - 24 * 3600000 - 1, t)) afterStory++;
+  });
+  const likesAfterStory = c.likes.filter(l => l.time && anyIn(storiesBy[keyOf(l)] || [], l.time.getTime() - 60 * MIN - 1, l.time.getTime())).length;
+
+  return {
+    sessionRows: sessionRows,
+    triggerRows: triggerRows,
+    columns: {
+      'Sessions pulled by messages': described.filter(d => d.pulledBy === 'A message').length,
+      'Quick returns': described.filter(d => d.quick === 'Yes').length,
+      'Acts on items seen': onSeen,
+      'Acts elsewhere': c.likes.length + c.saves.length - onSeen,
+      'Conversations after their story': afterStory,
+      'Likes after their story': likesAfterStory,
+    },
+  };
+}
+
+const TRIGGER_OUTCOMES = {
+  Pull: 'Opening the app', Stay: 'Long sessions', Late: 'Late-night sessions',
+  Act: 'Acting on content', Seek: 'Looking things up', Reach: 'Reaching out',
+};
+
+/** One ranked trigger as a line of the Prompt. */
+function triggerLine_(x) {
+  const counts = x.unit === 'idle minutes'
+    ? `${x.hits} starts in ${Math.round(x.exposure / 60)} idle hours; usual ${round_(x.p0 * 60, 2)} an hour`
+    : `${x.hits} of ${x.exposure} ${x.unit}; usual ${fmtVal_(x.p0, 'pct')}`;
+  return `${TRIGGER_OUTCOMES[x.outcome] || x.outcome} · ${x.dimension}: ${x.context} — ${round_(x.lift, 1)}× (${counts}) [${x.tier}]`;
+}
+
+/** Evidence below this many hits is "too few" and never ranked; at TRIGGER_STRONG or more it is "strong". */
+const TRIGGER_MIN_HITS = 3;
+const TRIGGER_STRONG = 10;
+/**
+ * Contexts that are the absence of one, or a duplicate of another dimension's: counted, so every dimension still adds
+ * up to the whole, but never ranked. "Nothing seen" alone would otherwise top the list four times over — a session
+ * opened by a message has nothing in its opening format, source, tone and theme all at once.
+ */
+const UNRANKED_CONTEXTS = ['Nothing seen', 'Unknown', 'Sponsored', 'Nothing in particular', 'Nothing just before',
+  'No story first', 'Not a quick return'];
+
+/**
+ * Lifts from Triggers rows (any number of buckets), ranked. The rate in a context is compared with the outcome's
+ * overall rate across the same dimension, after shrinking it toward that overall rate with three hits' worth of
+ * prior: two out of three cannot outrank thirty out of three hundred. Evidence is the hits behind a trigger, and
+ * for a dampener the hits it would have had at the overall rate — a context that rarely leads anywhere is shown by
+ * the absence of hits, so its own count cannot be what vouches for it. The dashboard repeats this in app.js.
+ */
+function rankTriggers_(rows) {
+  const groups = {};
+  rows.forEach(r => {
+    const g = groups[r.outcome + '|' + r.dimension] = groups[r.outcome + '|' + r.dimension] || { exposure: 0, hits: 0, contexts: {} };
+    const x = g.contexts[r.context] = g.contexts[r.context] || { outcome: r.outcome, dimension: r.dimension, context: r.context, unit: r.unit, exposure: 0, hits: 0 };
+    x.exposure += +r.exposure || 0;
+    x.hits += +r.hits || 0;
+    g.exposure += +r.exposure || 0;
+    g.hits += +r.hits || 0;
+  });
+  const out = [];
+  Object.keys(groups).forEach(k => {
+    const g = groups[k];
+    if (!g.hits || !g.exposure) return;
+    const p0 = g.hits / g.exposure;
+    Object.keys(g.contexts).forEach(name => {
+      const x = g.contexts[name];
+      if (!x.exposure) return;
+      const lift = ((x.hits + TRIGGER_MIN_HITS) / (x.exposure + TRIGGER_MIN_HITS / p0)) / p0;
+      const evidence = lift >= 1 ? x.hits : x.exposure * p0;
+      const tier = evidence < TRIGGER_MIN_HITS ? 'too few' : evidence < TRIGGER_STRONG ? 'some' : 'strong';
+      out.push(Object.assign({}, x, { p0: p0, rate: x.hits / x.exposure, lift: lift, tier: tier,
+        strength: tier === 'too few' || UNRANKED_CONTEXTS.indexOf(name) >= 0 ? 0
+          : Math.abs(Math.log(lift)) * (tier === 'strong' ? 1 : 0.6) }));
+    });
+  });
+  const ranked = out.filter(x => x.strength > 0).sort((a, b) => b.strength - a.strength);
+  return {
+    all: out,
+    triggers: ranked.filter(x => x.lift >= 1.25),
+    dampeners: ranked.filter(x => x.lift <= 0.8),
+  };
 }
 
 // ── Conversations ────────────────────────────────────────────────────────────
