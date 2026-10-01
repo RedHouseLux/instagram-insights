@@ -150,7 +150,7 @@
       'tr.notviewed': 'Fuori dalla cronologia di visualizzazione conservata da Instagram.',
       'tr.partial': 'Parziale: meno di metà del periodo ha una cronologia di visualizzazione.',
       'tr.usual': 'Il tuo intervallo abituale: {lo} – {hi}', 'tr.outside': 'Fuori dal tuo intervallo abituale.',
-      'tr.click': 'Clicca per mostrare questo periodo qui sotto.',
+      'tr.click': 'Clicca per aprire la panoramica di questo periodo.',
       'tr.byday': 'per giorno', 'tr.byweek': 'per settimana', 'tr.bymonth': 'per mese',
       'tr.key.gap': 'vuoto = nessun export', 'tr.key.day': 'i giorni fuori dalla cronologia di visualizzazione restano vuoti',
       'tr.key.hollow': 'vuoto al centro = settimana parziale', 'tr.key.band': 'fascia = il tuo intervallo abituale',
@@ -163,7 +163,7 @@
       'heat.note.chosen': 'Quota delle tue azioni pesate (ricerche e commenti 3, salvataggi e follow 2, like 1) che portano ciascun tema. Una settimana con poche azioni oscilla molto.',
       // Your account
       'perf.lede': 'I numeri di Instagram sul tuo profilo. Ogni punto è un totale dei 90 giorni che finiscono quel giorno, quindi due punti a una settimana di distanza condividono 83 giorni: si muovono lentamente e non vanno mai sommati. I punti vuoti sono ricavati dal "% rispetto ai 90 giorni precedenti" di Instagram stesso.',
-      'perf.key': 'Pieno: come riportato · vuoto e tratteggiato: ricavato · ▼ la tua ultima storia · arancione: la finestra che termina nel periodo mostrato qui sotto. "rispetto a una settimana prima" è la settimana entrata nella finestra meno quella uscita, 13 settimane fa — non questa settimana da sola.',
+      'perf.key': 'Pieno: come riportato · vuoto e tratteggiato: ricavato · ▼ la tua ultima storia · punto scuro con l’anello: la finestra che termina nel periodo aperto in Panoramica. "rispetto a una settimana prima" è la settimana entrata nella finestra meno quella uscita, 13 settimane fa — non questa settimana da sola.',
       'perf.story': 'La tua ultima storia in questi export: {d}. Le interazioni con le storie in queste finestre vengono da lei e da quelle precedenti; da circa il {r} i 90 giorni non la includono più e, senza una nuova, scendono a zero. Leggi un calo di copertura e interazioni alla luce di questo prima di leggerlo come un pubblico che si allontana.',
       'perf.nogap': 'Nessun export copre queste settimane.',
       'perf.tip.rep': 'Come riportato nell’export del {d}.',
@@ -185,7 +185,7 @@
       'strips.shown': 'Ciò che ti è stato mostrato · la dieta del feed',
       'strips.big5': 'Personalità · Big Five', 'strips.needs': 'Bisogni · Teoria dell’autodeterminazione',
       'strips.thin': 'n={n} · troppo pochi',
-      'strips.key': 'Ogni striscia va da 0 a 100. Punti grigi: ogni altra {p} registrata. Arancione: questa {p}. n: su quanti eventi poggia il punteggio; con meno di {m} resta vuoto invece di essere indovinato. Passa sopra una riga per la sua formula.',
+      'strips.key': 'Ogni striscia va da 0 a 100. Punti grigi: ogni altra {p} registrata. Punto scuro con l’anello: questa {p}. n: su quanti eventi poggia il punteggio; con meno di {m} resta vuoto invece di essere indovinato. Passa sopra una riga per la sua formula.',
       'infl.h': 'Il feed e te · quota di ciò che ti è stato mostrato contro quota di ciò che hai scelto',
       'db.seen': 'quota di ciò che ti è stato mostrato', 'db.chosen': 'quota di ciò che hai scelto',
       'db.of.seen': 'di ciò che ti è stato mostrato', 'db.of.chosen': 'di ciò che hai scelto',
@@ -201,6 +201,26 @@
       'conv.person': 'Persona', 'conv.msgs': 'Inviati · ricevuti', 'conv.convs': 'Conversazioni (avviate da te)',
       'conv.yours': 'Tuoi turni con risposta', 'conv.theirs': 'Loro turni a cui hai risposto', 'conv.wait': 'Risposta mediana: loro · tu',
       'conv.voice': 'vocali',
+      // Tabs, motion, overview
+      'tab.overview': 'Panoramica', 'tab.time': 'Nel tempo', 'tab.triggers': 'Fattori', 'tab.feed': 'Il tuo feed',
+      'tab.you': 'Tu', 'tab.people': 'Persone e profilo', 'tab.wellbeing': 'Benessere',
+      'motion.title': 'Animazioni sì o no', 'motion.off': 'Disattiva le animazioni', 'motion.on': 'Attiva le animazioni',
+      'sec.stood': 'Cosa è saltato all’occhio', 'ov.signals': 'Cosa tenere d’occhio', 'ov.signals.all': 'Tutti i segnali →',
+      'stood.unusual': 'Insolito', 'stood.usual': 'di solito',
+      'stood.higher': 'Più alto del solito: fuori da ciò che hanno coperto i periodi recenti.',
+      'stood.lower': 'Più basso del solito: fuori da ciò che hanno coperto i periodi recenti.',
+      'stood.trigger': 'Fattore forte', 'stood.trigger.some': 'Fattore',
+      'stood.trigger.why': 'Sull’intervallo mostrato. Un’associazione, non una causa.',
+      'stood.worse': 'Peggiorato', 'stood.rising': 'In crescita', 'stood.rising.stat': '+{n} punti del tuo feed rispetto al periodo prima',
+      'stood.rising.why': 'Una quota più grande di ciò che ti è stato mostrato rispetto a prima.',
+      'stood.changed': 'Cambiato', 'stood.reply.why': 'Quanto spesso ciò che scrivi riceve risposta entro un giorno.',
+      'stood.none': 'Niente fuori dal tuo intervallo abituale in questa {p}, nessun fattore con abbastanza prove e nessun rischio in peggioramento.',
+      'stood.go.time': 'Nel tempo →', 'stood.go.triggers': 'Fattori →', 'stood.go.feed': 'Il tuo feed →',
+      'stood.go.people': 'Persone e profilo →', 'stood.go.wellbeing': 'Benessere →',
+      'sec.diet': 'La dieta del feed', 'sec.you': 'Personalità, bisogni e influenza', 'sec.method': 'Come si calcola ciascun indicatore',
+      'sec.close': 'Chi ti è vicino',
+      'strips.key.short': 'Punti grigi: ogni altro periodo registrato; il punto scuro: questo. Da 0 a 100.',
+      'well.method': 'Come si calcola ogni numero qui (METHODOLOGY) →',
       // Context triggers
       'sec.triggers': 'Cosa viene subito prima di ciò che fai',
       'trig.lede': 'In quali condizioni apri l’app, ci resti a lungo, agisci su ciò che vedi, cerchi qualcosa o scrivi a qualcuno — letto da ciò che è venuto subito prima. Sono associazioni, non cause: dicono cosa va insieme, non cosa provoca cosa.',
@@ -511,6 +531,8 @@
   }
 
   async function init() {
+    initMotion();
+    wireTabs();
     setSkeleton(true);
     startChecking();
     try {
@@ -628,31 +650,151 @@
 
     drawSectionIcons();
     syncControls();
-    drawHero(row, coverage, span);
-    drawTiles(row, before);
-    drawLayers(row, before);
-    drawTrends();
-    drawPerformance();
-    drawThemeDonut();
-    drawThemes();
-    drawThemeHighlights(row, before);
-    drawThemeSlope(row, before);
-    drawAccounts();
-    drawProfileOfWeek();
-    drawNetworkPreview();
-    drawBelonging();
-    drawConversations();
-    drawDaily();
-    drawTriggers();
-    drawEmotions();
-    drawStrips();
-    drawInfluence();
-    drawRiskMatrix();
-    drawRisks();
-    drawHours();
-    drawProfile();
-    drawSignals();
     drawLog();
+    view = { row: row, before: before, coverage: coverage, span: span };
+    // Only the tab on screen is drawn; the others are marked stale and draw when they are next shown. A period or
+    // range change re-renders the visible tab in place, faded briefly so the change reads as a change.
+    drawn = {};
+    const panel = $('#panel-' + tab);
+    const swap = motionOn() && panel && !panel.hidden && panel.dataset.ever === '1';
+    if (swap) panel.classList.add('is-stale');
+    showTab(tab, { quiet: true });
+    if (swap) requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.remove('is-stale')));
+  }
+
+  // ── Tabs ─────────────────────────────────────────────────────────────────────────────────────────────
+  // By question rather than by data source: what happened, how it moved, what sets it off, what you were shown,
+  // what you do, who is involved, what to watch. Existing sections were moved into them with their ids intact, so
+  // every draw function below is unchanged — a tab is simply the list of them it calls.
+  const TABS = ['overview', 'time', 'triggers', 'feed', 'you', 'people', 'wellbeing'];
+  const TAB_DRAW = {
+    overview: v => { drawHero(v.row, v.coverage, v.span); drawTiles(v.row, v.before); drawStoodOut(v.row, v.before); drawLayers(v.row, v.before); drawTopSignals(); },
+    time: () => { drawTrends(); },
+    triggers: () => { drawTriggers(); },
+    feed: v => { drawThemeDonut(); drawThemes(); drawThemeHighlights(v.row, v.before); drawThemeSlope(v.row, v.before); drawEmotions(); drawStrips(); drawAccounts(); },
+    you: () => { drawStrips(); drawInfluence(); drawDaily(); drawHours(); drawProfile(); },
+    people: () => { drawPerformance(); drawProfileOfWeek(); drawNetworkPreview(); drawBelonging(); drawConversations(); drawClose(); },
+    wellbeing: () => { drawRiskMatrix(); drawRisks(); drawSignals(); drawMethodLink(); },
+  };
+  let tab = 'overview';
+  try {
+    const saved = localStorage.getItem('ii-tab');
+    if (TABS.indexOf(saved) >= 0) tab = saved;
+  } catch (e) { /* blocked storage: start on Overview */ }
+  let drawn = {};
+  let view = null;
+
+  /** Shows a tab, drawing it first if it is stale; entrance motion plays the first time it is shown after a draw. */
+  function showTab(name, opts) {
+    opts = opts || {};
+    if (TABS.indexOf(name) < 0) name = 'overview';
+    const changed = name !== tab;
+    tab = name;
+    try { localStorage.setItem('ii-tab', name); } catch (e) { /* this visit only */ }
+    document.querySelectorAll('#tabs [role="tab"]').forEach(b => {
+      const on = b.dataset.tab === name;
+      b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    const panel = $('#panel-' + name);
+    document.querySelectorAll('.tabpanel').forEach(p => { p.hidden = p !== panel; });
+    if (!panel || !view) return;
+    const fresh = !drawn[name];
+    if (fresh) {
+      TAB_DRAW[name](view);
+      drawn[name] = true;
+    }
+    if (motionOn() && (changed || (fresh && panel.dataset.ever !== '1'))) {
+      // The entrance plays once per draw of a tab: on its first show and after a period change, not on every visit.
+      panel.classList.remove('is-entering', 'play');
+      void panel.offsetWidth;
+      panel.classList.add('is-entering');
+      if (fresh) panel.classList.add('play');
+      clearTimeout(panel._playTimer);
+      panel._playTimer = setTimeout(() => panel.classList.remove('is-entering', 'play'), 1400);
+    }
+    panel.dataset.ever = '1';
+    if (opts.focus) panel.focus({ preventScroll: true });
+    if (opts.scroll) {
+      const target = opts.scroll === true ? $('#tabs') : $(opts.scroll);
+      if (target) target.scrollIntoView({ behavior: motionOn() ? 'smooth' : 'auto', block: 'start' });
+    }
+  }
+
+  function wireTabs() {
+    const list = $('#tabs');
+    if (!list) return;
+    const buttons = () => Array.from(list.querySelectorAll('[role="tab"]'));
+    buttons().forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+    // Arrow keys move along the tabs and select as they go; Home and End jump to either end (WAI-ARIA tabs).
+    list.addEventListener('keydown', e => {
+      const all = buttons();
+      const i = all.indexOf(document.activeElement);
+      if (i < 0) return;
+      let j = null;
+      if (e.key === 'ArrowRight') j = (i + 1) % all.length;
+      else if (e.key === 'ArrowLeft') j = (i - 1 + all.length) % all.length;
+      else if (e.key === 'Home') j = 0;
+      else if (e.key === 'End') j = all.length - 1;
+      if (j === null) return;
+      e.preventDefault();
+      all[j].focus();
+      all[j].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      showTab(all[j].dataset.tab);
+    });
+    // Any "go to" link inside a panel switches tab and lands on the section it names.
+    document.addEventListener('click', e => {
+      const go = e.target.closest && e.target.closest('[data-goto]');
+      if (!go) return;
+      e.preventDefault();
+      showTab(go.dataset.goto, { scroll: go.dataset.target || true });
+    });
+  }
+
+  // ── Motion ───────────────────────────────────────────────────────────────────────────────────────────
+  // Follows the system's reduced-motion setting until the reader chooses, then follows the choice. Every animation
+  // in app.css hangs off html[data-motion="on"], so "off" stops all of them at once.
+  function motionOn() { return document.documentElement.dataset.motion === 'on'; }
+  function initMotion() {
+    const reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+    let saved = null;
+    try { saved = localStorage.getItem('ii-motion'); } catch (e) { /* no storage: follow the system */ }
+    const apply = on => {
+      document.documentElement.dataset.motion = on ? 'on' : 'off';
+      const b = $('#motion');
+      if (b) {
+        b.setAttribute('aria-pressed', String(on));
+        b.setAttribute('aria-label', on ? t('motion.off', 'Turn animations off') : t('motion.on', 'Turn animations on'));
+      }
+    };
+    apply(saved ? saved === 'on' : !(reduce && reduce.matches));
+    if (reduce && reduce.addEventListener) reduce.addEventListener('change', () => {
+      let stored = null;
+      try { stored = localStorage.getItem('ii-motion'); } catch (e) { /* ignore */ }
+      if (!stored) apply(!reduce.matches);
+    });
+    const btn = $('#motion');
+    if (btn) btn.addEventListener('click', () => {
+      const on = !motionOn();
+      try { localStorage.setItem('ii-motion', on ? 'on' : 'off'); } catch (e) { /* this visit only */ }
+      apply(on);
+    });
+  }
+
+  /** Counts a number up from the value last shown in the same place, when the period changes. */
+  const lastShown = {};
+  function countTo(node, key, value, format) {
+    const from = lastShown[key];
+    lastShown[key] = value;
+    if (!motionOn() || value === null || from === undefined || from === null || from === value || !isFinite(from)) return;
+    const started = performance.now();
+    const step = now => {
+      const k = Math.min(1, (now - started) / 450);
+      const eased = 1 - Math.pow(1 - k, 3);
+      node.textContent = k < 1 ? format(from + (value - from) * eased) : format(value);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
   /** Section-heading icons, stamped once from the data-icon attribute the template carries. */
@@ -965,27 +1107,37 @@
     const tiles = [
       // The risk index is left out of a week for the same reason the Risks section is: it is scored against
       // month-scale thresholds and the month before, and seven days is not enough for it to mean anything.
-      { k: 'Risk index', label: t('tile.risk', 'Risk index'), value: fmt.int(row['Risk index']), sub: t('tile.risk.sub', 'out of 100'), worse: 'up', monthOnly: true },
-      { k: 'Est. minutes per active day', label: t('tile.min', 'Minutes a day'), value: fmt.one(row['Est. minutes per active day']), sub: t('tile.min.sub', 'estimated floor'), worse: 'up' },
-      { k: 'Seen per day', label: t('tile.items', 'Items a day'), value: fmt.one(row['Seen per day']), sub: t('tile.items.sub', 'posts and videos'), worse: 'up' },
-      { k: 'Active ratio', label: t('tile.active', 'Active ratio'), value: fmt.pct(row['Active ratio']), sub: t('tile.active.sub', 'likes, saves, comments, follows, searches per item'), worse: 'down', kind: 'pct' },
-      { k: 'Quiet interests', label: t('tile.quiet', 'Quiet interests'), value: fmt.int(row['Quiet interests']), sub: t('tile.quiet.sub', 'seen often, never touched'), worse: 'up' },
-      { k: 'Sessions per active day', label: t('tile.sessions', 'Sessions a day'), value: fmt.one(row['Sessions per active day']), sub: t('tile.sessions.sub', 'times you picked it up'), worse: 'up' },
+      { k: 'Risk index', label: t('tile.risk', 'Risk index'), f: fmt.int, sub: t('tile.risk.sub', 'out of 100'), worse: 'up', monthOnly: true },
+      { k: 'Est. minutes per active day', label: t('tile.min', 'Minutes a day'), f: fmt.one, sub: t('tile.min.sub', 'estimated floor'), worse: 'up' },
+      { k: 'Seen per day', label: t('tile.items', 'Items a day'), f: fmt.one, sub: t('tile.items.sub', 'posts and videos'), worse: 'up' },
+      { k: 'Active ratio', label: t('tile.active', 'Active ratio'), f: fmt.pct, sub: t('tile.active.sub', 'likes, saves, comments, follows, searches per item'), worse: 'down', kind: 'pct' },
+      { k: 'Quiet interests', label: t('tile.quiet', 'Quiet interests'), f: fmt.int, sub: t('tile.quiet.sub', 'seen often, never touched'), worse: 'up' },
+      { k: 'Sessions per active day', label: t('tile.sessions', 'Sessions a day'), f: fmt.one, sub: t('tile.sessions.sub', 'times you picked it up'), worse: 'up' },
     ];
     const box = $('#tiles');
     box.innerHTML = '';
-    tiles.filter(t => !(t.monthOnly && isWeek())).forEach(t => {
-      const d = before ? delta(row[t.k], before[t.k], t.kind) : null;
-      const cls = d && d.dir !== 'flat' ? (d.dir === t.worse ? 'worse' : 'better') : 'flat';
+    // The sparkline is the bucket and the seven before it, so a tile says where this value sits in its own recent
+    // run as well as how it compares with the one bucket before.
+    const rows = bucketRows();
+    const upto = rows.findIndex(r => r[bucketKey()] === current);
+    const recent = rows.slice(Math.max(0, upto - 7), upto + 1);
+    tiles.filter(tile => !(tile.monthOnly && isWeek())).forEach(tile => {
+      const d = before ? delta(row[tile.k], before[tile.k], tile.kind) : null;
+      const cls = d && d.dir !== 'flat' ? (d.dir === tile.worse ? 'worse' : 'better') : 'flat';
+      const value = numOrNull(row[tile.k]);
+      const v = el('div', { class: 'tile-v', text: tile.f(row[tile.k]) });
       const parts = [
-        el('div', { class: 'tile-v', text: t.value }),
-        el('div', { class: 'tile-k', text: t.label }),
-        el('div', { class: 'tile-s', text: t.sub }),
+        v,
+        el('div', { class: 'tile-k', text: tile.label }),
+        el('div', { class: 'tile-s', text: tile.sub }),
       ];
       // With nothing before it there is no comparison to draw, so none is drawn — a placeholder like
       // "first week" is just an empty promise taking up the space a real number will occupy later.
       if (d) parts.push(el('div', { class: 'tile-d ' + cls, text: d.text }));
+      const series = recent.map(r => numOrNull(r[tile.k]));
+      if (series.filter(x => x !== null).length >= 2) parts.push(CH.spark(series, { label: tile.label }));
       box.appendChild(el('div', { class: 'tile' }, parts));
+      countTo(v, 'tile|' + tile.k, value, tile.f);
     });
   }
 
@@ -1178,9 +1330,9 @@
       for (let h = 0; h < 24; h++) {
         const found = rows.find(r => r['Weekday no'] === i + 1 && r.Hour === h);
         const count = found ? found.Count : 0;
-        const cell = el('div', { class: 'cell', title: `${day} ${String(h).padStart(2, '0')}:00 · ${count} items` });
+        const cell = el('div', { class: 'cell', title: `${day} ${String(h).padStart(2, '0')}:00 · ${count} items`, style: `--d:${h * 16}ms` });
         if (count) {
-          cell.style.background = 'var(--seen)';
+          cell.style.background = 'var(--l-consumption)';
           cell.style.opacity = (0.18 + 0.82 * Math.sqrt(count / max)).toFixed(2);
         }
         grid.appendChild(cell);
@@ -1445,6 +1597,116 @@
     });
   }
 
+  /** The three most pressing signals, on the Overview; the full list stays on Wellbeing. */
+  function drawTopSignals() {
+    const box = $('#ov-signals');
+    if (!box) return;
+    box.innerHTML = '';
+    const order = { '🔴 Alert': 0, '⚠️ Watch': 1, 'ℹ️ Info': 2, '✅ OK': 3 };
+    const rank = s => (order[s.Level] === undefined ? 4 : order[s.Level]);
+    bucketTable('Signals').sort((a, b) => rank(a) - rank(b)).slice(0, 3).forEach(s => box.appendChild(el('div', { class: 'signal' }, [
+      el('span', { class: 'signal-l', text: s.Level }),
+      el('div', {}, [
+        el('div', { class: 'signal-n' }, [el('b', { text: s.Signal }), el('span', { class: 'signal-v', text: String(s.Value) })]),
+        el('div', { class: 'signal-m', text: s['What it means'] }),
+      ]),
+    ])));
+    $('#ov-signals-panel').hidden = !box.children.length;
+  }
+
+  // ── What stood out ─────────────────────────────────────────────────────────────────────────────────────
+  // At most four highlights, each a single fact with a way to its evidence: a measure outside your usual range,
+  // the strongest trigger in the range shown, the risk that worsened most, a theme that rose, a change in how often
+  // you are answered. Highlight styling (layer border, tint, badge) is reserved for these and for flagged charts,
+  // so it keeps meaning "look here".
+  function drawStoodOut(row, before) {
+    const box = $('#stood');
+    if (!box) return;
+    box.innerHTML = '';
+    const cards = [];
+    const period = isWeek() ? t('word.week', 'week') : t('word.month', 'month');
+
+    // Measures outside the usual range of the buckets before this one (the same band the charts over time shade).
+    const rows = bucketRows();
+    const k = rows.findIndex(r => r[bucketKey()] === current);
+    const unusual = [];
+    TREND_LAYERS.forEach(layer => layer.metrics.forEach(m => {
+      const values = rows.map(r => (m.calc ? m.calc(r) : numOrNull(r[m.key])));
+      const hollow = rows.map(r => !!m.view && r.Coverage !== '' && +r.Coverage < MIN_TREND_COVERAGE);
+      const band = usualRange(values, hollow, k);
+      const v = values[k];
+      if (!band || v === null || hollow[k] || (v >= band[0] && v <= band[1])) return;
+      const width = Math.max(band[1] - band[0], Math.abs(band[1]) * 0.1, 1e-6);
+      unusual.push({ m: m, layer: layer.id, v: v, band: band, up: v > band[1], dist: (v > band[1] ? v - band[1] : band[0] - v) / width });
+    }));
+    unusual.sort((a, b) => b.dist - a.dist).slice(0, 2).forEach(u => {
+      const f = fmtBy(u.m.f);
+      cards.push({
+        layer: u.layer, badge: t('stood.unusual', 'Unusual'), pulse: true, title: tr(u.m.label),
+        stat: `${f(u.v)} · ${t('stood.usual', 'usually')} ${f(u.band[0])}–${f(u.band[1])}`,
+        why: u.up ? t('stood.higher', 'Higher than usual: outside what recent {p}s covered.', { p: period })
+          : t('stood.lower', 'Lower than usual: outside what recent {p}s covered.', { p: period }),
+        goto: 'time',
+      });
+    });
+
+    const scope = triggerScope();
+    const top = scope ? rankTriggers(scope.rows).triggers[0] : null;
+    if (top) {
+      cards.push({
+        layer: TRIG_LAYER[top.outcome], badge: top.tier === 'strong' ? t('stood.trigger', 'Strong trigger') : t('stood.trigger.some', 'Trigger'),
+        title: triggerSentence(top), stat: `${liftText(top.lift)} · ${countText(top)}`,
+        why: t('stood.trigger.why', 'Over the range shown. An association, not a cause.'), goto: 'triggers',
+      });
+    }
+
+    const worse = bucketTable('Risks').filter(r => /^▲/.test(String(r.Trend)))
+      .map(r => ({ r: r, up: +(String(r.Trend).match(/\d+/) || [0])[0] })).sort((a, b) => b.up - a.up)[0];
+    if (worse) {
+      cards.push({
+        layer: 'risk', badge: t('stood.worse', 'Worse'), title: worse.r.Risk,
+        stat: `${worse.r.Score} · ${worse.r.Trend}`, why: worse.r.Evidence, goto: 'wellbeing',
+      });
+    }
+    if (row['Emerging theme']) {
+      cards.push({
+        layer: 'exposure', badge: t('stood.rising', 'Rising'), title: row['Emerging theme'],
+        stat: t('stood.rising.stat', '+{n} pts of your feed vs last {p}', { n: (100 * +row['Emerging change']).toFixed(1), p: period }),
+        why: t('stood.rising.why', 'A bigger share of what you were shown than it held before.'), goto: 'feed',
+      });
+    }
+    const now = before ? numOrNull(row['Reply rate to you']) : null;
+    const then = before ? numOrNull(before['Reply rate to you']) : null;
+    if (now !== null && then !== null && Math.abs(now - then) >= 0.15) {
+      cards.push({
+        layer: 'inbound', badge: t('stood.changed', 'Changed'), title: t('lc.replyrate', 'Your turns answered'),
+        stat: `${fmt.pct(then)} → ${fmt.pct(now)}`,
+        why: t('stood.reply.why', 'How often what you write gets an answer within a day.'), goto: 'people', target: '#sec-belonging',
+      });
+    }
+
+    cards.slice(0, 4).forEach(c => box.appendChild(el('div', { class: `stood-card is-highlight is-${c.layer}` }, [
+      el('span', { class: 'badge' + (c.pulse ? ' is-pulse' : ''), text: c.badge }),
+      el('b', { class: 'stood-t', text: c.title }),
+      el('span', { class: 'stood-s', text: c.stat }),
+      el('span', { class: 'stood-w', text: c.why || '' }),
+      el('button', Object.assign({ type: 'button', class: 'link-btn', 'data-goto': c.goto, text: t('stood.go.' + c.goto, TAB_NAME[c.goto] + ' →') },
+        c.target ? { 'data-target': c.target } : {})),
+    ])));
+    if (!cards.length) box.appendChild(el('p', { class: 'mono', text: t('stood.none', 'Nothing outside your usual range this {p}, no trigger with enough behind it, and no risk getting worse.', { p: period }) }));
+  }
+  const TAB_NAME = { overview: 'Overview', time: 'Over time', triggers: 'Triggers', feed: 'Your feed', you: 'You', people: 'People & account', wellbeing: 'Wellbeing' };
+
+  /** "Who you are close to" holds two panels that can each be empty; with both empty the heading goes too. */
+  function drawClose() {
+    const sec = $('#sec-close');
+    if (sec) sec.hidden = $('#pow').hidden && $('#sec-netprev').hidden;
+  }
+  function drawMethodLink() {
+    const a = $('#method-link');
+    if (a) a.href = 'https://github.com/RedHouseLux/instagram-insights/blob/main/' + (lang === 'it' ? 'METHODOLOGY.it.md' : 'METHODOLOGY.md');
+  }
+
   function drawLog() {
     const rows = table('Log').filter(l => l.Month);
     $('#log').textContent = rows.length
@@ -1658,8 +1920,8 @@
     }
     try { window.localStorage.setItem('insights-bucket', mode); } catch (e) { /* not worth failing over */ }
     render();
-    const hero = $('#hero');
-    if (hero) hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // A point on a chart over time opens that period's overview: the snapshot it summarises.
+    showTab('overview', { scroll: '#hero' });
   }
 
   function trendCard(m, tp) {
@@ -1705,11 +1967,17 @@
         if (p.hollow) notes.push(t('tr.partial', 'Partial: less than half of this period has viewing history.'));
         if (p.band) notes.push(t('tr.usual', 'Your usual range: {lo} – {hi}', { lo: f(p.band[0]), hi: f(p.band[1]) }));
         if (p.flag) notes.push(t('tr.outside', 'Outside your usual range.'));
-        notes.push(t('tr.click', 'Click to show this period below.'));
+        notes.push(t('tr.click', 'Click to open this period’s overview.'));
         notes.forEach(text => card.appendChild(el('p', { class: 'tipcard-note', text: text })));
       }, evt, anchor),
     });
-    return el('div', { class: 'spark' }, [el('h4', { class: 'spark-h', text: tr(m.label) }), svg]);
+    // The bucket on screen sitting outside its usual range is the one case a chart over time is highlighted for.
+    const odd = points.some(p => p.selected && p.flag);
+    return el('div', { class: 'spark' + (odd ? ' is-highlight' : '') }, [
+      el('div', { class: 'spark-top' }, [el('h4', { class: 'spark-h', text: tr(m.label) }),
+        odd ? el('span', { class: 'badge is-pulse', text: t('stood.unusual', 'Unusual') }) : el('span', {})]),
+      svg,
+    ]);
   }
 
   function drawTrends() {
@@ -1793,10 +2061,10 @@
       grid.appendChild(el('span', { class: 'wd', text: th }));
       keys.forEach((k, j) => {
         const v = cell(th, k);
-        const c = el('div', { class: 'cell' + (k ? '' : ' is-gap') });
+        const c = el('div', { class: 'cell' + (k ? '' : ' is-gap'), style: `--d:${Math.round(400 * j / Math.max(1, keys.length))}ms` });
         c.title = `${th} · ${periodLabel(tp.points[j], tp.unit)}: ${v === null ? '—' : fmt.pct(v)}`;
         if (v) {
-          c.style.background = heatMode === 'seen' ? 'var(--seen)' : 'var(--accent)';
+          c.style.background = heatMode === 'seen' ? 'var(--l-exposure)' : 'var(--l-consumption)';
           c.style.opacity = (0.15 + 0.85 * Math.sqrt(v / max)).toFixed(2);
         }
         grid.appendChild(c);
@@ -1861,7 +2129,7 @@
     const notes = $('#perf-notes');
     notes.innerHTML = '';
     notes.appendChild(el('p', { class: 'mono perf-key', text: t('perf.key',
-      'Solid: as reported · hollow and dashed: worked out · ▼ your last story · orange: the window ending in the period shown below. '
+      'Solid: as reported · hollow and dashed: worked out · ▼ your last story · dark dot with a ring: the window ending in the period open in Overview. '
       + '"vs a week earlier" is the week that joined the window minus the week that left it, 13 weeks back — not this week on its own.') }));
     if (lastStory) {
       const rollOff = addDays(lastStory, 90);
@@ -1994,7 +2262,7 @@
     });
     const k = $('#strip-key');
     if (k) {
-      k.textContent = t('strips.key', 'Each strip runs 0–100. Grey dots: every other {p} on record. Orange: this {p}. n: how many events the score rests on; with fewer than {m} it is left blank rather than guessed. Hover a row for its formula.',
+      k.textContent = t('strips.key', 'Each strip runs 0–100. Grey dots: every other {p} on record. Dark dot with a ring: this {p}. n: how many events the score rests on; with fewer than {m} it is left blank rather than guessed. Hover a row for its formula.',
         { p: isWeek() ? t('word.week', 'week') : t('word.month', 'month'), m: MIN_EVIDENCE });
     }
   }
@@ -2409,7 +2677,7 @@
           const x = byKey[o + '|' + line.dim + '|' + line.context];
           if (!x) { grid.appendChild(el('span', { class: 'tm-c tm-cell is-na', role: 'cell' })); return; }
           tableRows.push(x);
-          const cell = el('span', { class: 'tm-c tm-cell tier-' + x.tier, role: 'cell', tabindex: '0' });
+          const cell = el('span', { class: 'tm-c tm-cell tier-' + x.tier, role: 'cell', tabindex: '0', style: `--d:${TRIG_OUTCOMES.indexOf(o) * 60}ms` });
           if (x.tier !== 'few') {
             const k2 = Math.min(1, Math.abs(Math.log(x.lift)) / Math.log(3));
             const pole = x.lift >= 1 ? 'var(--div-more)' : 'var(--div-less)';
@@ -2464,7 +2732,7 @@
       heat.appendChild(el('span', { class: 'wd', text: day }));
       for (let h = 0; h < 24; h++) {
         const n = grid[i][h];
-        const cell = el('div', { class: 'cell', title: t('trig.starts.cell', '{d} {h}:00 · {n} sessions began', { d: day, h: String(h).padStart(2, '0'), n: n }) });
+        const cell = el('div', { class: 'cell', style: `--d:${h * 16}ms`, title: t('trig.starts.cell', '{d} {h}:00 · {n} sessions began', { d: day, h: String(h).padStart(2, '0'), n: n }) });
         if (n) {
           cell.style.background = 'var(--l-consumption)';
           cell.style.opacity = (0.2 + 0.8 * Math.sqrt(n / max)).toFixed(2);

@@ -23,6 +23,7 @@
     <div class="top-actions">
       <button id="lang" type="button" class="icon-btn" title="English / Italiano" aria-label="Switch language">EN</button>
       <button id="theme" type="button" class="icon-btn" title="Switch light/dark" aria-label="Switch light or dark theme">◐</button>
+      <button id="motion" type="button" class="icon-btn" aria-pressed="true" data-i18n-title="motion.title" title="Animations on or off">∿</button>
       <button id="mode" type="button" data-i18n-title="mode.title" title="Switch between weekly and monthly buckets">Weekly</button>
       <button id="refresh" type="button" data-i18n="refresh" data-i18n-title="refresh.title" title="Checks Drive right now. Doesn't reload this page — after a code update, reload the tab first.">Check Drive now</button>
     </div>
@@ -72,9 +73,18 @@
     </div>
     <p id="note2" hidden></p>
 
-    <!-- The hero states the bucket and how much of it is actually covered, before any chart argues anything.
-         Numbering below is not decoration: the sections run feed → time → people → self → risk, which is the
-         order the evidence builds in, and each number is a step in that argument. -->
+    <!-- Tabs by question. Each draws only when it is first shown (see showTab in app.js), and carries the colour of
+         the layer it is mostly about as its underline; Overview, Over time and Wellbeing span every layer. -->
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+      <button type="button" role="tab" id="tab-overview" aria-controls="panel-overview" data-tab="overview" data-i18n="tab.overview">Overview</button>
+      <button type="button" role="tab" id="tab-time" aria-controls="panel-time" data-tab="time" data-i18n="tab.time">Over time</button>
+      <button type="button" role="tab" id="tab-triggers" aria-controls="panel-triggers" data-tab="triggers" data-layer="consumption" data-i18n="tab.triggers">Triggers</button>
+      <button type="button" role="tab" id="tab-feed" aria-controls="panel-feed" data-tab="feed" data-layer="exposure" data-i18n="tab.feed">Your feed</button>
+      <button type="button" role="tab" id="tab-you" aria-controls="panel-you" data-tab="you" data-layer="consumption" data-i18n="tab.you">You</button>
+      <button type="button" role="tab" id="tab-people" aria-controls="panel-people" data-tab="people" data-layer="social" data-i18n="tab.people">People &amp; account</button>
+      <button type="button" role="tab" id="tab-wellbeing" aria-controls="panel-wellbeing" data-tab="wellbeing" data-i18n="tab.wellbeing">Wellbeing</button>
+    </nav>
+    <div class="tabpanel" role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" data-tab="overview" tabindex="0" hidden>
     <section class="hero" id="hero">
       <div class="hero-main">
         <span class="eyebrow" id="hero-eyebrow"></span>
@@ -88,19 +98,30 @@
     </section>
 
     <div class="tiles" id="tiles"></div>
-
+    <section class="sec" id="sec-stood">
+      <h2 class="sec-h"><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.stood">What stood out</span></h2>
+      <div class="stood" id="stood"></div>
+    </section>
     <!-- The four layers come first because every section after them belongs to one of them, and the one
          distinction worth holding on to is between what reached you and what you did. -->
     <section class="sec" id="sec-layers">
-      <h2 class="sec-h"><span class="sec-n">01</span><span class="sec-i" data-icon="layers"></span><span data-i18n="sec.layers">Four layers: shown, used, done, received</span></h2>
+      <h2 class="sec-h"><span class="sec-i" data-icon="layers"></span><span data-i18n="sec.layers">Four layers: shown, used, done, received</span></h2>
       <p class="lede" style="margin-bottom:14px" data-i18n="layers.lede">What the feed showed you is mostly the recommender's
         choice; what you did with it is yours. The dashboard keeps the two apart, and adds what you did toward people and
         what they did back.</p>
       <div class="layers" id="layers"></div>
     </section>
-
+    <div class="panel" id="ov-signals-panel" style="margin-top:12px">
+      <div class="sub-row">
+        <h3 class="sub" data-i18n="ov.signals">What to watch</h3>
+        <button type="button" class="link-btn" data-goto="wellbeing" data-i18n="ov.signals.all">All signals →</button>
+      </div>
+      <div id="ov-signals"></div>
+    </div>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="panel-time" aria-labelledby="tab-time" data-tab="time" tabindex="0" hidden>
     <section class="sec" id="sec-trends">
-      <h2 class="sec-h"><span class="sec-n">02</span><span class="sec-i" data-icon="trend"></span><span data-i18n="sec.trends">Over time</span></h2>
+      <h2 class="sec-h"><span class="sec-i" data-icon="trend"></span><span data-i18n="sec.trends">Over time</span></h2>
       <p class="mono trend-key" id="trend-key"></p>
       <div id="trends"></div>
       <div class="panel" id="theme-heat-panel">
@@ -116,46 +137,12 @@
       </div>
       <details class="tableview" id="trend-table-box"><summary data-i18n="table.view">Table view</summary><div id="trend-table"></div></details>
     </section>
-
-    <section class="sec" id="sec-account" hidden>
-      <h2 class="sec-h"><span class="sec-n">03</span><span class="sec-i" data-icon="account"></span><span data-i18n="sec.account">Your account, as others meet it</span></h2>
-      <p class="lede" style="margin-bottom:14px" data-i18n="perf.lede">Instagram's own numbers for your profile. Every point is a
-        total for the 90 days ending that day, so points a week apart share 83 days: they move slowly, and they must
-        never be added together. Hollow points are worked out from Instagram's own "% vs the previous 90 days".</p>
-      <div id="perf-notes"></div>
-      <div class="grid-sm" id="perf"></div>
-      <div class="cols" id="perf-audience"></div>
-      <details class="tableview"><summary data-i18n="table.view">Table view</summary><div id="perf-table"></div></details>
-    </section>
-
-    <section class="sec" id="sec-feed">
-      <h2 class="sec-h"><span class="sec-n">04</span><span class="sec-i" data-icon="feed"></span><span data-i18n="sec.feed">What the feed showed you</span></h2>
-      <div class="cols cols-donut">
-        <div class="panel panel-centre"><div id="theme-donut"></div><div class="legend" id="theme-legend"></div></div>
-        <div class="panel" id="themes"></div>
-      </div>
-      <div class="hls" id="theme-highlights"></div>
-      <div class="panel panel-centre" id="sec-slope"><h3 class="sub" data-i18n="slope.h">Movement since the bucket before · above the line grew, below it shrank</h3><div id="theme-slope"></div></div>
-    </section>
-
-    <section class="sec" id="sec-time">
-      <h2 class="sec-h"><span class="sec-n">05</span><span class="sec-i" data-icon="clock"></span><span data-i18n="sec.time">When it took your time</span></h2>
-      <div class="panel">
-        <h3 class="sub" data-i18n="daily.h">Minutes per day, in the window Instagram kept</h3>
-        <div id="daily"></div>
-        <p id="daily-note" class="mono" style="margin-top:10px"></p>
-      </div>
-      <div class="panel" id="sec-hours">
-        <h3 class="sub" data-i18n="hours.h">Hour by hour</h3>
-        <div id="hours"></div>
-        <p id="hours-note" class="mono" style="margin-top:10px"></p>
-      </div>
-    </section>
-
+    </div>
+    <div class="tabpanel" role="tabpanel" id="panel-triggers" aria-labelledby="tab-triggers" data-tab="triggers" tabindex="0" hidden>
     <!-- Context triggers: the conditions behaviour follows. Counts per bucket are summed over the range in the filter
          row and turned into lifts in the browser, so the evidence for a pattern grows as weeks accumulate. -->
     <section class="sec" id="sec-triggers">
-      <h2 class="sec-h"><span class="sec-n">06</span><span class="sec-i" data-icon="trigger"></span><span data-i18n="sec.triggers">What comes just before what you do</span></h2>
+      <h2 class="sec-h"><span class="sec-i" data-icon="trigger"></span><span data-i18n="sec.triggers">What comes just before what you do</span></h2>
       <p class="lede" style="margin-bottom:8px" data-i18n="trig.lede">Under which conditions you open the app, stay long, act on what you
         see, look something up or write to someone — read from what came just before. These are associations, not causes:
         they say what goes together, not what makes what happen.</p>
@@ -198,35 +185,19 @@
         </div>
       </div>
     </section>
-
-    <section class="sec" id="sec-people">
-      <h2 class="sec-h"><span class="sec-n">07</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
-      <div class="pow" id="pow" hidden></div>
-      <div class="cols">
-        <div class="panel">
-          <h3 class="sub" data-i18n="top.h">Most seen</h3>
-          <div id="top"></div>
-        </div>
-        <div class="panel" id="sec-quiet">
-          <h3 class="sub" data-i18n="quiet.h">Quiet interests · seen often, never liked or searched</h3>
-          <div id="quiet"></div>
-        </div>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="panel-feed" aria-labelledby="tab-feed" data-tab="feed" tabindex="0" hidden>
+    <section class="sec" id="sec-feed">
+      <h2 class="sec-h"><span class="sec-i" data-icon="feed"></span><span data-i18n="sec.feed">What the feed showed you</span></h2>
+      <div class="cols cols-donut">
+        <div class="panel panel-centre"><div id="theme-donut"></div><div class="legend" id="theme-legend"></div></div>
+        <div class="panel" id="themes"></div>
       </div>
-      <div class="panel" id="sec-netprev" hidden>
-        <h3 class="sub" data-i18n="net.h">Your network, in miniature</h3>
-        <div class="netprev">
-          <div class="netprev-svg" id="netprev"></div>
-          <div class="netprev-body">
-            <p class="bel-m" id="netprev-say"></p>
-            <ul class="np-legend" id="netprev-legend"></ul>
-            <p style="margin-top:12px"><a id="netprev-link" href="#" target="_blank"><span data-i18n="net.link">Open the full network view →</span></a></p>
-          </div>
-        </div>
-      </div>
+      <div class="hls" id="theme-highlights"></div>
+      <div class="panel panel-centre" id="sec-slope"><h3 class="sub" data-i18n="slope.h">Movement since the bucket before · above the line grew, below it shrank</h3><div id="theme-slope"></div></div>
     </section>
-
     <section class="sec" id="sec-feeling">
-      <h2 class="sec-h"><span class="sec-n">08</span><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
+      <h2 class="sec-h"><span class="sec-i" data-icon="pulse"></span><span data-i18n="sec.feeling">How it felt</span></h2>
       <div class="panel">
         <div class="sub-row">
           <h3 class="sub" id="emo-h"></h3>
@@ -239,15 +210,30 @@
         <div id="emotions"></div>
       </div>
     </section>
-
-    <!-- Personality and needs are read from behaviour only; the feed diet is what the recommender served; the
-         influence panel is the relation between the two. Each indicator is a strip of every bucket on record,
-         so where this one sits is read against your own range rather than as a verdict on a 0–100 scale. -->
+    <section class="sec" id="sec-diet">
+      <h2 class="sec-h"><span class="sec-i" data-icon="feed"></span><span data-i18n="sec.diet">The feed diet</span></h2>
+      <div class="panel"><h3 class="sub" data-i18n="strips.shown">What you were shown · the feed diet</h3><div id="strips-shown"></div>
+        <p class="mono" style="margin-top:10px" data-i18n="strips.key.short">Grey dots: every other bucket on record; the dark dot: this one. 0–100.</p>
+      </div>
+    </section>
+    <section class="sec" id="sec-people">
+      <h2 class="sec-h"><span class="sec-i" data-icon="users"></span><span data-i18n="sec.people">Who filled it</span></h2>
+      <div class="cols">
+        <div class="panel">
+          <h3 class="sub" data-i18n="top.h">Most seen</h3>
+          <div id="top"></div>
+        </div>
+        <div class="panel" id="sec-quiet">
+          <h3 class="sub" data-i18n="quiet.h">Quiet interests · seen often, never liked or searched</h3>
+          <div id="quiet"></div>
+        </div>
+      </div>
+    </section>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="panel-you" aria-labelledby="tab-you" data-tab="you" tabindex="0" hidden>
     <section class="sec" id="sec-profile">
-      <h2 class="sec-h"><span class="sec-n">09</span><span class="sec-i" data-icon="person"></span><span data-i18n="sec.profile">What you do, and what you are shown</span></h2>
-      <div class="cols cols-strips">
-        <div class="panel"><h3 class="sub" data-i18n="strips.do">What you do · personality and needs, from behaviour</h3><div id="strips-do"></div></div>
-        <div class="panel"><h3 class="sub" data-i18n="strips.shown">What you were shown · the feed diet</h3><div id="strips-shown"></div></div>
+      <h2 class="sec-h"><span class="sec-i" data-icon="person"></span><span data-i18n="sec.you">Personality, needs and influence</span></h2>
+      <div class="panel"><h3 class="sub" data-i18n="strips.do">What you do · personality and needs, from behaviour</h3><div id="strips-do"></div>
       </div>
       <p class="mono strip-key" id="strip-key"></p>
       <div class="panel" id="influence">
@@ -256,11 +242,53 @@
         <div id="dumbbell"></div>
         <p id="influence-note" class="mono" style="margin-top:10px"></p>
       </div>
+    </section>
+    <section class="sec" id="sec-time">
+      <h2 class="sec-h"><span class="sec-i" data-icon="clock"></span><span data-i18n="sec.time">When it took your time</span></h2>
+      <div class="panel">
+        <h3 class="sub" data-i18n="daily.h">Minutes per day, in the window Instagram kept</h3>
+        <div id="daily"></div>
+        <p id="daily-note" class="mono" style="margin-top:10px"></p>
+      </div>
+      <div class="panel" id="sec-hours">
+        <h3 class="sub" data-i18n="hours.h">Hour by hour</h3>
+        <div id="hours"></div>
+        <p id="hours-note" class="mono" style="margin-top:10px"></p>
+      </div>
+    </section>
+    <section class="sec" id="sec-method">
+      <h2 class="sec-h"><span class="sec-i" data-icon="search"></span><span data-i18n="sec.method">How each indicator is computed</span></h2>
       <div class="panel" id="profile"></div>
     </section>
-
+    </div>
+    <div class="tabpanel" role="tabpanel" id="panel-people" aria-labelledby="tab-people" data-tab="people" tabindex="0" hidden>
+    <section class="sec" id="sec-account" hidden>
+      <h2 class="sec-h"><span class="sec-i" data-icon="account"></span><span data-i18n="sec.account">Your account, as others meet it</span></h2>
+      <p class="lede" style="margin-bottom:14px" data-i18n="perf.lede">Instagram's own numbers for your profile. Every point is a
+        total for the 90 days ending that day, so points a week apart share 83 days: they move slowly, and they must
+        never be added together. Hollow points are worked out from Instagram's own "% vs the previous 90 days".</p>
+      <div id="perf-notes"></div>
+      <div class="grid-sm" id="perf"></div>
+      <div class="cols" id="perf-audience"></div>
+      <details class="tableview"><summary data-i18n="table.view">Table view</summary><div id="perf-table"></div></details>
+    </section>
+    <section class="sec" id="sec-close">
+      <h2 class="sec-h"><span class="sec-i" data-icon="users"></span><span data-i18n="sec.close">Who you are close to</span></h2>
+      <div class="pow" id="pow" hidden></div>
+      <div class="panel" id="sec-netprev" hidden>
+        <h3 class="sub" data-i18n="net.h">Your network, in miniature</h3>
+        <div class="netprev">
+          <div class="netprev-svg" id="netprev"></div>
+          <div class="netprev-body">
+            <p class="bel-m" id="netprev-say"></p>
+            <ul class="np-legend" id="netprev-legend"></ul>
+            <p style="margin-top:12px"><a id="netprev-link" href="#" target="_blank"><span data-i18n="net.link">Open the full network view →</span></a></p>
+          </div>
+        </div>
+      </div>
+    </section>
     <section class="sec" id="sec-belonging" hidden>
-      <h2 class="sec-h"><span class="sec-n">10</span><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
+      <h2 class="sec-h"><span class="sec-i" data-icon="users"></span><span data-i18n="sec.belonging">Whether you belong</span></h2>
       <p class="lede" style="margin-bottom:14px" data-i18n="bel.lede">Four things belonging is made of. An Instagram export
         measures two of them, reaches a third only by proxy, and is silent on the fourth — that row says so rather
         than being dropped, because a missing row reads as nothing to report, which is the opposite of what is true.</p>
@@ -275,21 +303,22 @@
         <div id="bel-needs-list"></div>
       </div>
     </section>
-
+    </div>
+    <div class="tabpanel" role="tabpanel" id="panel-wellbeing" aria-labelledby="tab-wellbeing" data-tab="wellbeing" tabindex="0" hidden>
+    <p id="week-note" class="mono" hidden></p>
     <section class="sec" id="sec-risks">
-      <h2 class="sec-h"><span class="sec-n">11</span><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
+      <h2 class="sec-h"><span class="sec-i" data-icon="alert"></span><span data-i18n="sec.risks">Where the friction is</span></h2>
       <div class="cols cols-matrix">
         <div class="panel panel-centre"><div id="risk-matrix"></div></div>
         <div class="panel" id="risks"></div>
       </div>
     </section>
-
     <section class="sec" id="sec-signals">
-      <h2 class="sec-h"><span class="sec-n">12</span><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
+      <h2 class="sec-h"><span class="sec-i" data-icon="search"></span><span data-i18n="sec.signals">What to watch</span></h2>
       <div class="panel" id="signals"></div>
     </section>
-
-    <p id="week-note" class="mono" hidden></p>
+    <p class="mono" style="margin-top:14px"><a id="method-link" href="https://github.com/RedHouseLux/instagram-insights/blob/main/METHODOLOGY.md" target="_blank" data-i18n="well.method">How every number here is worked out (METHODOLOGY) →</a></p>
+    </div>
 
     <footer>
       <p id="log" class="mono"></p>

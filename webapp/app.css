@@ -60,8 +60,8 @@ h2 { font-size: 17px; margin: 34px 0 10px; }
 .eyebrow { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 
 /* ── Infographic spread ──────────────────────────────────────────────────────────────────────────────
-   Sections are numbered because the order is an argument, not a menu: feed → time → people → feeling →
-   self → friction → what to watch. The number and the rule carry that; the icon only labels the subject. */
+   The tabs carry the order now (Overview → Over time → Triggers → Your feed → You → People → Wellbeing), so
+   sections are no longer numbered; the rule under a heading separates them and the icon labels the subject. */
 .sec { margin-top: 44px; }
 .sec-h { display: flex; align-items: center; gap: 12px; font-family: var(--cond); font-size: 24px; font-weight: 700;
   letter-spacing: -0.005em; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--ink);
@@ -176,7 +176,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--seen); out
 .toast-text { display: block; transition: opacity 0.35s ease, transform 0.35s ease; opacity: 1; transform: translateY(0); }
 .toast-text.is-changing { opacity: 0; transform: translateY(5px); }
 @media (prefers-reduced-motion: reduce) {
-  .toast-text { transition: none; }
+  :root:not([data-motion="on"]) .toast-text { transition: none; }
 }
 .empty-card { border: 1.5px dashed var(--line); text-align: left; }
 .empty-card h2 { margin-top: 0; }
@@ -221,7 +221,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--seen); out
 .risk-m { font-size: 13px; color: var(--muted); margin-top: 2px; }
 #daily { display: flex; align-items: flex-end; gap: 4px; height: 130px; }
 .day { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 4px; }
-.day i { display: block; width: 100%; max-width: 46px; background: var(--seen); border-radius: 4px 4px 0 0; }
+.day i { display: block; width: 100%; max-width: 46px; background: var(--l-consumption); border-radius: 4px 4px 0 0; }
 .day span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
 .theme { display: grid; grid-template-columns: minmax(96px, 150px) 1fr 52px 62px; gap: 10px; align-items: center; padding: 5px 0; font-size: 13px; }
 .theme-n { color: var(--ink-2); }
@@ -282,8 +282,8 @@ footer { margin-top: 42px; padding-top: 16px; border-top: 1px solid var(--line);
   .top-actions { align-self: flex-end; }
 }
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-  .skel { animation: none; background: var(--line); }
+  :root:not([data-motion="on"]) * { transition: none !important; animation: none !important; }
+  :root:not([data-motion="on"]) .skel { background: var(--line); }
 }
 .legend-note { width: 100%; margin: 10px 0 0; line-height: 1.45; text-transform: none; letter-spacing: 0; }
 /* Subtopic chips sit under their theme's bar, indented to the bar's own column so the hierarchy is spatial
@@ -317,7 +317,7 @@ footer { margin-top: 42px; padding-top: 16px; border-top: 1px solid var(--line);
 .tipcard-note { color: var(--ink-2); }
 /* Keyboard focus can't follow a pointer, so a tabbed slice anchors the card under the chart instead. */
 .tipcard.is-anchored { position: absolute; }
-@media (prefers-reduced-motion: reduce) { .tipcard { transition: none; } }
+@media (prefers-reduced-motion: reduce) { :root:not([data-motion="on"]) .tipcard { transition: none; } }
 
 /* ── Profile of the week ─────────────────────────────────────────────────────────────────────────── */
 .pow { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
@@ -415,12 +415,12 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
 .ch-line-sm { max-width: 100%; margin-top: 4px; outline: none; }
 .ch-line-sm:focus-visible { outline: 2px solid var(--seen); outline-offset: 2px; border-radius: 6px; }
 .ch-base { stroke: var(--baseline, var(--line)); stroke-width: 1; }
-.ch-band { fill: color-mix(in srgb, var(--seen) 11%, transparent); stroke: none; }
-.ch-series { stroke: var(--seen); stroke-width: 2; stroke-linecap: round; }
+.ch-band { fill: color-mix(in srgb, var(--series, var(--seen)) 11%, transparent); stroke: none; }
+.ch-series { stroke: var(--series, var(--seen)); stroke-width: 2; stroke-linecap: round; }
 .ch-series.is-dashed { stroke-dasharray: 3 4; opacity: .8; }
-.ch-pt-sm { fill: var(--seen); stroke: var(--panel); stroke-width: 2; }
-.ch-pt-sm.is-hollow { fill: var(--panel); stroke: var(--seen); stroke-width: 1.8; }
-.ch-pt-sm.is-selected { fill: var(--accent); stroke: var(--panel); }
+.ch-pt-sm { fill: var(--series, var(--seen)); stroke: var(--panel); stroke-width: 2; }
+.ch-pt-sm.is-hollow { fill: var(--panel); stroke: var(--series, var(--seen)); stroke-width: 1.8; }
+.ch-pt-sm.is-selected { fill: var(--ink); stroke: var(--panel); stroke-width: 2.5; }
 .ch-pt-sm.is-hot { stroke: var(--ink); stroke-width: 1.5; }
 .ch-flag { fill: none; stroke: var(--ink-2); stroke-width: 1.2; }
 .ch-cross { stroke: var(--ink-2); stroke-width: 1; opacity: .55; pointer-events: none; }
@@ -465,7 +465,7 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
 .strip-track { position: relative; height: 14px; }
 .strip-track::before { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 9%, transparent); }
 .strip-dot { position: absolute; top: 3px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--muted); opacity: .45; }
-.strip-dot.is-now { top: 1px; width: 12px; height: 12px; margin-left: -6px; background: var(--accent); opacity: 1; box-shadow: 0 0 0 2px var(--panel); }
+.strip-dot.is-now { top: 1px; width: 12px; height: 12px; margin-left: -6px; background: var(--ink); opacity: 1; box-shadow: 0 0 0 2px var(--panel); }
 .strip-v { font-family: var(--mono); font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
 .strip-e { font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; }
 .strip.is-blank .strip-n { color: var(--muted); }
@@ -483,10 +483,10 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
 .db-track { position: relative; height: 14px; }
 .db-track::before { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: color-mix(in srgb, var(--ink) 7%, transparent); border-radius: 2px; }
 .db-bar { position: absolute; top: 5px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--muted) 45%, transparent); }
-.db-bar.is-up { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.db-bar.is-up { background: color-mix(in srgb, var(--l-consumption) 45%, transparent); }
 .db-dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; box-shadow: 0 0 0 2px var(--panel); }
-.db-seen { background: var(--muted); }
-.db-chosen { background: var(--accent); }
+.db-seen { background: var(--l-exposure); }
+.db-chosen { background: var(--l-consumption); }
 .db-v { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
 
 .tv.conv td, .tv.conv th { white-space: normal; }
@@ -519,10 +519,10 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
 .trig-main { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
 .trig-s { margin: 0; font-size: 14px; line-height: 1.4; }
 .trig-lift { font-family: var(--cond); font-size: 26px; line-height: 1; }
-.trig-bar { display: grid; grid-template-columns: 112px 1fr 78px; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-2); }
+.trig-bar { display: grid; grid-template-columns: 112px 1fr 96px; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-2); }
 .trig-bar .bar i.is-now { background: var(--layer); }
 .trig-bar .bar i.is-usual { background: var(--muted); opacity: .55; }
-.trig-bar-v { font-family: var(--mono); font-size: 11.5px; text-align: right; font-variant-numeric: tabular-nums; }
+.trig-bar-v { font-family: var(--mono); font-size: 11.5px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .trig-n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .trig-damp { margin-top: 14px; }
 .trig-damp:empty { display: none; }
@@ -569,5 +569,101 @@ a[aria-disabled="true"] { color: var(--muted); text-decoration: none; cursor: de
 @media (max-width: 620px) {
   .dg-row { grid-template-columns: 1fr; gap: 0; margin-bottom: 6px; }
   .dg-axis > div:first-child { display: none; }
-  .trig-bar { grid-template-columns: 92px 1fr 70px; }
+  .trig-bar { grid-template-columns: 92px 1fr 88px; }
 }
+
+/* ── Tabs ────────────────────────────────────────────────────────────────────────────────────────────────
+   Sticky, so the question you are reading under stays in view; each tab underlines in the colour of the layer it
+   is mostly about. On a phone the bar scrolls sideways, snapping to tabs, with its edges faded to say there is more. */
+.tabs { position: sticky; top: 0; z-index: 6; display: flex; gap: 2px; margin: 14px -4px 4px; padding: 6px 4px 0;
+  background: var(--ground); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs [role="tab"] { flex: 0 0 auto; scroll-snap-align: start; border: 0; border-radius: 8px 8px 0 0; background: transparent; color: var(--ink-2);
+  padding: 9px 13px 10px; font-size: 14px; font-weight: 500; white-space: nowrap; box-shadow: inset 0 -3px 0 transparent; }
+.tabs [role="tab"]:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.tabs [role="tab"][aria-selected="true"] { color: var(--ink); font-weight: 600; box-shadow: inset 0 -3px 0 var(--tab-layer, var(--ink)); }
+.tabs [data-layer="exposure"] { --tab-layer: var(--l-exposure); }
+.tabs [data-layer="consumption"] { --tab-layer: var(--l-consumption); }
+.tabs [data-layer="social"] { --tab-layer: var(--l-social); }
+.tabs [data-layer="inbound"] { --tab-layer: var(--l-inbound); }
+.tabs [role="tab"]:focus-visible { outline: 2px solid var(--seen); outline-offset: -2px; }
+.tabpanel { transition: opacity .2s ease; }
+.tabpanel:focus { outline: none; }
+.tabpanel > .sec:first-child, .tabpanel > .hero:first-child { margin-top: 14px; }
+.tabpanel.is-stale { opacity: .55; transition: none; }
+@media (max-width: 760px) {
+  .tabs { mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); padding-inline: 14px; margin-inline: -18px; }
+  .tabs [role="tab"] { padding: 8px 11px 9px; font-size: 13.5px; }
+}
+
+/* ── Colour follows the layer ───────────────────────────────────────────────────────────────────────────── */
+.tl-exposure, .is-exposure { --series: var(--l-exposure); --layer: var(--l-exposure); }
+.tl-consumption, .is-consumption { --series: var(--l-consumption); --layer: var(--l-consumption); }
+.tl-social, .is-social { --series: var(--l-social); --layer: var(--l-social); }
+.tl-inbound, .is-inbound, #sec-account { --series: var(--l-inbound); --layer: var(--l-inbound); }
+.is-risk { --layer: var(--worse); }
+.lc { border-left: 3px solid var(--lc-layer, var(--line)); }
+.lc-exposure { --lc-layer: var(--l-exposure); }
+.lc-consumption { --lc-layer: var(--l-consumption); }
+.lc-social { --lc-layer: var(--l-social); }
+.lc-inbound { --lc-layer: var(--l-inbound); }
+#conversations-panel { border-left: 3px solid var(--l-social); }
+
+/* Borders say how much to trust a thing: a hairline by default; a 1.5px layer border, a 6% tint and a badge for
+   the few things worth looking at first; dashed for what rests on little evidence (the Belonging convention). */
+.is-highlight { border: 1.5px solid var(--layer, var(--accent)) !important; background: color-mix(in srgb, var(--layer, var(--accent)) 6%, var(--panel)); }
+.badge { justify-self: start; display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink); background: color-mix(in srgb, var(--layer, var(--accent)) 18%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--layer, var(--accent)) 55%, transparent); border-radius: 99px; padding: 1px 8px; }
+.trig.tier-strong { border: 1.5px solid var(--layer); background: color-mix(in srgb, var(--layer) 6%, var(--panel)); }
+.trig.tier-some { border-style: dashed; border-left-style: solid; }
+.strip.is-blank .strip-track::before { background: none; border-top: 2px dashed color-mix(in srgb, var(--ink) 14%, transparent); height: 0; }
+
+/* What stood out */
+.stood { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.stood-card { display: grid; gap: 4px; align-content: start; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--panel); }
+.stood-t { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.stood-s { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.stood-w { font-size: 12px; color: var(--muted); }
+.link-btn { justify-self: start; border: 0; background: none; padding: 2px 0; color: var(--seen); font-size: 13px; font-weight: 500; cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+.stood-card .link-btn { margin-top: 4px; }
+.spark-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+/* Tile sparkline */
+.ch-spark { width: 100%; max-width: 120px; height: 28px; margin-top: 8px; }
+.ch-spark-l { fill: none; stroke: var(--ink-2); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; opacity: .7; }
+.ch-spark-d { fill: var(--ink); stroke: var(--panel); stroke-width: 2; }
+
+/* ── Motion ─────────────────────────────────────────────────────────────────────────────────────────────
+   Everything below runs only with html[data-motion="on"]: the reduced-motion setting turns it off until the reader
+   chooses otherwise, and the ∿ button turns it off outright. Entrances play when a tab is first drawn (.play), and
+   never longer than about 700ms; nothing loops. */
+[data-motion="on"] .tabpanel.is-entering { animation: ii-rise .2s ease-out both; }
+[data-motion="on"] .play .ch-series:not(.is-dashed) { stroke-dasharray: var(--len) var(--len); stroke-dashoffset: var(--len);
+  animation: ii-draw var(--dur, 80ms) linear var(--d, 0ms) forwards; }
+[data-motion="on"] .play .ch-series.is-dashed, [data-motion="on"] .play .ch-band { animation: ii-fade .5s ease-out both; }
+[data-motion="on"] .play .ch-pt-sm, [data-motion="on"] .play .ch-dg-dot, [data-motion="on"] .play .db-dot {
+  transform-box: fill-box; transform-origin: center; animation: ii-pop .28s ease-out var(--d, 0ms) both; }
+[data-motion="on"] .play .bar i, [data-motion="on"] .play .db-bar { transform-origin: left center; animation: ii-grow-x .5s cubic-bezier(.2, .7, .2, 1) both; }
+[data-motion="on"] .play .day i, [data-motion="on"] .play .cov-track i { transform-origin: left bottom; animation: ii-grow-y .5s cubic-bezier(.2, .7, .2, 1) both; }
+[data-motion="on"] .play .cov-track i { animation-name: ii-grow-x; }
+[data-motion="on"] .play .strip-dot { animation: ii-fade .45s ease-out both; }
+[data-motion="on"] .play .heat .cell, [data-motion="on"] .play .theat .cell, [data-motion="on"] .play .tm-cell { animation: ii-fade .3s ease-out var(--d, 0ms) both; }
+[data-motion="on"] .badge.is-pulse { animation: ii-pulse 1.2s ease-out .3s 1; }
+[data-motion="on"] .tile, [data-motion="on"] .lc, [data-motion="on"] .trig, [data-motion="on"] .hl, [data-motion="on"] .stood-card,
+[data-motion="on"] .spark { transition: transform .15s ease, box-shadow .15s ease; }
+[data-motion="on"] .tile:hover, [data-motion="on"] .lc:hover, [data-motion="on"] .trig:hover, [data-motion="on"] .hl:hover,
+[data-motion="on"] .stood-card:hover, [data-motion="on"] .spark:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 0, 0, .08); }
+[data-motion="off"] *, [data-motion="off"] *::before, [data-motion="off"] *::after { animation: none !important; transition: none !important; }
+#motion[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+@keyframes ii-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes ii-draw { to { stroke-dashoffset: 0; } }
+@keyframes ii-fade { from { opacity: 0; } }
+@keyframes ii-pop { from { transform: scale(0); opacity: 0; } }
+@keyframes ii-grow-x { from { transform: scaleX(0); } }
+@keyframes ii-grow-y { from { transform: scaleY(0); } }
+@keyframes ii-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--layer, var(--accent)) 55%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; } }
+#week-note { margin: 14px 0 0; }

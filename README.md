@@ -270,7 +270,17 @@ A page that reads live from the tabs `processNewExports()` already keeps current
 - **After changing `Code.gs`, `Dashboard.gs` or the `webapp/` files,** run `node build/build-webapp.js` to rebuild `webapp/Index.html`, then push the update (see above).
 - **Finding your exports automatically:** because Instagram's own "send to Google Drive" option can't be pointed at a specific folder, every check also looks across "My Drive" for anything named with "meta" in it, confirms it's really an Instagram export before touching it, and moves a real one into the `Instagram Exports` folder. Anything else with "meta" in its name is left exactly where it is.
 
-What it shows: the tiles for the week or month with changes against the one before; the four layers (what reached you, how you used it, what you did toward people, what they did back); every measure **over time**, with a range filter (last week by day, 8 weeks, 6 months, all, or a custom range), your usual range shaded, partial weeks hollow and missing weeks left as gaps; your account's 90-day performance; themes shown and chosen; the hour × weekday heatmap; **context triggers** — what tends to come just before you open the app, stay long, act, look something up or write to someone, as ranked cards, a context × behaviour matrix, when sessions begin and every session on one minutes axis; most-seen accounts and quiet interests; emotional tone of what you were shown, of your words and of words to you; personality, needs, feed diet and influence as strips against every other week on record; belonging and conversations; the 11 risks; the signals; and a link to the network view. Every chart has a table view.
+What it shows, in seven tabs that each answer one question — they draw when first opened, and the last one you used opens next time:
+
+- **Overview**: the week or month at a glance — tiles with a sparkline of the eight buckets before and the change against the last one; **what stood out** (a measure outside your usual range, the strongest trigger in the range shown, the risk that worsened most, a rising theme, a change in how often you are answered), each with a link to its evidence; the four layers (what reached you, how you used it, what you did toward people, what they did back); and the three signals most worth a look.
+- **Over time**: every measure over the range in the filter row (last week by day, 8 weeks, 6 months, all, or a custom range), your usual range shaded, partial weeks hollow and missing weeks left as gaps, and themes over time, shown against chosen. Click a point to open that period's Overview.
+- **Triggers**: what tends to come just before you open the app, stay long, act, look something up or write to someone — ranked cards, a context × behaviour matrix, when sessions begin, and every session on one minutes axis.
+- **Your feed**: themes shown and how they moved, emotional tone, the feed diet, most-seen accounts and quiet interests.
+- **You**: personality, needs and influence as strips against every other bucket on record; minutes per day and the hour × weekday heatmap; how each indicator is computed.
+- **People & account**: your account's 90-day performance, who you are close to, belonging and conversations.
+- **Wellbeing**: the 11 risks and every signal.
+
+Colour follows the layer a thing belongs to — blue for what reached you, teal for how you used it, pink for what you did toward people, gold for what they did back — and a highlighted border marks the few things worth looking at first. Animations follow your system's reduced-motion setting, and the ∿ button turns them off or on. Every chart has a table view.
 
 ## Sharing it with other people
 

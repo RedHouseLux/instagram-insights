@@ -273,4 +273,4 @@ content. `node test/run-local.js` checks that no message text appears in any cel
 | Layer metrics (Monthly/Weekly columns) | `layerColumns` in `analyzeExport_` |
 | Themes, emotions, signals word lists | the Settings tab (then *Reprocess everything*) |
 | Performance fields and labels | `PERF_FIELDS` |
-| Dashboard charts and ranges | `webapp/app.js` (`TREND_LAYERS`, `PERF`, `trendPeriods`), then `node build/build-webapp.js` |
+| Dashboard tabs, charts and ranges | `webapp/app.js` (`TAB_DRAW`, `TREND_LAYERS`, `PERF`, `trendPeriods`), then `node build/build-webapp.js` |

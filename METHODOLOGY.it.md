@@ -291,4 +291,4 @@ mai il contenuto. `node test/run-local.js` verifica che nessun testo di messaggi
 | Metriche dei livelli (colonne Monthly/Weekly) | `layerColumns` in `analyzeExport_` |
 | Elenchi di parole per temi, emozioni, segnali | la scheda Settings (poi *Rielabora tutto*) |
 | Campi ed etichette dell'andamento del profilo | `PERF_FIELDS` |
-| Grafici e intervalli del cruscotto | `webapp/app.js` (`TREND_LAYERS`, `PERF`, `trendPeriods`), poi `node build/build-webapp.js` |
+| Schede, grafici e intervalli del cruscotto | `webapp/app.js` (`TAB_DRAW`, `TREND_LAYERS`, `PERF`, `trendPeriods`), poi `node build/build-webapp.js` |

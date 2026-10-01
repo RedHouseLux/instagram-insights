@@ -360,13 +360,19 @@ var CH = (function () {
         : n('path', { d: 'M' + x + ',' + (T - 12) + 'L' + (x + 4) + ',' + (T - 8) + 'L' + x + ',' + (T - 4) + 'L' + (x - 4) + ',' + (T - 8) + 'Z', class: 'ch-mark ch-mark-alt' }));
     });
 
-    // The line, broken at every gap; a segment touching a worked-out point is dashed.
+    // The line, broken at every gap; a segment touching a worked-out point is dashed. Each segment carries its own
+    // length and a delay proportional to where it starts, which is all the CSS draw-in needs to run left to right
+    // in about 600ms whatever the number of points (the animation itself is in app.css, behind data-motion).
+    var span = Math.max(1, points.length - 1);
+    var at = function (k) { return Math.round(600 * k / span) + 'ms'; };
     for (var i = 1; i < points.length; i++) {
       var a = points[i - 1], b = points[i];
       if (a.v === null || b.v === null || a.v === undefined || b.v === undefined) continue;
-      svg.appendChild(n('line', {
+      var seg = n('line', {
         x1: X(a.x), y1: Y(a.v), x2: X(b.x), y2: Y(b.v), class: 'ch-series' + (a.dashed || b.dashed ? ' is-dashed' : ''),
-      }));
+      });
+      seg.setAttribute('style', '--len:' + Math.ceil(Math.hypot(X(b.x) - X(a.x), Y(b.v) - Y(a.v))) + ';--d:' + at(i - 1) + ';--dur:' + Math.round(600 / span) + 'ms');
+      svg.appendChild(seg);
     }
     var cross = n('line', { x1: 0, x2: 0, y1: T - 2, y2: H - B, class: 'ch-cross' });
     cross.style.display = 'none';
@@ -377,6 +383,7 @@ var CH = (function () {
       var dot = n('circle', {
         cx: X(p.x), cy: Y(p.v), r: p.selected ? 5 : 4,
         class: 'ch-pt-sm' + (p.hollow ? ' is-hollow' : '') + (p.selected ? ' is-selected' : ''),
+        style: '--d:' + at(p.x - (opts.xMin || 0)),
       });
       svg.appendChild(dot);
       return dot;
@@ -497,7 +504,7 @@ var CH = (function () {
       // render, and dots that share a minute fan out rather than stacking into one.
       g.values.forEach(function (x, k) {
         var y = H / 2 + (((k * 7) % 9) - 4) * 2.6;
-        var dot = n('circle', { cx: X(x.v), cy: y, r: 4, class: 'ch-dg-dot' });
+        var dot = n('circle', { cx: X(x.v), cy: y, r: 4, class: 'ch-dg-dot', style: '--d:' + Math.round(4 * pct(x.v)) + 'ms' });
         var hit = n('circle', { cx: X(x.v), cy: y, r: 9, class: 'ch-hit' });
         if (opts.onHover) {
           hit.addEventListener('mouseenter', function (e) { dot.classList.add('is-hot'); opts.onHover(x.data, e); });
@@ -539,6 +546,31 @@ var CH = (function () {
     return wrap;
   }
 
+  // ── Tile sparkline ───────────────────────────────────────────────────────────────────────────────────
+  // The last few buckets of one tile's measure, no axis: its job is the shape of the run and where the newest point
+  // sits in it, which the dark end dot marks. Gaps stay gaps.
+  function spark(values, opts) {
+    opts = opts || {};
+    var W = 120, H = 28, P = 4;
+    var svg = root(W, H, 'ch-spark');
+    svg.setAttribute('aria-label', (opts.label || '') + ': ' + values.filter(function (v) { return v !== null; }).length + ' points');
+    var vals = values.filter(function (v) { return v !== null && !isNaN(v); });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if (hi === lo) { hi = lo + 1; lo = lo - 1; }
+    var X = function (k) { return P + (values.length < 2 ? 0 : k / (values.length - 1)) * (W - 2 * P); };
+    var Y = function (v) { return H - P - (v - lo) / (hi - lo) * (H - 2 * P); };
+    var run = [];
+    var flush = function () {
+      if (run.length > 1) svg.appendChild(n('polyline', { points: run.join(' '), class: 'ch-spark-l' }));
+      run = [];
+    };
+    values.forEach(function (v, k) { if (v === null || isNaN(v)) flush(); else run.push(X(k) + ',' + Y(v)); });
+    flush();
+    var last = values.length - 1;
+    if (values[last] !== null && !isNaN(values[last])) svg.appendChild(n('circle', { cx: X(last), cy: Y(values[last]), r: 3.5, class: 'ch-spark-d' }));
+    return svg;
+  }
+
   function icon(name, size) {
     var svg = root(24, 24, 'ch-icon');
     svg.setAttribute('width', size || 20);
@@ -552,5 +584,5 @@ var CH = (function () {
     return svg;
   }
 
-  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, line: line, dotGroups: dotGroups, icon: icon, icons: ICONS };
+  return { radar: radar, matrix: matrix, donut: donut, slope: slope, scatter: scatter, line: line, dotGroups: dotGroups, spark: spark, icon: icon, icons: ICONS };
 }());
